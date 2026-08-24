@@ -2,6 +2,7 @@
 
 from .bounded import BABCSConfig, BoundedAdamsBashforthIntegrator, BoundedIntegrator
 from .candidates import CANDIDATE_METHODS
+from ._project import VERSION as __version__
 from .model import (
     Capacitor,
     Circuit,
@@ -34,4 +35,5 @@ __all__ = [
     "Sine",
     "Switch",
     "VoltageSource",
+    "__version__",
 ]

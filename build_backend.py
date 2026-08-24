@@ -3,30 +3,46 @@ from __future__ import annotations
 import base64
 import csv
 import hashlib
+import importlib.util
 import io
 import zipfile
+from functools import lru_cache
 from pathlib import Path
+from types import ModuleType
+
+
+@lru_cache(maxsize=1)
+def _project() -> ModuleType:
+    path = Path(__file__).parent / "src" / "babcs" / "_project.py"
+    specification = importlib.util.spec_from_file_location("_babcs_project", path)
+    if specification is None or specification.loader is None:
+        raise RuntimeError(f"unable to load project metadata from {path}")
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module
 
 
 def _metadata() -> bytes:
+    project = _project()
     return (
         "Metadata-Version: 2.1\n"
-        "Name: bab-cs\n"
-        "Version: 1.0.0\n"
-        "Summary: Bounded Adams-Bashforth circuit simulation reference implementation\n"
-        "Requires-Python: >=3.11\n"
+        f"Name: {project.DISTRIBUTION_NAME}\n"
+        f"Version: {project.VERSION}\n"
+        f"Summary: {project.SUMMARY}\n"
+        f"Requires-Python: {project.REQUIRES_PYTHON}\n"
         "Provides-Extra: sparse\n"
-        'Requires-Dist: scipy>=1.11; extra == "sparse"\n'
+        f'Requires-Dist: {project.SPARSE_REQUIREMENT}; extra == "sparse"\n'
         "\n"
     ).encode()
 
 
 def _wheel_name() -> str:
-    return "bab_cs-1.0.0-py3-none-any.whl"
+    return _project().wheel_filename()
 
 
 def build_wheel(wheel_directory: str, config_settings=None, metadata_directory=None) -> str:
     root = Path(__file__).parent
+    project = _project()
     target = Path(wheel_directory) / _wheel_name()
     records: list[tuple[str, str, str]] = []
 
@@ -45,17 +61,22 @@ def build_wheel(wheel_directory: str, config_settings=None, metadata_directory=N
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted((root / "src" / "babcs").glob("*.py")):
             add_bytes(archive, f"babcs/{path.name}", path.read_bytes())
-        dist_info = "bab_cs-1.0.0.dist-info"
+        dist_info = project.dist_info_directory()
         add_bytes(archive, f"{dist_info}/METADATA", _metadata())
         add_bytes(
             archive,
             f"{dist_info}/WHEEL",
-            b"Wheel-Version: 1.0\nGenerator: bab-cs\nRoot-Is-Purelib: true\nTag: py3-none-any\n",
+            (
+                "Wheel-Version: 1.0\n"
+                f"Generator: {project.DISTRIBUTION_NAME}\n"
+                "Root-Is-Purelib: true\n"
+                f"Tag: {project.WHEEL_TAG}\n"
+            ).encode(),
         )
         add_bytes(
             archive,
             f"{dist_info}/entry_points.txt",
-            b"[console_scripts]\nbabcs = babcs.cli:main\n",
+            f"[console_scripts]\n{project.CONSOLE_SCRIPT}\n".encode(),
         )
         buffer = io.StringIO()
         writer = csv.writer(buffer, lineterminator="\n")
@@ -66,7 +87,7 @@ def build_wheel(wheel_directory: str, config_settings=None, metadata_directory=N
 
 
 def prepare_metadata_for_build_wheel(metadata_directory: str, config_settings=None) -> str:
-    dist_info = Path(metadata_directory) / "bab_cs-1.0.0.dist-info"
+    dist_info = Path(metadata_directory) / _project().dist_info_directory()
     dist_info.mkdir(parents=True, exist_ok=True)
     (dist_info / "METADATA").write_bytes(_metadata())
     return dist_info.name

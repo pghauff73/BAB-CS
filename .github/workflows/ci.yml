@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compile sources
-        run: python -m compileall -q -f src tests tools
+        run: python -m compileall -q -f src tests tools build_backend.py
 
       - name: Run regression suite
         env:
