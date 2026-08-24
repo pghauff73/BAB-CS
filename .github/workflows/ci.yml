@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Compile sources
+        run: python -m compileall -q -f src tests
+
+      - name: Run regression suite
+        env:
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+
+      - name: Verify deterministic examples
+        if: matrix.python-version == '3.14'
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/babcs-a /tmp/babcs-b
+          for case in rc_step lc_tank pulsed_rc; do
+            python -m babcs simulate "examples/${case}.json" \
+              --csv "/tmp/babcs-a/${case}.csv" \
+              --summary "/tmp/babcs-a/${case}.json" >/dev/null
+            python -m babcs simulate "examples/${case}.json" \
+              --csv "/tmp/babcs-b/${case}.csv" \
+              --summary "/tmp/babcs-b/${case}.json" >/dev/null
+            cmp "/tmp/babcs-a/${case}.csv" "/tmp/babcs-b/${case}.csv"
+            cmp "/tmp/babcs-a/${case}.json" "/tmp/babcs-b/${case}.json"
+          done
+
+  wheel:
+    name: Build validated wheel
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Build wheel
+        run: python -m pip wheel . --no-deps --wheel-dir dist
+
+      - name: Verify installed wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m venv /tmp/babcs-wheel
+          /tmp/babcs-wheel/bin/python -m pip install --no-deps dist/*.whl
+          /tmp/babcs-wheel/bin/python -m pip check
+          /tmp/babcs-wheel/bin/babcs simulate examples/rc_step.json \
+            --mode shadow --summary /tmp/babcs-wheel-summary.json >/dev/null
+          test -s /tmp/babcs-wheel-summary.json
+          sha256sum dist/*.whl
+
+      - name: Upload wheel
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bab-cs-wheel
+          path: dist/*.whl
+          if-no-files-found: error
+          retention-days: 30

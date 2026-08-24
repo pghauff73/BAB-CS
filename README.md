@@ -1,5 +1,7 @@
 # BAB-CSv1
 
+[![CI](https://github.com/pghauff73/BAB-CS/actions/workflows/ci.yml/badge.svg)](https://github.com/pghauff73/BAB-CS/actions/workflows/ci.yml)
+
 BAB-CSv1 is a dependency-free Python reference implementation of **Bounded
 Adams-Bashforth Circuit Simulation**. It combines a variable-step AB2 predictor
 with semiexplicit modified nodal analysis, algebraic projection, an implicit
@@ -172,4 +174,3 @@ force an implicit startup step after the event.
   not a proof against the unknown exact physical trajectory.
 - Periodic anchors replay endpoints and the preceding history state; they do not
   rewrite already emitted intermediate output samples.
-
