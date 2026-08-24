@@ -4,12 +4,14 @@ Audit date: August 24, 2026
 
 ## Status
 
-- **Local implementation:** achieved against the working-tree snapshot identified below.
+- **Local implementation:** achieved against the committed source snapshot identified below.
 - **Local deterministic qualification:** achieved.
 - **Installed-wheel qualification:** achieved.
 - **Live external comparison:** achieved with `ngspice-46` for the four declared mappings.
-- **Remote GitHub workflow evidence:** pending because this working tree has not been committed and pushed.
-- **Release publication approval:** pending human review of the candidate commit, thresholds, and artifacts.
+- **Remote GitHub workflow evidence:** achieved for the exact implementation
+  commit through CI, scheduled comparisons, and release qualification.
+- **Release publication:** not performed by this qualification change; publishing
+  remains a separate human-approved action.
 
 This is an additive qualification audit. It does not rewrite
 `docs/BAB_CSV1_COMPLETION_AUDIT.md` or imply that the tests and comparison
@@ -17,8 +19,10 @@ program was part of the original v1 release evidence.
 
 ## Qualified Snapshot
 
-- Base commit: `46b8ad886bb25445208099b4627f45f6a9da4d5b`
-- Working tree: dirty, with the implementation changes listed by `git status`.
+- Parent commit: `46b8ad886bb25445208099b4627f45f6a9da4d5b`
+- Qualified implementation commit:
+  `ee38e8503c0eaa08f0e3c592050032d5c18c1383`
+- Working tree at qualification: clean.
 - Deterministic source-tree SHA-256:
   `169f81b882e154acf26fe218d8c620cacdbcc437c5fd82e972918e061b87ecfc`
 - Source files in hash: 61.
@@ -269,7 +273,7 @@ implementation is responsible for a discrepancy.
   netlist, raw-output, and log hashes.
 - Four live `ngspice-46` mappings completed successfully.
 
-### TC-011 — CI Qualification Tiers: Implemented; Remote Evidence Pending
+### TC-011 — CI Qualification Tiers: Achieved
 
 - `.github/workflows/ci.yml` covers Python 3.11 through 3.14, the fast suite,
   deterministic examples/comparison smoke, wheel build, and installed-wheel
@@ -282,11 +286,24 @@ implementation is responsible for a discrepancy.
   commit, environment, and report hashes.
 - All workflow files parse as valid YAML, and their commands were reproduced
   locally, including the complete Python 3.11 through 3.14 default matrix.
-- The repository's current base commit
-  `46b8ad886bb25445208099b4627f45f6a9da4d5b` has a successful remote `CI`
-  push run (`32719668272`), confirming the existing Actions infrastructure.
-- No remote workflow run can identify this exact dirty source snapshot; that
-  evidence requires a committed and pushed candidate.
+- `CI` push run `32728382145` passed at the qualified implementation commit,
+  including CPython 3.11 through 3.14 and the wheel job.
+- `Scheduled Comparisons` dispatch run `32728407551` passed at the same commit,
+  including the no-skip long-horizon suite, complete deterministic method
+  matrix, and all four live `ngspice` mappings.
+- `Release Qualification` dispatch run `32728410398` passed at the same commit,
+  including the no-skip source suite, candidate-wheel build, installed-wheel
+  verification, provenance capture, and artifact upload.
+- The release-qualification wheel SHA-256 is
+  `c6539b326b5f9b8228f31612a291cd9b74798757278c2f3712d6990e62c57ae1`.
+- The scheduled numerical CSV and SVG matched the installed-wheel CSV and SVG
+  byte-for-byte, with SHA-256 values
+  `0de55953c57faa4ceb6f43570fc1cdd9efacf1aa4b9e0d031bdf30745b433195`
+  and `98742d51cbc017b2dd08d5ec57ad280ed9390b2fd96c4b279ae2e5450a0c843b`.
+- The remote reports record source-tree SHA-256
+  `169f81b882e154acf26fe218d8c620cacdbcc437c5fd82e972918e061b87ecfc`
+  and manifest SHA-256
+  `7b805a88a1cd86e7569ff0d9fa0dbbd5f9db2b6f3c841808af12062b4866d406`.
 
 ### TC-012 — Documentation and Evidence Audit: Achieved
 
@@ -311,14 +328,16 @@ implementation is responsible for a discrepancy.
 - Byte-identical deterministic numerical artifacts: pass.
 - Installed candidate wheel comparison: pass.
 - Requirement-to-evidence audit: present.
-- Exact-candidate remote pull-request, scheduled, and release workflows: pending
-  commit/push and remote execution.
-- Human review before release publication: pending.
+- Exact-candidate remote CI, scheduled, and release workflows: pass at
+  `ee38e8503c0eaa08f0e3c592050032d5c18c1383`.
+- Human review before release publication: retained as a separate gate; no new
+  release was published by this qualification run.
 
-The implementation is locally qualified, but the plan's release-certification
-gate is not complete until the source is committed, pushed, all three workflow
-tiers pass at that commit, and a human approves any changed threshold, baseline,
-or deterministic artifact.
+The implementation and comparison program are qualified locally and remotely.
+The audit itself is excluded from the deterministic source-tree hash, so this
+evidence-only update does not alter the qualified implementation snapshot.
+Publishing or replacing a GitHub release still requires an explicit human
+decision after reviewing the candidate commit, thresholds, and artifacts.
 
 ## Known Limitations
 
