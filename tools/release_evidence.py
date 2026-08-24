@@ -3,10 +3,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
+import re
 import subprocess
 import sys
 import zipfile
+from datetime import datetime, timezone
 from email.parser import BytesParser
 from pathlib import Path
 from typing import Any, Iterable
@@ -18,6 +21,40 @@ CONTROL_FILES = {
     "RELEASE_MANIFEST.json",
     "RELEASE_MANIFEST_SHA256",
     "SHA256SUMS",
+}
+CORE_EVIDENCE_FILES = {
+    "SOURCE_COMMIT",
+    "TAG",
+    "PACKAGE_VERSION",
+    "PYTHON_VERSION",
+    "PYTHON_IMPLEMENTATION",
+    "PLATFORM",
+    "OPERATING_SYSTEM",
+    "PIP_VERSION",
+    "SCIPY_VERSION",
+    "NGSPICE_VERSION",
+    "QUALIFICATION_CREATED_UTC",
+    "WORKFLOW_RUN_ID",
+    "WORKFLOW_RUN_URL",
+    "WORKFLOW_EVENT",
+    "WORKFLOW_REF",
+    "WORKFLOW_SHA",
+}
+ENVIRONMENT_FIELDS = {
+    "python_version": "PYTHON_VERSION",
+    "python_implementation": "PYTHON_IMPLEMENTATION",
+    "platform": "PLATFORM",
+    "operating_system": "OPERATING_SYSTEM",
+    "pip_version": "PIP_VERSION",
+    "scipy_version": "SCIPY_VERSION",
+    "ngspice_version": "NGSPICE_VERSION",
+}
+WORKFLOW_FIELDS = {
+    "run_id": "WORKFLOW_RUN_ID",
+    "run_url": "WORKFLOW_RUN_URL",
+    "event": "WORKFLOW_EVENT",
+    "ref": "WORKFLOW_REF",
+    "sha": "WORKFLOW_SHA",
 }
 
 
@@ -51,14 +88,42 @@ def command_output(command: list[str], *, fallback: str = "unavailable") -> str:
     return (completed.stdout or completed.stderr).strip() or fallback
 
 
+def normalize_utc_timestamp(value: str | None) -> str:
+    if value is None:
+        instant = datetime.now(timezone.utc).replace(microsecond=0)
+    else:
+        try:
+            instant = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError as error:
+            raise ReleaseEvidenceError(f"invalid UTC qualification timestamp: {value!r}") from error
+        if instant.tzinfo is None:
+            raise ReleaseEvidenceError("qualification timestamp must include a UTC offset")
+        instant = instant.astimezone(timezone.utc).replace(microsecond=0)
+    return instant.isoformat().replace("+00:00", "Z")
+
+
+def workflow_run_url() -> str:
+    server = os.environ.get("GITHUB_SERVER_URL")
+    repository = os.environ.get("GITHUB_REPOSITORY")
+    run_id = os.environ.get("GITHUB_RUN_ID")
+    if server and repository and run_id:
+        return f"{server}/{repository}/actions/runs/{run_id}"
+    return "unavailable"
+
+
 def record_environment(
     output_directory: Path,
     *,
     source_commit: str,
     tag: str,
+    created_utc: str | None = None,
+    workflow_run_id: str | None = None,
+    workflow_run_url_value: str | None = None,
+    workflow_event: str | None = None,
+    workflow_ref: str | None = None,
+    workflow_sha: str | None = None,
 ) -> None:
-    validate_source_commit(source_commit)
-    validate_tag(tag, _project.VERSION, allow_candidate=True)
+    validate_release_identity(source_commit, tag, allow_candidate=True)
     output_directory.mkdir(parents=True, exist_ok=True)
     write_text(output_directory / "SOURCE_COMMIT", source_commit)
     write_text(output_directory / "TAG", tag)
@@ -82,6 +147,30 @@ def record_environment(
         output_directory / "NGSPICE_VERSION",
         command_output(["ngspice", "--version"]),
     )
+    write_text(
+        output_directory / "QUALIFICATION_CREATED_UTC",
+        normalize_utc_timestamp(created_utc),
+    )
+    write_text(
+        output_directory / "WORKFLOW_RUN_ID",
+        workflow_run_id or os.environ.get("GITHUB_RUN_ID") or "unavailable",
+    )
+    write_text(
+        output_directory / "WORKFLOW_RUN_URL",
+        workflow_run_url_value or workflow_run_url(),
+    )
+    write_text(
+        output_directory / "WORKFLOW_EVENT",
+        workflow_event or os.environ.get("GITHUB_EVENT_NAME") or "unavailable",
+    )
+    write_text(
+        output_directory / "WORKFLOW_REF",
+        workflow_ref or os.environ.get("GITHUB_REF") or "unavailable",
+    )
+    write_text(
+        output_directory / "WORKFLOW_SHA",
+        workflow_sha or os.environ.get("GITHUB_SHA") or "unavailable",
+    )
 
 
 def validate_source_commit(source_commit: str) -> None:
@@ -96,6 +185,18 @@ def validate_tag(tag: str, version: str, *, allow_candidate: bool = False) -> No
     if allow_candidate and tag.startswith("candidate-") and len(tag) > len("candidate-"):
         return
     raise ReleaseEvidenceError(f"tag {tag!r} does not match package version {version!r}")
+
+
+def validate_release_identity(
+    source_commit: str,
+    tag: str,
+    *,
+    allow_candidate: bool = False,
+) -> None:
+    validate_source_commit(source_commit)
+    validate_tag(tag, _project.VERSION, allow_candidate=allow_candidate)
+    if tag.startswith("candidate-") and tag != f"candidate-{source_commit[:12]}":
+        raise ReleaseEvidenceError("candidate tag does not match the source commit prefix")
 
 
 def expected_metadata() -> dict[str, str]:
@@ -201,6 +302,10 @@ def evidence_role(name: str) -> str:
         return "release_wheel"
     if name in {"SOURCE_COMMIT", "TAG", "PACKAGE_VERSION"}:
         return "release_identity"
+    if name == "QUALIFICATION_CREATED_UTC":
+        return "qualification_time"
+    if name in WORKFLOW_FIELDS.values():
+        return "workflow_identity"
     if name in {
         "PYTHON_VERSION",
         "PYTHON_IMPLEMENTATION",
@@ -219,10 +324,18 @@ def evidence_role(name: str) -> str:
         return "wheel_inspection"
     if name == "artifact-comparison.json":
         return "artifact_equivalence"
+    if name == "comparison-inspection.json":
+        return "comparison_inspection"
     if name.endswith("tests.log"):
         return "test_log"
+    if name.endswith("install.log"):
+        return "installation_log"
+    if name == "compile.log":
+        return "build_log"
     if "wheel-build" in name and name.endswith(".log"):
         return "build_log"
+    if name.endswith("timing.json"):
+        return "timing_report"
     if name.endswith("comparison.json"):
         return "numerical_report"
     if name.endswith("comparison.csv"):
@@ -260,7 +373,198 @@ def manifest_entries(evidence_directory: Path) -> list[dict[str, Any]]:
     return entries
 
 
-def write_manifest(
+def read_text_evidence(evidence_directory: Path, name: str) -> str:
+    value = (evidence_directory / name).read_text().strip()
+    if not value:
+        raise ReleaseEvidenceError(f"release evidence is empty: {name}")
+    return value
+
+
+def parse_test_log(path: Path) -> dict[str, Any]:
+    content = path.read_text(errors="replace")
+    run_matches = re.findall(r"^Ran (\d+) tests? in ([0-9]+(?:\.[0-9]+)?)s\s*$", content, re.MULTILINE)
+    outcome_matches = re.findall(r"^OK(?: \(([^)]*)\))?\s*$", content, re.MULTILINE)
+    if len(run_matches) != 1 or len(outcome_matches) != 1:
+        raise ReleaseEvidenceError(f"test log lacks one successful unittest summary: {path.name}")
+    test_count, elapsed_seconds = run_matches[0]
+    details = outcome_matches[0]
+    skipped_match = re.search(r"skipped=(\d+)", details)
+    return {
+        "path": path.name,
+        "outcome": "passed",
+        "tests": int(test_count),
+        "skipped": int(skipped_match.group(1)) if skipped_match else 0,
+        "elapsed_seconds": float(elapsed_seconds),
+    }
+
+
+def comparison_summary(path: Path, *, timing: bool = False) -> dict[str, Any]:
+    report = read_json(path)
+    results = report.get("results")
+    if not isinstance(results, list) or not results:
+        raise ReleaseEvidenceError(f"comparison report has no results: {path.name}")
+    if timing:
+        repeats = report.get("timing_repeats")
+        if not isinstance(repeats, int) or repeats < 1:
+            raise ReleaseEvidenceError(f"timing report has invalid repeat count: {path.name}")
+        return {
+            "path": path.name,
+            "kind": "timing",
+            "result_count": len(results),
+            "timing_repeats": repeats,
+        }
+    cases = report.get("cases")
+    analyses = report.get("analyses")
+    if not isinstance(cases, list) or not cases or not isinstance(analyses, dict):
+        raise ReleaseEvidenceError(f"numerical comparison report is incomplete: {path.name}")
+    return {
+        "path": path.name,
+        "kind": "numerical",
+        "case_count": len(cases),
+        "result_count": len(results),
+    }
+
+
+def comparison_result_key(result: object, *, path: Path) -> tuple[str, str, float, int | None]:
+    if not isinstance(result, dict):
+        raise ReleaseEvidenceError(f"comparison result is not an object: {path.name}")
+    case_id = result.get("case_id")
+    method = result.get("method")
+    nominal_step = result.get("nominal_step")
+    anchor_interval = result.get("anchor_interval")
+    if not isinstance(case_id, str) or not isinstance(method, str):
+        raise ReleaseEvidenceError(f"comparison result identity is invalid: {path.name}")
+    if not isinstance(nominal_step, (int, float)) or isinstance(nominal_step, bool):
+        raise ReleaseEvidenceError(f"comparison result step is invalid: {path.name}")
+    if anchor_interval is not None and (
+        not isinstance(anchor_interval, int) or isinstance(anchor_interval, bool)
+    ):
+        raise ReleaseEvidenceError(f"comparison result anchor interval is invalid: {path.name}")
+    return case_id, method, float(nominal_step), anchor_interval
+
+
+def expected_comparison_keys(manifest_path: Path) -> set[tuple[str, str, float, int | None]]:
+    manifest = read_json(manifest_path)
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or not cases:
+        raise ReleaseEvidenceError("comparison manifest has no cases")
+    expected: set[tuple[str, str, float, int | None]] = set()
+    for case in cases:
+        if not isinstance(case, dict):
+            raise ReleaseEvidenceError("comparison manifest contains a non-object case")
+        case_id = case.get("id")
+        methods = case.get("methods")
+        nominal_steps = case.get("nominal_steps")
+        anchor_intervals = case.get("anchor_intervals")
+        if (
+            not isinstance(case_id, str)
+            or not isinstance(methods, list)
+            or not methods
+            or not isinstance(nominal_steps, list)
+            or not nominal_steps
+            or not isinstance(anchor_intervals, list)
+            or not anchor_intervals
+        ):
+            raise ReleaseEvidenceError(f"comparison manifest case is incomplete: {case_id!r}")
+        for method in methods:
+            if not isinstance(method, str):
+                raise ReleaseEvidenceError(f"comparison manifest method is invalid: {case_id}")
+            intervals: list[int | None] = anchor_intervals if method in {"active", "shadow"} else [None]
+            for anchor_interval in intervals:
+                if anchor_interval is not None and (
+                    not isinstance(anchor_interval, int) or isinstance(anchor_interval, bool)
+                ):
+                    raise ReleaseEvidenceError(
+                        f"comparison manifest anchor interval is invalid: {case_id}"
+                    )
+                for nominal_step in nominal_steps:
+                    if not isinstance(nominal_step, (int, float)) or isinstance(nominal_step, bool):
+                        raise ReleaseEvidenceError(
+                            f"comparison manifest nominal step is invalid: {case_id}"
+                        )
+                    key = case_id, method, float(nominal_step), anchor_interval
+                    if key in expected:
+                        raise ReleaseEvidenceError(f"comparison manifest duplicates a result: {key!r}")
+                    expected.add(key)
+    return expected
+
+
+def inspect_comparison(
+    report_path: Path,
+    manifest_path: Path,
+    *,
+    expected_source_commit: str,
+    timing_path: Path | None = None,
+) -> dict[str, Any]:
+    validate_source_commit(expected_source_commit)
+    report = read_json(report_path)
+    manifest_hash = sha256_file(manifest_path)
+    if report.get("manifest_sha256") != manifest_hash:
+        raise ReleaseEvidenceError("comparison report manifest hash does not match")
+    runner = report.get("runner")
+    if not isinstance(runner, dict) or runner.get("quick") is not False:
+        raise ReleaseEvidenceError("release comparison report must be a complete non-quick run")
+    source = report.get("source")
+    if not isinstance(source, dict):
+        raise ReleaseEvidenceError("comparison report source provenance is missing")
+    if source.get("commit") != expected_source_commit or source.get("dirty") is not False:
+        raise ReleaseEvidenceError("comparison report is not from the clean expected source commit")
+    expected = expected_comparison_keys(manifest_path)
+    results = report.get("results")
+    if not isinstance(results, list):
+        raise ReleaseEvidenceError("comparison report results are missing")
+    actual_values = [comparison_result_key(result, path=report_path) for result in results]
+    if len(actual_values) != len(set(actual_values)):
+        raise ReleaseEvidenceError("comparison report contains duplicate results")
+    actual = set(actual_values)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        unexpected = sorted(actual - expected)
+        raise ReleaseEvidenceError(
+            f"comparison matrix mismatch; missing={missing!r}, unexpected={unexpected!r}"
+        )
+    cases = report.get("cases")
+    expected_case_ids = {key[0] for key in expected}
+    if not isinstance(cases, list) or {
+        case.get("id") for case in cases if isinstance(case, dict)
+    } != expected_case_ids:
+        raise ReleaseEvidenceError("comparison report case evidence is incomplete")
+    analyses = report.get("analyses")
+    if not isinstance(analyses, dict) or any(
+        not isinstance(analyses.get(name), list)
+        for name in ("convergence", "fixed_accuracy", "fixed_work")
+    ):
+        raise ReleaseEvidenceError("comparison report analyses are incomplete")
+    timing_summary_value = None
+    if timing_path is not None:
+        timing = read_json(timing_path)
+        timing_results = timing.get("results")
+        if not isinstance(timing_results, list):
+            raise ReleaseEvidenceError("timing report results are missing")
+        timing_values = [comparison_result_key(result, path=timing_path) for result in timing_results]
+        if len(timing_values) != len(set(timing_values)) or set(timing_values) != expected:
+            raise ReleaseEvidenceError("timing report matrix does not match numerical results")
+        timing_source = timing.get("source")
+        if not isinstance(timing_source, dict) or timing_source != source:
+            raise ReleaseEvidenceError("timing report source provenance does not match")
+        timing_summary_value = comparison_summary(timing_path, timing=True)
+    return {
+        "manifest": manifest_path.name,
+        "manifest_sha256": manifest_hash,
+        "source_commit": expected_source_commit,
+        "source_tree_sha256": source.get("source_tree_sha256"),
+        "case_count": len(expected_case_ids),
+        "method_count": len({key[1] for key in expected}),
+        "result_count": len(expected),
+        "analysis_counts": {
+            name: len(analyses[name])
+            for name in ("convergence", "fixed_accuracy", "fixed_work")
+        },
+        "timing": timing_summary_value,
+    }
+
+
+def build_manifest(
     evidence_directory: Path,
     *,
     source_commit: str,
@@ -268,9 +572,9 @@ def write_manifest(
     wheel_name: str,
     required_files: Iterable[str],
 ) -> dict[str, Any]:
-    validate_source_commit(source_commit)
-    validate_tag(tag, _project.VERSION, allow_candidate=True)
-    evidence_directory.mkdir(parents=True, exist_ok=True)
+    validate_release_identity(source_commit, tag, allow_candidate=True)
+    if wheel_name != _project.wheel_filename():
+        raise ReleaseEvidenceError("release wheel name does not match package version")
     source_file = evidence_directory / "SOURCE_COMMIT"
     tag_file = evidence_directory / "TAG"
     version_file = evidence_directory / "PACKAGE_VERSION"
@@ -283,25 +587,111 @@ def write_manifest(
     wheel = evidence_directory / wheel_name
     if not wheel.is_file():
         raise ReleaseEvidenceError(f"release wheel is missing: {wheel_name}")
-    required = sorted(set(required_files))
+    required_values = list(required_files)
+    if len(required_values) != len(set(required_values)):
+        raise ReleaseEvidenceError("required release evidence contains duplicate paths")
+    required = sorted(CORE_EVIDENCE_FILES | set(required_values) | {wheel_name})
     missing = [name for name in required if not (evidence_directory / name).is_file()]
     if missing:
         raise ReleaseEvidenceError(f"required release evidence is missing: {missing!r}")
-    entries = manifest_entries(evidence_directory)
-    manifest = {
+    created_utc = normalize_utc_timestamp(
+        read_text_evidence(evidence_directory, "QUALIFICATION_CREATED_UTC")
+    )
+    environment = {
+        field: read_text_evidence(evidence_directory, name)
+        for field, name in ENVIRONMENT_FIELDS.items()
+    }
+    workflow = {
+        field: read_text_evidence(evidence_directory, name)
+        for field, name in WORKFLOW_FIELDS.items()
+    }
+    if workflow["sha"] != "unavailable":
+        validate_source_commit(workflow["sha"])
+        if workflow["sha"] != source_commit:
+            raise ReleaseEvidenceError("workflow SHA does not match source commit")
+    if tag == f"v{_project.VERSION}":
+        if workflow["event"] != "push" or workflow["ref"] != f"refs/tags/{tag}":
+            raise ReleaseEvidenceError("release tag evidence is not from the exact tag push")
+        if not workflow["run_id"].isdigit():
+            raise ReleaseEvidenceError("release tag evidence lacks a GitHub workflow run ID")
+        if not workflow["run_url"].endswith(f"/actions/runs/{workflow['run_id']}"):
+            raise ReleaseEvidenceError("release tag evidence workflow URL does not match its run ID")
+    elif workflow["run_id"] != "unavailable":
+        if workflow["event"] not in {"workflow_dispatch", "local"}:
+            raise ReleaseEvidenceError("candidate evidence has an unexpected workflow event")
+        if workflow["event"] == "workflow_dispatch" and not workflow["ref"].startswith(
+            "refs/heads/"
+        ):
+            raise ReleaseEvidenceError("candidate workflow evidence is not from a branch ref")
+        if workflow["run_url"] != "unavailable" and not workflow["run_url"].endswith(
+            f"/actions/runs/{workflow['run_id']}"
+        ):
+            raise ReleaseEvidenceError("candidate workflow URL does not match its run ID")
+    tests = [
+        parse_test_log(path)
+        for path in sorted(evidence_directory.glob("*tests.log"), key=lambda item: item.name)
+    ]
+    comparisons = []
+    for name in ("source-comparison.json", "installed-wheel-comparison.json"):
+        path = evidence_directory / name
+        if path.is_file():
+            comparisons.append(comparison_summary(path))
+    timing_path = evidence_directory / "source-timing.json"
+    if timing_path.is_file():
+        comparisons.append(comparison_summary(timing_path, timing=True))
+    wheel_hash = sha256_file(wheel)
+    wheel_hash_path = evidence_directory / "WHEEL_SHA256"
+    if wheel_hash_path.is_file():
+        recorded_wheel_hash = wheel_hash_path.read_text().strip().partition("  ")[0]
+        if recorded_wheel_hash != wheel_hash:
+            raise ReleaseEvidenceError("WHEEL_SHA256 does not match the retained wheel")
+    inspection_path = evidence_directory / "wheel-inspection.json"
+    if inspection_path.is_file():
+        inspection = read_json(inspection_path)
+        if (
+            inspection.get("filename") != wheel_name
+            or inspection.get("version") != _project.VERSION
+            or inspection.get("sha256") != wheel_hash
+            or inspection.get("size") != wheel.stat().st_size
+        ):
+            raise ReleaseEvidenceError("wheel inspection does not match the retained wheel")
+    return {
         "schema": "bab-cs-release-evidence-v1",
         "status": "candidate",
+        "qualification": {"created_utc": created_utc},
         "package": {
             "distribution": _project.DISTRIBUTION_NAME,
             "version": _project.VERSION,
             "tag": tag,
             "source_commit": source_commit,
             "wheel": wheel_name,
-            "wheel_sha256": sha256_file(wheel),
+            "wheel_sha256": wheel_hash,
         },
+        "environment": environment,
+        "workflow": workflow,
+        "tests": tests,
+        "comparisons": comparisons,
         "required_files": required,
-        "files": entries,
+        "files": manifest_entries(evidence_directory),
     }
+
+
+def write_manifest(
+    evidence_directory: Path,
+    *,
+    source_commit: str,
+    tag: str,
+    wheel_name: str,
+    required_files: Iterable[str],
+) -> dict[str, Any]:
+    evidence_directory.mkdir(parents=True, exist_ok=True)
+    manifest = build_manifest(
+        evidence_directory,
+        source_commit=source_commit,
+        tag=tag,
+        wheel_name=wheel_name,
+        required_files=required_files,
+    )
     payload = json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n"
     manifest_path = evidence_directory / "RELEASE_MANIFEST.json"
     manifest_path.write_text(payload)
@@ -326,7 +716,10 @@ def write_checksums(evidence_directory: Path) -> None:
 
 def read_json(path: Path) -> dict[str, Any]:
     try:
-        data = json.loads(path.read_text(), parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+        data = json.loads(
+            path.read_text(),
+            parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)),
+        )
     except (OSError, json.JSONDecodeError, ValueError) as error:
         raise ReleaseEvidenceError(f"invalid JSON evidence {path}: {error}") from error
     if not isinstance(data, dict):
@@ -362,8 +755,7 @@ def verify_manifest(
     expected_tag: str,
     expected_wheel_sha256: str | None = None,
 ) -> dict[str, Any]:
-    validate_source_commit(expected_source_commit)
-    validate_tag(expected_tag, _project.VERSION, allow_candidate=True)
+    validate_release_identity(expected_source_commit, expected_tag, allow_candidate=True)
     manifest_path = evidence_directory / "RELEASE_MANIFEST.json"
     manifest = read_json(manifest_path)
     if manifest.get("schema") != "bab-cs-release-evidence-v1":
@@ -423,6 +815,15 @@ def verify_manifest(
     missing = [name for name in required if name not in listed]
     if missing:
         raise ReleaseEvidenceError(f"required manifest evidence is unlisted: {missing!r}")
+    reconstructed = build_manifest(
+        evidence_directory,
+        source_commit=expected_source_commit,
+        tag=expected_tag,
+        wheel_name=wheel_name,
+        required_files=required,
+    )
+    if reconstructed != manifest:
+        raise ReleaseEvidenceError("release manifest semantic content does not match evidence")
     manifest_hash_line = (evidence_directory / "RELEASE_MANIFEST_SHA256").read_text().strip()
     expected_manifest_hash_line = f"{sha256_file(manifest_path)}  {manifest_path.name}"
     if manifest_hash_line != expected_manifest_hash_line:
@@ -443,6 +844,23 @@ def parse_pairs(values: Iterable[str]) -> list[tuple[Path, Path]]:
     return pairs
 
 
+def load_required_files(path: Path, *, wheel_name: str) -> list[str]:
+    values = []
+    for line in path.read_text().splitlines():
+        value = line.strip()
+        if not value:
+            continue
+        value = value.replace("{wheel}", wheel_name)
+        if "{" in value or "}" in value or Path(value).name != value:
+            raise ReleaseEvidenceError(f"invalid required evidence path: {value!r}")
+        values.append(value)
+    if not values:
+        raise ReleaseEvidenceError("required evidence profile is empty")
+    if len(values) != len(set(values)):
+        raise ReleaseEvidenceError("required evidence profile contains duplicate paths")
+    return values
+
+
 def write_json(path: Path, data: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2, sort_keys=True, allow_nan=False) + "\n")
@@ -456,6 +874,12 @@ def build_parser() -> argparse.ArgumentParser:
     environment.add_argument("--output-dir", required=True)
     environment.add_argument("--source-commit", required=True)
     environment.add_argument("--tag", required=True)
+    environment.add_argument("--created-utc")
+    environment.add_argument("--workflow-run-id")
+    environment.add_argument("--workflow-run-url")
+    environment.add_argument("--workflow-event")
+    environment.add_argument("--workflow-ref")
+    environment.add_argument("--workflow-sha")
 
     wheel = subparsers.add_parser("inspect-wheel")
     wheel.add_argument("--wheel", required=True)
@@ -466,11 +890,19 @@ def build_parser() -> argparse.ArgumentParser:
     compare.add_argument("--pair", action="append", required=True)
     compare.add_argument("--output", required=True)
 
+    comparison = subparsers.add_parser("inspect-comparison")
+    comparison.add_argument("--report", required=True)
+    comparison.add_argument("--manifest", required=True)
+    comparison.add_argument("--source-commit", required=True)
+    comparison.add_argument("--timing-report")
+    comparison.add_argument("--output", required=True)
+
     manifest = subparsers.add_parser("write-manifest")
     manifest.add_argument("--evidence-dir", required=True)
     manifest.add_argument("--source-commit", required=True)
     manifest.add_argument("--tag", required=True)
     manifest.add_argument("--wheel", required=True)
+    manifest.add_argument("--requirements-file")
     manifest.add_argument("--require", action="append", default=[])
 
     verify = subparsers.add_parser("verify")
@@ -489,6 +921,12 @@ def main(argv: list[str] | None = None) -> int:
                 Path(arguments.output_dir),
                 source_commit=arguments.source_commit,
                 tag=arguments.tag,
+                created_utc=arguments.created_utc,
+                workflow_run_id=arguments.workflow_run_id,
+                workflow_run_url_value=arguments.workflow_run_url,
+                workflow_event=arguments.workflow_event,
+                workflow_ref=arguments.workflow_ref,
+                workflow_sha=arguments.workflow_sha,
             )
         elif arguments.command == "inspect-wheel":
             write_json(
@@ -500,13 +938,31 @@ def main(argv: list[str] | None = None) -> int:
                 Path(arguments.output),
                 {"artifacts": compare_artifacts(parse_pairs(arguments.pair))},
             )
+        elif arguments.command == "inspect-comparison":
+            write_json(
+                Path(arguments.output),
+                inspect_comparison(
+                    Path(arguments.report),
+                    Path(arguments.manifest),
+                    expected_source_commit=arguments.source_commit,
+                    timing_path=Path(arguments.timing_report) if arguments.timing_report else None,
+                ),
+            )
         elif arguments.command == "write-manifest":
+            required_files = list(arguments.require)
+            if arguments.requirements_file:
+                required_files.extend(
+                    load_required_files(
+                        Path(arguments.requirements_file),
+                        wheel_name=arguments.wheel,
+                    )
+                )
             write_manifest(
                 Path(arguments.evidence_dir),
                 source_commit=arguments.source_commit,
                 tag=arguments.tag,
                 wheel_name=arguments.wheel,
-                required_files=arguments.require,
+                required_files=required_files,
             )
         else:
             verify_manifest(

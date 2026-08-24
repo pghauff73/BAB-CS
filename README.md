@@ -208,6 +208,11 @@ Build a wheel:
 python -m pip wheel . --no-deps --wheel-dir dist
 ```
 
+Package identity is owned by `src/babcs/_project.py`. The build backend,
+runtime `babcs.__version__`, `pyproject.toml`, wheel filename, wheel METADATA,
+optional sparse dependency, compatibility tag, and console entry point are
+checked together by `tests/test_build_backend.py`.
+
 ## JSON Case Format
 
 ```json
@@ -304,8 +309,21 @@ directly from the event state.
   repeated timing, and optional `ngspice` evidence jobs without blocking pull
   requests.
 - `.github/workflows/release-qualification.yml` runs the complete source suite,
-  tests the installed candidate wheel, and records source, wheel, report, and
-  environment provenance for release review.
+  installs SciPy and `ngspice`, records exact workflow and environment identity,
+  generates numerical and timing evidence, validates the complete comparison
+  matrix, builds the wheel twice, qualifies the retained wheel in a clean
+  environment, verifies source/installed artifact identity, and uploads a
+  deterministic release-evidence bundle.
+- `release-evidence-required.txt` is the canonical required-file profile for the
+  qualification bundle.
+- `tools/release_evidence.py` records provenance, inspects wheel identity,
+  validates comparison completeness, compares artifacts byte-for-byte, writes
+  `RELEASE_MANIFEST.json` and `SHA256SUMS`, and independently re-verifies the
+  complete bundle.
 
 Any changed numerical threshold, baseline, or deterministic artifact requires
-human review before release publication.
+human review before release publication. Qualification automation retains
+`contents: read`; it does not create a tag, approve a release, publish a GitHub
+release, or upload release assets. See
+`docs/RELEASE_QUALIFICATION_IMPLEMENTATION_AUDIT.md` for the distinction between
+implemented infrastructure and execution-time release evidence.

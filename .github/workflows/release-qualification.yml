@@ -40,13 +40,15 @@ jobs:
           else
             tag="candidate-${source_commit:0:12}"
           fi
+          created_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           SOURCE_COMMIT="${source_commit}" TAG="${tag}" VERSION="${version}" PYTHONPATH=src \
             python -c \
-            'from tools.release_evidence import validate_source_commit, validate_tag; import os; validate_source_commit(os.environ["SOURCE_COMMIT"]); validate_tag(os.environ["TAG"], os.environ["VERSION"], allow_candidate=True)'
+            'from tools.release_evidence import validate_release_identity; import os; validate_release_identity(os.environ["SOURCE_COMMIT"], os.environ["TAG"], allow_candidate=True)'
           echo "BABCS_SOURCE_COMMIT=${source_commit}" >> "${GITHUB_ENV}"
           echo "BABCS_VERSION=${version}" >> "${GITHUB_ENV}"
           echo "BABCS_TAG=${tag}" >> "${GITHUB_ENV}"
           echo "BABCS_WHEEL=${wheel}" >> "${GITHUB_ENV}"
+          echo "BABCS_CREATED_UTC=${created_utc}" >> "${GITHUB_ENV}"
 
       - name: Install external qualification dependency
         run: |
@@ -61,10 +63,21 @@ jobs:
           python tools/release_evidence.py record-environment \
             --output-dir artifacts/release \
             --source-commit "${BABCS_SOURCE_COMMIT}" \
-            --tag "${BABCS_TAG}"
+            --tag "${BABCS_TAG}" \
+            --created-utc "${BABCS_CREATED_UTC}" \
+            --workflow-run-id "${GITHUB_RUN_ID}" \
+            --workflow-run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --workflow-event "${GITHUB_EVENT_NAME}" \
+            --workflow-ref "${GITHUB_REF}" \
+            --workflow-sha "${BABCS_SOURCE_COMMIT}"
 
       - name: Compile qualification sources
-        run: python -m compileall -q -f src tests tools build_backend.py
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          python -m compileall -q -f src tests tools build_backend.py \
+            2>&1 | tee artifacts/release/compile.log
 
       - name: Run dependency-free full source qualification
         env:
@@ -82,9 +95,13 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m venv /tmp/babcs-source-scipy
-          /tmp/babcs-source-scipy/bin/python -m pip install --upgrade pip
-          /tmp/babcs-source-scipy/bin/python -m pip install "scipy>=1.11"
+          set -o pipefail
+          rm -rf /tmp/babcs-source-scipy
+          {
+            python -m venv /tmp/babcs-source-scipy
+            /tmp/babcs-source-scipy/bin/python -m pip install --upgrade pip
+            /tmp/babcs-source-scipy/bin/python -m pip install "scipy>=1.11"
+          } 2>&1 | tee artifacts/release/source-scipy-install.log
           /tmp/babcs-source-scipy/bin/python -c \
             'import scipy; print(scipy.__version__)' \
             > artifacts/release/SCIPY_VERSION
@@ -112,7 +129,20 @@ jobs:
             --output artifacts/release/source-comparison.json \
             --csv-output artifacts/release/source-comparison.csv \
             --plot-output artifacts/release/source-comparison.svg \
+            --timing-output artifacts/release/source-timing.json \
+            --timing-repeats 3 \
             2>&1 | tee artifacts/release/source-comparison.log
+
+      - name: Inspect complete comparison matrix
+        env:
+          PYTHONPATH: src
+        run: |
+          /tmp/babcs-source-scipy/bin/python tools/release_evidence.py inspect-comparison \
+            --report artifacts/release/source-comparison.json \
+            --manifest benchmarks/manifest.json \
+            --source-commit "${BABCS_SOURCE_COMMIT}" \
+            --timing-report artifacts/release/source-timing.json \
+            --output artifacts/release/comparison-inspection.json
 
       - name: Generate ngspice cross-implementation evidence
         env:
@@ -141,8 +171,10 @@ jobs:
             2>&1 | tee artifacts/release/wheel-build-b.log
           cmp "artifacts/build-a/${BABCS_WHEEL}" "artifacts/build-b/${BABCS_WHEEL}"
           cp "artifacts/build-a/${BABCS_WHEEL}" artifacts/release/
-          sha256sum "artifacts/release/${BABCS_WHEEL}" \
-            > artifacts/release/WHEEL_SHA256
+          (
+            cd artifacts/release
+            sha256sum "${BABCS_WHEEL}" > WHEEL_SHA256
+          )
           python -m zipfile -l "artifacts/release/${BABCS_WHEEL}" \
             > artifacts/release/WHEEL_CONTENTS
 
@@ -159,14 +191,17 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m venv /tmp/babcs-release-wheel
-          /tmp/babcs-release-wheel/bin/python -m pip install --no-deps \
-            "artifacts/release/${BABCS_WHEEL}"
-          /tmp/babcs-release-wheel/bin/python -m pip check
+          set -o pipefail
+          rm -rf /tmp/babcs-release-wheel
+          {
+            python -m venv /tmp/babcs-release-wheel
+            /tmp/babcs-release-wheel/bin/python -m pip install --no-deps \
+              "artifacts/release/${BABCS_WHEEL}"
+            /tmp/babcs-release-wheel/bin/python -m pip check
+          } 2>&1 | tee artifacts/release/installed-wheel-install.log
           /tmp/babcs-release-wheel/bin/python -c \
             'import babcs; print(babcs.__file__)' \
             > artifacts/release/INSTALLED_PACKAGE_PATH
-          set -o pipefail
           BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
             /tmp/babcs-release-wheel/bin/python -m unittest discover -s tests -v \
             2>&1 | tee artifacts/release/installed-wheel-tests.log
@@ -175,11 +210,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          /tmp/babcs-release-wheel/bin/python -m pip install "scipy>=1.11"
+          set -o pipefail
+          /tmp/babcs-release-wheel/bin/python -m pip install "scipy>=1.11" \
+            2>&1 | tee artifacts/release/installed-wheel-scipy-install.log
           /tmp/babcs-release-wheel/bin/python -c \
             'import scipy; print(scipy.__version__)' \
             > artifacts/release/INSTALLED_SCIPY_VERSION
-          set -o pipefail
           BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
             /tmp/babcs-release-wheel/bin/python -m unittest discover -s tests -v \
             2>&1 | tee artifacts/release/installed-wheel-scipy-tests.log
@@ -211,34 +247,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          required=(
-            SOURCE_COMMIT TAG PACKAGE_VERSION PYTHON_VERSION PYTHON_IMPLEMENTATION
-            PLATFORM OPERATING_SYSTEM PIP_VERSION SCIPY_VERSION NGSPICE_VERSION
-            source-tests.log source-scipy-tests.log source-comparison.json
-            source-comparison.csv source-comparison.svg source-comparison.log
-            wheel-build-a.log wheel-build-b.log "${BABCS_WHEEL}" WHEEL_SHA256
-            WHEEL_CONTENTS wheel-inspection.json INSTALLED_PACKAGE_PATH
-            installed-wheel-tests.log INSTALLED_SCIPY_VERSION
-            installed-wheel-scipy-tests.log installed-wheel-comparison.json
-            installed-wheel-comparison.csv installed-wheel-comparison.svg
-            installed-wheel-comparison.log artifact-comparison.json
-          )
-          for case in rc_step rl_step diode_clip switched_rc; do
-            required+=(
-              "ngspice-${case}.json" "ngspice-${case}.cir"
-              "ngspice-${case}.dat" "ngspice-${case}.log"
-            )
-          done
-          arguments=()
-          for path in "${required[@]}"; do
-            arguments+=(--require "${path}")
-          done
           python tools/release_evidence.py write-manifest \
             --evidence-dir artifacts/release \
             --source-commit "${BABCS_SOURCE_COMMIT}" \
             --tag "${BABCS_TAG}" \
             --wheel "${BABCS_WHEEL}" \
-            "${arguments[@]}"
+            --requirements-file release-evidence-required.txt
           wheel_sha="$(cut -d ' ' -f 1 artifacts/release/WHEEL_SHA256)"
           python tools/release_evidence.py verify \
             --evidence-dir artifacts/release \

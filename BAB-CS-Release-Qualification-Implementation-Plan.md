@@ -3,9 +3,10 @@
 ## Status
 
 - **Target specification:** `BAB-CS-Release-Qualification-Plan.md`
-- **Implementation status:** In progress
-- **Implementation baseline:**
-  `96297b4514a66ba6553778ea84446a968073629a`
+- **Implementation status:** Implemented; this does not qualify or approve the
+  proposed release
+- **Initial implementation commit:**
+  `41782a67a12be4483ab490041e2aed4fa5692990`
 - **Proposed package version:** `1.1.0`
 - **Tagging/publication:** explicitly excluded from implementation authority;
   both remain exact-hash human-approved actions
@@ -46,6 +47,7 @@ verify artifacts, and expose direct tests for the qualification contract.
    - write environment/provenance files;
    - inspect and verify a wheel;
    - compare source and installed artifacts byte-for-byte;
+   - validate the complete case/method/step/anchor comparison matrix;
    - build a deterministic `RELEASE_MANIFEST.json`;
    - build `SHA256SUMS` without self-inclusion;
    - verify a completed evidence directory against expected version, source
@@ -55,7 +57,8 @@ verify artifacts, and expose direct tests for the qualification contract.
 4. The manifest status remains `candidate`; tooling must not synthesize human
    approval.
 5. Verification must fail closed on missing, duplicate, mismatched, unlisted,
-   or nonfinite qualification summaries.
+   nonfinite, failed-test, incomplete-comparison, or workflow/source-identity
+   evidence.
 
 ### IP-3: Qualification workflow closure
 
@@ -110,6 +113,7 @@ Update `.github/workflows/release-qualification.yml` to:
 | `build_backend.py` | Derive wheel and METADATA identity from canonical metadata |
 | `src/babcs/__init__.py` | Export `__version__` |
 | `tools/release_evidence.py` | Implement provenance, wheel, manifest, checksum, comparison, and verification commands |
+| `release-evidence-required.txt` | Declare the complete evidence bundle once for workflow and manual execution |
 | `tests/test_build_backend.py` | Expand package metadata and wheel identity coverage |
 | `tests/test_release_evidence.py` | Add deterministic and fail-closed qualification-tool tests |
 | `.github/workflows/ci.yml` | Include release-evidence tooling tests in normal qualification |
@@ -149,7 +153,7 @@ all declared mismatch classes.
 
 1. Install optional and external dependencies.
 2. Run source qualification and comparisons.
-3. run ngspice evidence.
+3. Run ngspice evidence.
 4. Build and compare two wheels.
 5. Qualify the installed retained wheel.
 6. Generate, verify, and upload the complete evidence set.

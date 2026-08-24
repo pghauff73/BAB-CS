@@ -3,12 +3,13 @@
 ## 1. Document Status
 
 - **Proposed release:** `v1.1.0`
-- **Plan status:** Draft; execution not yet authorized
+- **Plan status:** Executable qualification procedure implemented; release
+  execution, approval, tagging, and publication not yet authorized
 - **Drafted against repository commit:**
   `26e8c2f289e5e2eba369952031f495c331e1b002`
-- **Implementation baseline recorded by the release draft:**
-  `8ae886944f3cd7d051c402d693c5d564d830eb7d`
-- **Current package metadata:** `1.0.0`
+- **Initial qualification tooling commit:**
+  `41782a67a12be4483ab490041e2aed4fa5692990`
+- **Current package metadata:** `1.1.0`, owned by `src/babcs/_project.py`
 - **Final release commit:** not yet created
 - **Final release tag:** not yet created
 - **Final wheel SHA-256:** not yet available
@@ -55,8 +56,15 @@ The qualification audit must use the following repository sources together:
   comparison matrix.
 - `.github/workflows/ci.yml`, `.github/workflows/comparisons.yml`, and
   `.github/workflows/release-qualification.yml` for automated evidence.
-- `pyproject.toml` and `build_backend.py` for authoritative package and wheel
-  metadata.
+- `src/babcs/_project.py`, `pyproject.toml`, and `build_backend.py` for canonical
+  package and wheel metadata.
+- `release-evidence-required.txt` for the complete qualification-bundle file
+  profile.
+- `tools/release_evidence.py` for workflow/environment recording, wheel and
+  comparison inspection, artifact equivalence, deterministic manifest creation,
+  checksums, and independent verification.
+- `docs/RELEASE_QUALIFICATION_IMPLEMENTATION_AUDIT.md` for the distinction
+  between implemented infrastructure and execution-time release evidence.
 
 If these sources disagree, qualification stops until the inconsistency is
 resolved in source and revalidated.
@@ -170,34 +178,29 @@ Any source, test, threshold, workflow, manifest, documentation, or build change
 after `SOURCE_FROZEN` invalidates downstream states. The candidate returns to
 `DRAFT` and receives a new final source SHA.
 
-## 8. Pre-Qualification Workflow Gaps
+## 8. Qualification Automation Status
 
-The current `.github/workflows/release-qualification.yml` provides valuable
-evidence, but it does not yet prove every requirement in this plan.
+The qualification workflow now resolves exact source/tag/version identity,
+installs SciPy and `ngspice`, records environment and GitHub run provenance,
+compiles all Python sources, runs dependency-free and SciPy long/very-long
+suites, generates numerical and timing reports, verifies the full comparison
+matrix, executes all four external mappings, builds the wheel twice, inspects
+the retained wheel, qualifies it in a clean environment, compares source and
+installed artifacts byte-for-byte, and creates and re-verifies a deterministic
+evidence manifest.
 
-Before the release tag is created, qualification must either update the workflow
-or produce equivalent exact-commit manual evidence for these gaps:
+The original gaps for optional sparse coverage, independent wheel construction,
+installed long tiers, source/installed equivalence, external evidence,
+environment recording, and evidence manifests are therefore implemented in
+source. `release-evidence-required.txt` is the canonical required-file profile,
+and `tools/release_evidence.py` fails closed on missing, duplicate, unexpected,
+mismatched, nonfinite, incomplete, or identity-inconsistent evidence.
 
-1. The workflow does not install the optional SciPy dependency before the full
-   source suite, so optional sparse tests may be skipped.
-2. The workflow builds the wheel once rather than twice, so byte-reproducibility
-   is not independently demonstrated by the workflow.
-3. The installed-wheel suite does not enable the long and very-long tiers.
-4. The workflow generates installed-wheel comparisons but not a source
-   comparison in the same environment, so source/installed byte equality is not
-   established there.
-5. The workflow does not execute the `ngspice` external cases.
-6. The workflow records Python but not operating-system, SciPy, pip, and ngspice
-   versions.
-7. The workflow does not create a release evidence manifest tying every file to
-   the release identity.
-8. The workflow uploads an Actions artifact but does not publish a GitHub
-   release or prove that published assets are those exact files.
-
-Preferred resolution: extend the workflow so the tag-triggered run produces all
-required evidence in one environment. Acceptable interim resolution: generate
-the missing evidence from the same exact tag checkout, record all commands and
-hashes, and include it in the human review bundle.
+The remaining original publication gap is intentional. The workflow retains
+`contents: read`; it cannot approve a release, create or move a tag, publish a
+GitHub release, or prove public asset identity. Those remain exact-hash human
+and post-publication gates. Implemented automation is not evidence that a final
+release commit has already been qualified.
 
 ## 9. Requirement-to-Evidence Matrix
 
@@ -237,19 +240,15 @@ scope.
 
 ### A1. Update version-bearing files
 
-Update together:
-
-- `pyproject.toml` project version;
-- `build_backend.py` METADATA version;
-- `build_backend.py` wheel filename;
-- `build_backend.py` `.dist-info` directory names;
-- release notes and tests that intentionally name the release version.
+Update `src/babcs/_project.py` as the canonical package identity. Keep
+`pyproject.toml` declarative metadata aligned; `build_backend.py` and
+`babcs.__version__` derive their identity from the canonical module.
 
 Required search:
 
 ```bash
 rg -n '1\.0\.0|bab_cs-1\.0\.0' \
-  pyproject.toml build_backend.py README.md RELEASE.md tests
+  pyproject.toml build_backend.py src README.md RELEASE.md tests
 ```
 
 Any remaining match must be justified as historical text rather than active
@@ -257,7 +256,7 @@ build identity.
 
 ### A2. Validate metadata consistency
 
-Add or run tests that assert:
+Run tests that assert:
 
 - the project version equals wheel METADATA version;
 - the wheel filename contains that version;
@@ -265,6 +264,10 @@ Add or run tests that assert:
 - `Requires-Python` matches `pyproject.toml`;
 - the `sparse` extra matches `pyproject.toml`;
 - the console entry point is `babcs = babcs.cli:main`.
+
+```bash
+PYTHONPATH=src python -m unittest tests.test_build_backend -v
+```
 
 ### A3. Create final source commit
 
@@ -286,18 +289,30 @@ without restarting qualification.
 
 ```bash
 mkdir -p artifacts/release
-git rev-parse HEAD | tee artifacts/release/SOURCE_COMMIT
-uname -a | tee artifacts/release/OPERATING_SYSTEM
-python --version | tee artifacts/release/PYTHON_VERSION
-python -m pip --version | tee artifacts/release/PIP_VERSION
-python -c 'import platform; print(platform.platform())' \
-  | tee artifacts/release/PLATFORM
+source_commit="$(git rev-parse HEAD)"
+tag="candidate-${source_commit:0:12}"
+created_utc="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+PYTHONPATH=src python tools/release_evidence.py record-environment \
+  --output-dir artifacts/release \
+  --source-commit "${source_commit}" \
+  --tag "${tag}" \
+  --created-utc "${created_utc}" \
+  --workflow-run-id local \
+  --workflow-run-url unavailable \
+  --workflow-event local \
+  --workflow-ref "$(git symbolic-ref -q HEAD || printf detached)" \
+  --workflow-sha "${source_commit}"
 ```
+
+GitHub Actions supplies the authenticated run ID, URL, event, ref, and exact
+checked-out SHA instead of the local placeholders.
 
 ### B2. Compile sources
 
 ```bash
-python -m compileall -q src tools tests build_backend.py
+set -o pipefail
+python -m compileall -q -f src tools tests build_backend.py \
+  2>&1 | tee artifacts/release/compile.log
 ```
 
 ### B3. Run complete source tests
@@ -319,8 +334,10 @@ Use a clean virtual environment:
 ```bash
 rm -rf /tmp/babcs-source-scipy
 python -m venv /tmp/babcs-source-scipy
-/tmp/babcs-source-scipy/bin/python -m pip install --upgrade pip
-/tmp/babcs-source-scipy/bin/python -m pip install 'scipy>=1.11'
+{
+  /tmp/babcs-source-scipy/bin/python -m pip install --upgrade pip
+  /tmp/babcs-source-scipy/bin/python -m pip install 'scipy>=1.11'
+} 2>&1 | tee artifacts/release/source-scipy-install.log
 /tmp/babcs-source-scipy/bin/python -c \
   'import scipy; print(scipy.__version__)' \
   | tee artifacts/release/SCIPY_VERSION
@@ -338,7 +355,15 @@ PYTHONPATH=src python tools/compare_methods.py \
   --output artifacts/release/source-comparison.json \
   --csv-output artifacts/release/source-comparison.csv \
   --plot-output artifacts/release/source-comparison.svg \
-  | tee artifacts/release/source-comparison.log
+  --timing-output artifacts/release/source-timing.json \
+  --timing-repeats 3 \
+  2>&1 | tee artifacts/release/source-comparison.log
+PYTHONPATH=src python tools/release_evidence.py inspect-comparison \
+  --report artifacts/release/source-comparison.json \
+  --manifest benchmarks/manifest.json \
+  --source-commit "$(git rev-parse HEAD)" \
+  --timing-report artifacts/release/source-timing.json \
+  --output artifacts/release/comparison-inspection.json
 ```
 
 ### C2. Audit comparison coverage
@@ -356,6 +381,10 @@ Confirm:
 - rejected attempts and implicit fallback reasons are represented;
 - no target or work budget was silently relaxed;
 - timing data is not used as a deterministic qualification gate.
+
+`comparison-inspection.json` must report the complete non-quick matrix with no
+missing, duplicate, or unexpected case/method/step/anchor combination and must
+bind the numerical and timing reports to the clean expected source commit.
 
 ### C3. Review threshold and baseline changes
 
@@ -406,13 +435,19 @@ The conclusion must remain limited to the mapped cases and settings.
 ### E1. Build independently
 
 ```bash
-rm -rf dist-a dist-b
-python -m pip wheel . --no-deps --wheel-dir dist-a \
+rm -rf artifacts/build-a artifacts/build-b
+mkdir -p artifacts/build-a artifacts/build-b artifacts/release
+python -m pip wheel . --no-deps --wheel-dir artifacts/build-a \
   2>&1 | tee artifacts/release/wheel-build-a.log
-python -m pip wheel . --no-deps --wheel-dir dist-b \
+python -m pip wheel . --no-deps --wheel-dir artifacts/build-b \
   2>&1 | tee artifacts/release/wheel-build-b.log
-cmp dist-a/*.whl dist-b/*.whl
-sha256sum dist-a/*.whl | tee artifacts/release/WHEEL_SHA256
+cmp artifacts/build-a/bab_cs-1.1.0-py3-none-any.whl \
+  artifacts/build-b/bab_cs-1.1.0-py3-none-any.whl
+cp artifacts/build-a/bab_cs-1.1.0-py3-none-any.whl artifacts/release/
+(
+  cd artifacts/release
+  sha256sum bab_cs-1.1.0-py3-none-any.whl > WHEEL_SHA256
+)
 ```
 
 ### E2. Inspect wheel identity
@@ -420,8 +455,12 @@ sha256sum dist-a/*.whl | tee artifacts/release/WHEEL_SHA256
 Inspect without modifying the archive:
 
 ```bash
-python -m zipfile -l dist-a/bab_cs-1.1.0-py3-none-any.whl \
+python -m zipfile -l artifacts/release/bab_cs-1.1.0-py3-none-any.whl \
   | tee artifacts/release/WHEEL_CONTENTS
+PYTHONPATH=src python tools/release_evidence.py inspect-wheel \
+  --wheel artifacts/release/bab_cs-1.1.0-py3-none-any.whl \
+  --repository-root . \
+  --output artifacts/release/wheel-inspection.json
 ```
 
 Verify:
@@ -433,8 +472,8 @@ Verify:
   packaged;
 - archive member order and timestamps remain deterministic.
 
-The wheel in `dist-a` becomes the sole release candidate artifact. Do not
-rebuild it after approval.
+The retained wheel in `artifacts/release` becomes the sole release candidate
+artifact. Do not rebuild it after approval.
 
 ## 15. Phase F: Installed-Wheel Qualification
 
@@ -443,9 +482,11 @@ rebuild it after approval.
 ```bash
 rm -rf /tmp/babcs-release-wheel
 python -m venv /tmp/babcs-release-wheel
-/tmp/babcs-release-wheel/bin/python -m pip install --no-deps \
-  dist-a/bab_cs-1.1.0-py3-none-any.whl
-/tmp/babcs-release-wheel/bin/python -m pip check
+{
+  /tmp/babcs-release-wheel/bin/python -m pip install --no-deps \
+    artifacts/release/bab_cs-1.1.0-py3-none-any.whl
+  /tmp/babcs-release-wheel/bin/python -m pip check
+} 2>&1 | tee artifacts/release/installed-wheel-install.log
 ```
 
 Confirm import provenance:
@@ -471,7 +512,8 @@ BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
 ### F3. Installed sparse tests
 
 ```bash
-/tmp/babcs-release-wheel/bin/python -m pip install 'scipy>=1.11'
+/tmp/babcs-release-wheel/bin/python -m pip install 'scipy>=1.11' \
+  2>&1 | tee artifacts/release/installed-wheel-scipy-install.log
 /tmp/babcs-release-wheel/bin/python -c \
   'import scipy; print(scipy.__version__)' \
   | tee artifacts/release/INSTALLED_SCIPY_VERSION
@@ -493,12 +535,11 @@ BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
 ### F5. Source/installed equivalence
 
 ```bash
-cmp artifacts/release/source-comparison.json \
-  artifacts/release/installed-wheel-comparison.json
-cmp artifacts/release/source-comparison.csv \
-  artifacts/release/installed-wheel-comparison.csv
-cmp artifacts/release/source-comparison.svg \
-  artifacts/release/installed-wheel-comparison.svg
+PYTHONPATH=src python tools/release_evidence.py compare-artifacts \
+  --pair artifacts/release/source-comparison.json=artifacts/release/installed-wheel-comparison.json \
+  --pair artifacts/release/source-comparison.csv=artifacts/release/installed-wheel-comparison.csv \
+  --pair artifacts/release/source-comparison.svg=artifacts/release/installed-wheel-comparison.svg \
+  --output artifacts/release/artifact-comparison.json
 ```
 
 Any difference requires investigation and a fresh qualification cycle.
@@ -521,17 +562,31 @@ Create `artifacts/release/RELEASE_MANIFEST.json` containing:
 - creation time in UTC;
 - qualification status `candidate`, never `approved` before human review.
 
-Generate the checksum file after the manifest is finalized:
+Use the canonical required-file profile. The tool fails if any required file is
+missing, any unexpected file lacks a recognized role, test/comparison summaries
+are incomplete, workflow/source identity differs, or wheel inspection and
+hashes do not match:
 
 ```bash
-find artifacts/release -maxdepth 1 -type f ! -name SHA256SUMS \
-  -print0 | sort -z | xargs -0 sha256sum \
-  > artifacts/release/SHA256SUMS
-sha256sum artifacts/release/RELEASE_MANIFEST.json \
-  > artifacts/release/RELEASE_MANIFEST_SHA256
+source_commit="$(cat artifacts/release/SOURCE_COMMIT)"
+tag="$(cat artifacts/release/TAG)"
+PYTHONPATH=src python tools/release_evidence.py write-manifest \
+  --evidence-dir artifacts/release \
+  --source-commit "${source_commit}" \
+  --tag "${tag}" \
+  --wheel bab_cs-1.1.0-py3-none-any.whl \
+  --requirements-file release-evidence-required.txt
+wheel_sha="$(cut -d ' ' -f 1 artifacts/release/WHEEL_SHA256)"
+PYTHONPATH=src python tools/release_evidence.py verify \
+  --evidence-dir artifacts/release \
+  --source-commit "${source_commit}" \
+  --tag "${tag}" \
+  --wheel-sha256 "${wheel_sha}"
 ```
 
-Do not include `SHA256SUMS` in its own checksum list.
+`RELEASE_MANIFEST.json` remains byte-deterministic for identical evidence.
+`RELEASE_MANIFEST_SHA256` binds the manifest, and sorted `SHA256SUMS` covers the
+manifest, its hash record, and every evidence file while excluding itself.
 
 ## 17. Phase H: Human Pre-Tag Review
 

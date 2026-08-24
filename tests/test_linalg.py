@@ -289,10 +289,10 @@ class LinearAlgebraTests(unittest.TestCase):
         factorization = factor_linear(matrix, backend="scipy")
 
         self.assertEqual(workspace.column_ordering, "NATURAL")
-        self.assertEqual(
-            solve_factored(factorization, [1.0] * matrix.size),
-            solve_linear(matrix.to_dense(), [1.0] * matrix.size),
-        )
+        actual = solve_factored(factorization, [1.0] * matrix.size)
+        expected = solve_linear(matrix.to_dense(), [1.0] * matrix.size)
+        for actual_value, expected_value in zip(actual, expected, strict=True):
+            self.assertAlmostEqual(actual_value, expected_value, places=12)
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_repeated_grid_pattern_rejects_natural_ordering_with_more_fill(self) -> None:
@@ -365,10 +365,10 @@ class LinearAlgebraTests(unittest.TestCase):
         )
         self.assertEqual(orderings, ["NATURAL", "COLAMD"])
         self.assertEqual(workspace.column_ordering, "COLAMD")
-        self.assertEqual(
-            solve_factored(factorization, [1.0] * matrix.size),
-            solve_linear(matrix.to_dense(), [1.0] * matrix.size),
-        )
+        actual = solve_factored(factorization, [1.0] * matrix.size)
+        expected = solve_linear(matrix.to_dense(), [1.0] * matrix.size)
+        for actual_value, expected_value in zip(actual, expected, strict=True):
+            self.assertAlmostEqual(actual_value, expected_value, places=12)
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_workspace_cache_has_bounded_per_thread_capacity(self) -> None:

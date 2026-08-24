@@ -4,19 +4,20 @@
 
 - **Proposed release:** `v1.1.0`
 - **Status:** Draft; not approved for publication
-- **Implementation baseline:**
-  `8ae886944f3cd7d051c402d693c5d564d830eb7d`
-- **Final release source commit:** to be recorded after the version and release
-  documentation commit
-- **Current package metadata:** `1.0.0`
-- **Required before tagging:** update and verify every version-bearing build field
+- **Initial qualification tooling commit:**
+  `41782a67a12be4483ab490041e2aed4fa5692990`
+- **Final release source commit:** not yet selected or approved
+- **Current package metadata:** `1.1.0`, owned by `src/babcs/_project.py`
+- **Required before tagging:** complete exact-commit qualification and human
+  review of every `RQ-*` requirement
 - **Release authority:** explicit human review of the exact tagged commit and its
   qualification evidence
 
 The proposed `v1.1.0` designation reflects a backward-compatible feature,
-qualification, and performance release. It is not yet encoded in
-`pyproject.toml` or `build_backend.py`; a wheel built from the current source is
-still named `bab_cs-1.0.0-py3-none-any.whl`.
+qualification, and performance release. The package version is encoded as
+`1.1.0`; the deterministic candidate wheel is
+`bab_cs-1.1.0-py3-none-any.whl`. Encoding the version does not qualify, approve,
+tag, or publish the release.
 
 ## Release Summary
 
@@ -137,20 +138,17 @@ production simulator.
 
 ## Current Validation Evidence
 
-The candidate source commit completed the full opt-in local source suite with:
+Implementation validation has exercised the canonical metadata, deterministic
+wheel, release-evidence tooling, complete long and very-long source suite, and
+workflow command surface. These runs validate the infrastructure while it is
+being implemented; they are not release evidence for a final frozen commit.
 
-- `BABCS_LONG_TESTS=1`
-- `BABCS_VERY_LONG_TESTS=1`
-- 174 tests passed
-- zero skips
-- 40.757 seconds reported by `unittest`
-
-The most recent installed-wheel and deterministic comparison evidence predates
-the final Schur and solution-materialization changes. Its wheel hash and report
-hashes must not be reused as evidence for this release candidate.
-
-Publication remains blocked on successful normal CI for the final release
-commit and tag-triggered qualification of that exact commit.
+The exact candidate must still be selected, qualified from a clean full SHA,
+reviewed requirement-by-requirement, explicitly approved, tagged, requalified
+by the tag-triggered workflow, approved for publication, published, and checked
+from freshly downloaded public assets. No earlier wheel hash or report hash may
+be reused after a source, test, workflow, threshold, manifest, or documentation
+change.
 
 ## Compatibility
 
@@ -193,168 +191,98 @@ tested, committed, and requalified before the release tag is created.
 
 ## Release Qualification Procedure
 
-### 1. Select and encode the version
+### 1. Verify canonical identity
 
-Update all hard-coded package-version locations together:
-
-- `pyproject.toml`
-- `_metadata()` in `build_backend.py`
-- `_wheel_name()` in `build_backend.py`
-- the `.dist-info` names in `build_backend.py`
-
-Confirm that no old version remains:
+`src/babcs/_project.py` is the package-identity owner. Verify that the project,
+runtime package, build backend, wheel, optional dependency, entry point, and
+compatibility tag remain aligned:
 
 ```bash
-rg -n '1\.0\.0|bab_cs-1\.0\.0' pyproject.toml build_backend.py README.md tests
+PYTHONPATH=src python -m unittest tests.test_build_backend -v
+rg -n '1\.0\.0|bab_cs-1\.0\.0' \
+  pyproject.toml build_backend.py src README.md RELEASE.md tests
 ```
 
-Add or update tests so package metadata, wheel filename, and `.dist-info`
-directory cannot diverge silently.
+Historical audit references may retain `1.0.0`; no active build identity may.
 
-### 2. Confirm a clean exact source state
+### 2. Freeze one exact source commit
+
+Commit and push all intended source, test, workflow, threshold, manifest, and
+documentation changes. Confirm a clean worktree, normal CI success, and record
+the full 40-character SHA. Any later change invalidates all downstream
+qualification evidence.
+
+### 3. Produce candidate qualification evidence
+
+Run `.github/workflows/release-qualification.yml` with `workflow_dispatch` on
+the exact frozen commit. The workflow uses candidate identity
+`candidate-<first-12-source-SHA>` and performs all source, SciPy, comparison,
+timing, `ngspice`, deterministic wheel, installed-wheel, and source/installed
+equivalence work without publishing anything.
+
+The required bundle contents are declared once in
+`release-evidence-required.txt`. `tools/release_evidence.py` records the
+environment and workflow identity, inspects the wheel and comparison matrix,
+writes the deterministic candidate manifest, generates sorted checksums, and
+re-verifies the complete bundle.
+
+### 4. Verify the candidate bundle
+
+After downloading the `bab-cs-release-qualification` Actions artifact, verify
+it independently with the exact candidate SHA, candidate tag, and reviewed
+wheel hash:
 
 ```bash
-git status --short --branch
-git rev-parse HEAD
-git diff --check
+PYTHONPATH=src python tools/release_evidence.py verify \
+  --evidence-dir artifacts/release \
+  --source-commit <FULL_SOURCE_SHA> \
+  --tag candidate-<FIRST_12_SOURCE_SHA> \
+  --wheel-sha256 <WHEEL_SHA256>
 ```
 
-Record the full source commit. Do not qualify one commit and tag another.
+Review `comparison-inspection.json`, all test and installation summaries,
+source and installed numerical artifacts, the four `ngspice` bundles, timing
+claim scope, threshold or baseline changes, and the requirement audit. Tooling
+success is not semantic approval.
 
-### 3. Run the full source suite
+### 5. Record pre-tag human approval
 
-```bash
-BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
-  PYTHONPATH=src python -m unittest discover -s tests -v
-```
+Only after every applicable `RQ-001` through `RQ-022` item is proven may the
+release approver authorize one exact full source SHA, `v1.1.0`, wheel SHA-256,
+and manifest SHA-256. A branch name, short SHA, mutable artifact reference, or
+approximate filename is insufficient.
 
-The final result must contain no failures, errors, or unexpected skips.
-
-### 4. Generate numerical comparison evidence
-
-```bash
-mkdir -p artifacts/release
-PYTHONPATH=src python tools/compare_methods.py \
-  --output artifacts/release/source-comparison.json \
-  --csv-output artifacts/release/source-comparison.csv \
-  --plot-output artifacts/release/source-comparison.svg \
-  | tee artifacts/release/source-comparison.log
-```
-
-Review accuracy, bounds, oscillator behavior, rejected attempts, implicit
-fallbacks, re-anchor evidence, and deterministic work. A green process exit is
-not a substitute for reviewing changed thresholds or numerical baselines.
-
-### 5. Refresh `ngspice` evidence
-
-With `ngspice` installed:
+### 6. Create and push the approved tag
 
 ```bash
-for case in rc_step rl_step diode_clip switched_rc; do
-  PYTHONPATH=src python tools/compare_external.py \
-    "benchmarks/cases/${case}.json" \
-    --output "artifacts/release/${case}.json" \
-    --netlist-output "artifacts/release/${case}.cir" \
-    --raw-output "artifacts/release/${case}.dat" \
-    --log-output "artifacts/release/${case}.log"
-done
-```
-
-Review the generated semantic mappings and waveforms. These runs establish
-cross-implementation evidence only; they do not prove general superiority.
-
-### 6. Build the wheel twice
-
-```bash
-rm -rf dist-a dist-b
-python -m pip wheel . --no-deps --wheel-dir dist-a
-python -m pip wheel . --no-deps --wheel-dir dist-b
-cmp dist-a/*.whl dist-b/*.whl
-sha256sum dist-a/*.whl | tee artifacts/release/WHEEL_SHA256
-```
-
-The two wheels must be byte-identical.
-
-### 7. Test the installed wheel
-
-```bash
-rm -rf /tmp/babcs-release-wheel
-python -m venv /tmp/babcs-release-wheel
-/tmp/babcs-release-wheel/bin/python -m pip install --no-deps dist-a/*.whl
-/tmp/babcs-release-wheel/bin/python -m pip check
-/tmp/babcs-release-wheel/bin/python -m unittest discover -s tests -v
-/tmp/babcs-release-wheel/bin/python tools/compare_methods.py \
-  --output artifacts/release/installed-wheel-comparison.json \
-  --csv-output artifacts/release/installed-wheel-comparison.csv \
-  --plot-output artifacts/release/installed-wheel-comparison.svg \
-  | tee artifacts/release/installed-wheel-comparison.log
-```
-
-Compare the source and installed-wheel JSON, CSV, and SVG artifacts byte for
-byte. Investigate any difference rather than replacing the expected evidence.
-
-### 8. Record provenance and hashes
-
-```bash
-git rev-parse HEAD > artifacts/release/SOURCE_COMMIT
-python --version > artifacts/release/PYTHON_VERSION
-sha256sum artifacts/release/* > artifacts/release/SHA256SUMS
-```
-
-Record the operating system, Python version, SciPy version when used, ngspice
-version, source commit, wheel hash, and comparison hashes in the final release
-notes.
-
-### 9. Commit the version and release notes
-
-```bash
-git add pyproject.toml build_backend.py RELEASE.md tests
-git commit -m "Prepare BAB-CS v1.1.0 release"
-git push origin main
-```
-
-Wait for the exact commit's normal CI checks to complete successfully.
-
-### 10. Create and push the tag
-
-After explicit human approval of the exact commit and evidence:
-
-```bash
-git tag -a v1.1.0 -m "BAB-CS v1.1.0"
+git tag -a v1.1.0 <FULL_SOURCE_SHA> -m "BAB-CS v1.1.0"
 git push origin v1.1.0
 ```
 
-The tag starts `.github/workflows/release-qualification.yml`. That workflow
-runs the complete source suite, builds the candidate wheel, tests the installed
-wheel, generates installed-wheel comparisons, records provenance, and uploads
-the `bab-cs-release-qualification` artifact.
+The tag-triggered workflow must reproduce the complete evidence bundle for the
+exact tag and commit. Its wheel must match the approved candidate wheel or the
+release stops for investigation.
 
-### 11. Review tag qualification
+### 7. Review tag qualification and approve publication
 
-Before publication, verify that the downloaded qualification artifact contains:
+Verify the GitHub run ID, URL, event, ref, full SHA, conclusion, wheel hash,
+manifest hash, complete required-file profile, and every job result. The human
+publication approval must explicitly name those exact identifiers.
 
-- the expected wheel filename and SHA-256;
-- `SOURCE_COMMIT` equal to the tagged commit;
-- the expected Python version;
-- installed-wheel JSON, CSV, SVG, and log outputs;
-- `SHA256SUMS` covering the wheel and evidence;
-- no failed or cancelled workflow job.
+### 8. Publish only approved bytes
 
-### 12. Publish the GitHub release
+The qualification workflow retains `contents: read` and cannot create a GitHub
+release. After publication approval, attach only the exact qualified wheel,
+manifest, manifest hash, checksum file, environment identity, source and
+installed reports, logs, `ngspice` bundles, and reviewed release notes. Never
+rebuild the wheel during publication.
 
-The current workflow qualifies and uploads an Actions artifact; it does not
-create a GitHub release automatically. After human approval, create the GitHub
-release for the exact `v1.1.0` tag and attach:
+### 9. Verify public assets
 
-- `bab_cs-1.1.0-py3-none-any.whl`;
-- `SHA256SUMS`;
-- `SOURCE_COMMIT`;
-- comparison JSON, CSV, and SVG artifacts;
-- the release-qualification log or a durable evidence archive;
-- the reviewed release notes from this document.
-
-Do not publish a wheel rebuilt from a different checkout after qualification.
-The released wheel must be the exact qualified artifact.
+Download the public assets into a fresh directory, run
+`sha256sum --check SHA256SUMS`, verify the tag and manifest hashes, install the
+downloaded wheel into a fresh environment, run `pip check` and `babcs --help`,
+and preserve the final approval and evidence outside expiring Actions storage.
 
 ## Final Approval Checklist
 
