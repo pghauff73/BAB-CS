@@ -50,9 +50,16 @@ class ComparisonRunnerTests(unittest.TestCase):
             artifact = repository / "artifacts" / "comparison.json"
             artifact.parent.mkdir()
             artifact.write_text("{}\n", encoding="utf-8")
-            audit = repository / "docs" / "TESTS_AND_COMPARISONS_AUDIT.md"
-            audit.parent.mkdir()
-            audit.write_text("evidence\n", encoding="utf-8")
+            audit_directory = repository / "docs"
+            audit_directory.mkdir()
+            (audit_directory / "TESTS_AND_COMPARISONS_AUDIT.md").write_text(
+                "evidence\n",
+                encoding="utf-8",
+            )
+            (audit_directory / "PERFORMANCE_OPTIMIZATION_AUDIT.md").write_text(
+                "performance evidence\n",
+                encoding="utf-8",
+            )
             self.assertFalse(source_metadata(repository)["dirty"])
 
             source.write_text("VALUE = 2\n", encoding="utf-8")
@@ -67,7 +74,23 @@ class ComparisonRunnerTests(unittest.TestCase):
         }
         self.assertEqual(
             methods,
-            {"backward_euler", "trapezoidal", "bdf2", "shadow", "active", "raw_ab2"},
+            {
+                "backward_euler",
+                "trapezoidal",
+                "bdf2",
+                "shadow",
+                "active",
+                "raw_ab2",
+                "bounded_explicit_euler",
+                "bounded_heun",
+                "bounded_rk23",
+                "bounded_backward_euler",
+                "bounded_trapezoidal",
+                "bounded_bdf2",
+                "bounded_ab2_fast",
+                "bounded_heun_fast",
+                "bounded_rk23_fast",
+            },
         )
 
     def test_quick_analytic_report_is_byte_deterministic(self) -> None:
@@ -78,7 +101,7 @@ class ComparisonRunnerTests(unittest.TestCase):
         self.assertEqual(first_bytes, second_bytes)
         self.assertEqual(len(first["source"]["source_tree_sha256"]), 64)
         self.assertGreater(first["source"]["source_file_count"], 0)
-        self.assertEqual(len(first["results"]), 12)
+        self.assertEqual(len(first["results"]), 30)
         self.assertTrue(first["analyses"]["convergence"])
         active = [result for result in first["results"] if result["method"] == "active"]
         self.assertTrue(active)

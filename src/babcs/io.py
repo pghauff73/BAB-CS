@@ -30,7 +30,13 @@ def load_case(path: str | Path) -> tuple[Circuit, dict[str, float], BABCSConfig]
     raw_elements = data.get("elements")
     if not isinstance(raw_elements, list):
         raise ValueError("BAB-CS input requires an elements list")
-    circuit = Circuit(_element_from_data(element) for element in raw_elements)
+    linear_backend = data.get("linear_backend", "dense")
+    if not isinstance(linear_backend, str):
+        raise ValueError("linear_backend must be a string")
+    circuit = Circuit(
+        (_element_from_data(element) for element in raw_elements),
+        linear_backend=linear_backend,
+    )
 
     simulation = data.get("simulation", {})
     if not isinstance(simulation, dict):
@@ -103,6 +109,8 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
     metric_names = [
         "correction_gain",
         "predictor_reference_error",
+        "embedded_error",
+        "embedded_defect",
         "corrected_reference_error",
         "algebraic_residual",
         "full_residual",
@@ -120,6 +128,11 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
         "reference_solve_count",
         "reference_circuit_evaluations",
         "reference_algebraic_iterations",
+        "candidate_iterations",
+        "candidate_solve_count",
+        "candidate_circuit_evaluations",
+        "candidate_algebraic_iterations",
+        "dynamic_reference_checkpoint",
         "predictor_projection_iterations",
         "explicit_projection_count",
         "differential_jacobian_evaluations",
@@ -127,6 +140,7 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
         "replay_reference_iterations",
         "replay_circuit_evaluations",
         "replay_algebraic_iterations",
+        "replay_refinement_substeps",
         "pre_reset_estimated_bound",
     ]
     columns = (
@@ -190,6 +204,7 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
         point.history_reset_reason for point in result.points if point.history_reset_reason
     )
     return {
+        "linear_backend": result.linear_backend,
         "points": len(result.points),
         "start_time": result.points[0].time,
         "stop_time": result.points[-1].time,
@@ -210,6 +225,9 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
         "maximum_corrected_reference_error": max(
             (metric.corrected_reference_error for metric in metrics), default=0.0
         ),
+        "maximum_embedded_error": max(
+            (metric.embedded_error for metric in metrics), default=0.0
+        ),
         "maximum_algebraic_residual": max((metric.algebraic_residual for metric in metrics), default=0.0),
         "maximum_full_residual": max((metric.full_residual for metric in metrics), default=0.0),
         "maximum_energy_injection_ratio": max(
@@ -223,7 +241,19 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
             (metric.anchor_reference_error for metric in metrics), default=0.0
         ),
         "contractive_steps": sum(metric.certified_contractive for metric in metrics),
+        "candidate_steps": sum(metric.candidate_used for metric in metrics),
+        "dynamic_reference_checkpoints": sum(
+            metric.dynamic_reference_checkpoint for metric in metrics
+        ),
         "ab_steps": sum(metric.ab_used for metric in metrics),
+        "candidate_solves": sum(metric.candidate_solve_count for metric in metrics),
+        "candidate_iterations": sum(metric.candidate_iterations for metric in metrics),
+        "candidate_circuit_evaluations": sum(
+            metric.candidate_circuit_evaluations for metric in metrics
+        ),
+        "candidate_algebraic_iterations": sum(
+            metric.candidate_algebraic_iterations for metric in metrics
+        ),
         "reference_solves": sum(metric.reference_solve_count for metric in metrics),
         "reference_iterations": sum(metric.reference_iterations for metric in metrics),
         "reference_circuit_evaluations": sum(
@@ -251,6 +281,10 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
         ),
         "replay_algebraic_iterations": sum(
             metric.replay_algebraic_iterations for metric in metrics
+        ),
+        "maximum_replay_refinement_substeps": max(
+            (metric.replay_refinement_substeps for metric in metrics),
+            default=0,
         ),
         "rejection_reasons": dict(sorted(rejection_categories.items())),
         "history_resets": dict(sorted(reset_reasons.items())),

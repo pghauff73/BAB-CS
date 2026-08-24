@@ -59,6 +59,40 @@ class BoundedAdamsBashforthTests(unittest.TestCase):
         )
         self.assertGreater(result.final_history.periodic_reanchors, 0)
 
+    def test_active_mode_reuses_previous_jacobian_norm(self) -> None:
+        class CountingCircuit(Circuit):
+            def __init__(self) -> None:
+                super().__init__(
+                    [
+                        VoltageSource("V1", "vin", "0", Constant(1.0)),
+                        Resistor("R1", "vin", "out", 1_000.0),
+                        Capacitor("C1", "out", "0", 1.0e-6),
+                    ]
+                )
+                self.jacobian_evaluations = 0
+
+            def differential_jacobian(self, *args, **kwargs):
+                self.jacobian_evaluations += 1
+                return super().differential_jacobian(*args, **kwargs)
+
+        circuit = CountingCircuit()
+        integrator = BoundedAdamsBashforthIntegrator(
+            BABCSConfig(
+                rollout_mode="active",
+                predictor_reference_cap=100.0,
+                anchor_interval_steps=100,
+            )
+        )
+        state, history = integrator.initialize(circuit)
+        startup = integrator.step(circuit, state, history, 1.0e-5)
+        first_ab = integrator.step(circuit, startup.state, startup.history, 1.0e-5)
+        second_ab = integrator.step(circuit, first_ab.state, first_ab.history, 1.0e-5)
+
+        self.assertEqual(first_ab.metrics.differential_jacobian_evaluations, 2)
+        self.assertEqual(second_ab.metrics.differential_jacobian_evaluations, 1)
+        self.assertEqual(circuit.jacobian_evaluations, 3)
+        self.assertIsNotNone(second_ab.history.previous_jacobian_norm)
+
     def test_hard_predictor_cap_rejects_large_step(self) -> None:
         circuit = rc_circuit()
         integrator = BoundedAdamsBashforthIntegrator(
@@ -122,6 +156,7 @@ class BoundedAdamsBashforthTests(unittest.TestCase):
         self.assertTrue(shadow_metrics)
         self.assertTrue(all(metric.correction_gain == 1.0 for metric in shadow_metrics))
         self.assertTrue(all(metric.method == "shadow_reference_authority" for metric in shadow_metrics))
+        self.assertTrue(all(metric.explicit_projection_count == 1 for metric in shadow_metrics))
 
     def test_disabled_mode_never_executes_ab(self) -> None:
         circuit = rc_circuit()

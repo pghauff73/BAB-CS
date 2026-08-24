@@ -35,9 +35,32 @@ SUPPORTED_METHODS = {
     "shadow",
     "active",
     "raw_ab2",
+    "bounded_explicit_euler",
+    "bounded_heun",
+    "bounded_rk23",
+    "bounded_backward_euler",
+    "bounded_trapezoidal",
+    "bounded_bdf2",
+    "bounded_ab2_fast",
+    "bounded_heun_fast",
+    "bounded_rk23_fast",
 }
 IMPLICIT_METHODS = {"backward_euler", "trapezoidal", "bdf2"}
-SOURCE_HASH_EXCLUDED_PATHS = {"docs/TESTS_AND_COMPARISONS_AUDIT.md"}
+BOUNDED_CANDIDATES = {
+    "bounded_explicit_euler": ("explicit_euler", "trapezoidal", 1),
+    "bounded_heun": ("heun", "trapezoidal", 1),
+    "bounded_rk23": ("rk23", "trapezoidal", 1),
+    "bounded_backward_euler": ("backward_euler", "trapezoidal", 1),
+    "bounded_trapezoidal": ("trapezoidal", "bdf2", 1),
+    "bounded_bdf2": ("bdf2", "trapezoidal", 1),
+    "bounded_ab2_fast": ("ab2", "trapezoidal", 4),
+    "bounded_heun_fast": ("heun", "trapezoidal", 4),
+    "bounded_rk23_fast": ("rk23", "trapezoidal", 4),
+}
+SOURCE_HASH_EXCLUDED_PATHS = {
+    "docs/PERFORMANCE_OPTIMIZATION_AUDIT.md",
+    "docs/TESTS_AND_COMPARISONS_AUDIT.md",
+}
 SOURCE_HASH_EXCLUDED_PREFIXES = ("artifacts/", "build/", "dist/")
 
 
@@ -229,6 +252,15 @@ def write_svg_plot(path: str | Path, report: dict[str, Any], *, overwrite: bool 
         "shadow": "#7f7f7f",
         "active": "#2ca02c",
         "raw_ab2": "#d62728",
+        "bounded_explicit_euler": "#ff9896",
+        "bounded_heun": "#17becf",
+        "bounded_rk23": "#00a6a6",
+        "bounded_backward_euler": "#c49c94",
+        "bounded_trapezoidal": "#6baed6",
+        "bounded_bdf2": "#bcbddc",
+        "bounded_ab2_fast": "#98df8a",
+        "bounded_heun_fast": "#9edae5",
+        "bounded_rk23_fast": "#008b8b",
     }
     lines = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
@@ -490,6 +522,22 @@ def _execute_method(
             reference_method=method,
             anchor_interval_steps=1_000_000_000,
         )
+    elif method in BOUNDED_CANDIDATES:
+        candidate_method, reference_method, reference_interval_steps = BOUNDED_CANDIDATES[method]
+        run_config = replace(
+            config,
+            rollout_mode="active",
+            candidate_method=candidate_method,
+            reference_method=reference_method,
+            reference_interval_steps=reference_interval_steps,
+            embedded_error_cap=max(
+                config.embedded_error_cap,
+                config.predictor_reference_cap,
+            ),
+            anchor_interval_steps=(
+                config.anchor_interval_steps if anchor_interval is None else anchor_interval
+            ),
+        )
     else:
         run_config = replace(
             config,
@@ -645,7 +693,13 @@ def _raw_summary(points: tuple[RawAB2Point, ...]) -> dict[str, Any]:
         "maximum_accepted_step": max(steps, default=0.0),
         "mean_accepted_step": sum(steps) / len(steps) if steps else 0.0,
         "contractive_steps": 0,
+        "candidate_steps": 0,
+        "dynamic_reference_checkpoints": 0,
         "ab_steps": max(0, len(points) - 2),
+        "candidate_solves": 0,
+        "candidate_iterations": 0,
+        "candidate_circuit_evaluations": 0,
+        "candidate_algebraic_iterations": 0,
         "reference_solves": 0,
         "reference_iterations": 0,
         "reference_circuit_evaluations": 0,
@@ -666,6 +720,10 @@ def _raw_summary(points: tuple[RawAB2Point, ...]) -> dict[str, Any]:
 def _work_data(diagnostics: dict[str, Any]) -> dict[str, int]:
     names = (
         "accepted_steps",
+        "candidate_solves",
+        "candidate_iterations",
+        "candidate_circuit_evaluations",
+        "candidate_algebraic_iterations",
         "reference_solves",
         "reference_iterations",
         "reference_circuit_evaluations",
@@ -682,6 +740,8 @@ def _work_data(diagnostics: dict[str, Any]) -> dict[str, int]:
     work = {name: int(diagnostics.get(name, 0)) for name in names}
     aggregate_names = (
         "accepted_steps",
+        "candidate_circuit_evaluations",
+        "candidate_algebraic_iterations",
         "reference_circuit_evaluations",
         "reference_algebraic_iterations",
         "predictor_projection_iterations",
@@ -950,7 +1010,7 @@ def source_metadata(repository_root: Path) -> dict[str, Any]:
         "source_file_count": len(source_files),
         "source_tree_scope": (
             "Git tracked and untracked non-ignored files, excluding generated build/evidence "
-            "directories and docs/TESTS_AND_COMPARISONS_AUDIT.md."
+            "directories and evidence-only audit documents."
         ),
     }
 

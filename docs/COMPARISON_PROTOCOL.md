@@ -36,6 +36,13 @@ their toolchain and semantic-mapping provenance remain explicit.
   authoritative.
 - `active`: projected and contractively corrected AB2 with every-step implicit
   reference and independent periodic replay anchors.
+- `bounded_explicit_euler`, `bounded_heun`, and `bounded_rk23`: explicit
+  candidates using the shared every-step reference/correction controller.
+- `bounded_backward_euler`, `bounded_trapezoidal`, and `bounded_bdf2`: implicit
+  candidates paired with a distinct implicit reference.
+- `bounded_ab2_fast`, `bounded_heun_fast`, and `bounded_rk23_fast`: embedded
+  candidates with four-step scheduled references, dynamic bound checkpoints,
+  and periodic independent replay.
 - `raw_ab2`: test-only reduced-system variable-step AB2. It is not a production
   rollout mode and cannot bypass production safety gates.
 
@@ -74,11 +81,11 @@ reported rather than silently relaxed.
 
 For each declared `work_budgets` value, the report selects the most accurate
 result within the budget. Deterministic work is the sum of accepted steps,
-reference circuit evaluations and algebraic iterations, predictor/corrected
-projection iterations, differential Jacobian evaluations, and replay steps,
-circuit evaluations, and algebraic iterations. Each source counter is also
-reported independently. Wall time is excluded so hardware noise cannot change
-qualification.
+candidate and reference circuit evaluations and algebraic iterations,
+predictor/corrected projection iterations, differential Jacobian evaluations,
+and replay steps, circuit evaluations, and algebraic iterations. Each source
+counter is also reported independently. Wall time is excluded so hardware noise
+cannot change qualification.
 
 ## Metrics
 
@@ -87,18 +94,20 @@ error, RMS waveform error, per-state scaled error, and observed convergence
 order. Oscillator cases report sampled amplitude error, final phase error,
 relative period error, and relative energy span as separate quantities.
 
-Bound fields include predictor/reference error, corrected/reference error,
-recursive estimated bound, pre-reset bound, independent anchor deviation, and
-the empirical anchor-error-to-pre-reset-bound ratio. That ratio is
-characterization evidence, not a formal coverage proof.
+Bound fields include candidate/reference error, embedded error,
+corrected/reference error, recursive estimated bound, dynamic reference
+checkpoints, pre-reset bound, independent anchor deviation, and the empirical
+anchor-error-to-pre-reset-bound ratio. That ratio is characterization evidence,
+not a formal coverage proof.
 
 Robustness fields include accepted/rejected attempts, rejection categories,
 history-reset reasons, implicit fallbacks, periodic/safety anchors, and accepted
 timestep statistics.
 
-Work fields include projection counts and iterations, reference solves,
-reference Newton and algebraic iterations, replay work, differential Jacobian
-evaluations, and a deterministic aggregate work unit.
+Work fields include candidate solves/evaluations/iterations, projection counts
+and iterations, reference solves, reference Newton and algebraic iterations,
+replay work, differential Jacobian evaluations, and a deterministic aggregate
+work unit.
 
 ## Determinism and Provenance
 
@@ -129,7 +138,7 @@ source-tree SHA-256, manifest hash, runner identity, interpreter/platform
 metadata, case input hashes, circuit elements, simulation settings, complete
 method configuration, and authority. The source-tree hash covers Git tracked and
 untracked non-ignored files while excluding generated build/evidence directories
-and the self-referential qualification audit.
+and the self-referential qualification and performance audit documents.
 It contains no wall-clock measurements. Under an identical environment, the
 numerical JSON, flattened CSV, and SVG are expected to reproduce byte-for-byte.
 
@@ -150,16 +159,26 @@ never a correctness or release threshold.
 
 ## Performance Boundary
 
-Active BAB-CS performs an implicit reference solve on every eligible AB step
-and may also perform two projections, differential Jacobian estimation, and
-periodic refined replay. It is therefore not expected to outperform a pure
-implicit integrator in the current v1 architecture. Work comparisons describe
-the cost of bounded, inspectable behavior; they are not a speed claim.
+The default active mode performs an implicit reference solve on every candidate
+step and may also perform candidate/correction projections, differential
+Jacobian evaluation, and periodic refined replay. Built-in circuits use exact
+MNA sensitivity Jacobians plus bounded topology/factorization caches; extension
+subclasses retain a finite-difference fallback unless they provide an override.
+The deterministic default uses the built-in dense solver. An explicit optional
+`auto` backend uses SciPy SuperLU only beyond measured matrix-size, sparsity, and
+right-hand-side crossovers; `scipy` forces that backend. Diode circuits bypass
+the linear caches but may use the optional sparse backend for sufficiently large
+fresh Newton systems. Embedded AB2, Heun, and RK23
+variants may defer references, but dynamic bound checkpoints deliberately
+restore reference work in difficult regions. Work comparisons describe the cost
+of bounded, inspectable behavior; timing rows remain local characterization, not
+a general speed claim.
 
 ## Qualification Tiers
 
 - Pull-request CI runs Python 3.11 through 3.14 tests, deterministic examples,
-  a deterministic comparison smoke, and installed-wheel smoke.
+  a deterministic comparison smoke, optional SciPy backend qualification, and
+  installed-wheel smoke.
 - Scheduled CI enables `BABCS_LONG_TESTS=1`, runs the full comparison/timing
   matrix, runs `ngspice` mappings, hashes evidence, and uploads artifacts.
 - Release qualification enables both `BABCS_LONG_TESTS=1` and

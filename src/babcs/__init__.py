@@ -1,6 +1,7 @@
 """BAB-CSv1: bounded Adams-Bashforth circuit simulation."""
 
-from .bounded import BABCSConfig, BoundedAdamsBashforthIntegrator
+from .bounded import BABCSConfig, BoundedAdamsBashforthIntegrator, BoundedIntegrator
+from .candidates import CANDIDATE_METHODS
 from .model import (
     Capacitor,
     Circuit,
@@ -17,6 +18,8 @@ from .waveforms import Constant, PiecewiseLinear, Pulse, Sine
 __all__ = [
     "BABCSConfig",
     "BoundedAdamsBashforthIntegrator",
+    "BoundedIntegrator",
+    "CANDIDATE_METHODS",
     "Capacitor",
     "Circuit",
     "Constant",
@@ -32,4 +35,3 @@ __all__ = [
     "Switch",
     "VoltageSource",
 ]
-

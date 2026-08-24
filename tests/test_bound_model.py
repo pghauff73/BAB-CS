@@ -3,7 +3,14 @@ from __future__ import annotations
 import math
 import unittest
 
-from babcs import BABCSConfig, BoundedAdamsBashforthIntegrator, Simulator
+from babcs import (
+    BABCSConfig,
+    BoundedAdamsBashforthIntegrator,
+    Capacitor,
+    Circuit,
+    Inductor,
+    Simulator,
+)
 from babcs.io import summary_data
 from tests.support.circuits import rc_charge_circuit
 from tests.support.circuits import pulsed_rc_circuit
@@ -126,6 +133,62 @@ class BoundModelTests(unittest.TestCase):
                 point.metrics is None or point.metrics.closed_loop_gain == 0.0
                 for point in result.points
             )
+        )
+
+    def test_anchor_refinement_is_adapted_to_circuit_topology(self) -> None:
+        cases = (
+            (rc_charge_circuit(), 2),
+            (Circuit([Capacitor("C1", "n", "0", 1.0e-6), Inductor("L1", "n", "0", 1.0e-3)]), 4),
+        )
+        for circuit, expected_substeps in cases:
+            with self.subTest(expected_substeps=expected_substeps):
+                result = Simulator(
+                    BoundedAdamsBashforthIntegrator(
+                        BABCSConfig(
+                            rollout_mode="active",
+                            predictor_reference_cap=100.0,
+                            anchor_reference_cap=100.0,
+                            anchor_interval_steps=2,
+                            anchor_substeps=4,
+                            minimum_anchor_substeps=2,
+                        )
+                    )
+                ).run(circuit, 4.0e-5, 1.0e-5)
+                anchor_metrics = [
+                    point.metrics
+                    for point in result.points
+                    if point.metrics and point.metrics.periodic_reanchor
+                ]
+                self.assertTrue(anchor_metrics)
+                self.assertTrue(
+                    all(
+                        metrics.replay_refinement_substeps == expected_substeps
+                        for metrics in anchor_metrics
+                    )
+                )
+
+    def test_anchor_refinement_adaptation_can_be_disabled(self) -> None:
+        result = Simulator(
+            BoundedAdamsBashforthIntegrator(
+                BABCSConfig(
+                    rollout_mode="active",
+                    predictor_reference_cap=100.0,
+                    anchor_reference_cap=100.0,
+                    anchor_interval_steps=2,
+                    anchor_substeps=4,
+                    minimum_anchor_substeps=2,
+                    adaptive_anchor_refinement=False,
+                )
+            )
+        ).run(rc_charge_circuit(), 4.0e-5, 1.0e-5)
+        anchor_metrics = [
+            point.metrics
+            for point in result.points
+            if point.metrics and point.metrics.periodic_reanchor
+        ]
+        self.assertTrue(anchor_metrics)
+        self.assertTrue(
+            all(metrics.replay_refinement_substeps == 4 for metrics in anchor_metrics)
         )
 
 

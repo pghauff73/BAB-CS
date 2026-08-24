@@ -69,6 +69,64 @@ class CommandLineTests(unittest.TestCase):
             self.assertIn("maximum_anchor_reference_error", summary)
             self.assertIn("rejection_reasons", summary)
 
+    def test_candidate_and_fast_path_overrides_are_exposed(self) -> None:
+        case = {
+            "elements": [
+                {
+                    "type": "voltage_source",
+                    "name": "V1",
+                    "positive": "vin",
+                    "negative": "0",
+                    "waveform": 1.0,
+                },
+                {
+                    "type": "resistor",
+                    "name": "R1",
+                    "positive": "vin",
+                    "negative": "out",
+                    "resistance": 1000.0,
+                },
+                {
+                    "type": "capacitor",
+                    "name": "C1",
+                    "positive": "out",
+                    "negative": "0",
+                    "capacitance": 1.0e-6,
+                },
+            ],
+            "simulation": {"stop_time": 2.0e-4, "nominal_step": 1.0e-5},
+            "babcs": {"rollout_mode": "shadow", "predictor_reference_cap": 1.0e9},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            input_path = root / "case.json"
+            summary_path = root / "summary.json"
+            input_path.write_text(json.dumps(case), encoding="utf-8")
+            with redirect_stdout(StringIO()):
+                exit_code = main(
+                    [
+                        "simulate",
+                        str(input_path),
+                        "--mode",
+                        "active",
+                        "--candidate",
+                        "rk23",
+                        "--linear-backend",
+                        "auto",
+                        "--reference-interval",
+                        "4",
+                        "--bound-cap",
+                        "100",
+                        "--summary",
+                        str(summary_path),
+                    ]
+                )
+            self.assertEqual(exit_code, 0)
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(summary["linear_backend"], "auto")
+            self.assertGreater(summary["candidate_steps"], 0)
+            self.assertLess(summary["reference_solves"], summary["candidate_steps"])
+
 
 if __name__ == "__main__":
     unittest.main()

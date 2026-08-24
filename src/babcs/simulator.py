@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from .bounded import (
     BABCSHistory,
-    BoundedAdamsBashforthIntegrator,
+    BoundedIntegrator,
     SimulationState,
     StepMetrics,
     StepRejected,
@@ -31,6 +31,7 @@ class SimulationPoint:
 class SimulationResult:
     points: tuple[SimulationPoint, ...]
     final_history: BABCSHistory
+    linear_backend: str
 
     def node_trace(self, node: str) -> list[tuple[float, float]]:
         return [
@@ -46,8 +47,8 @@ class SimulationResult:
 
 
 class Simulator:
-    def __init__(self, integrator: BoundedAdamsBashforthIntegrator | None = None) -> None:
-        self.integrator = integrator or BoundedAdamsBashforthIntegrator()
+    def __init__(self, integrator: BoundedIntegrator | None = None) -> None:
+        self.integrator = integrator or BoundedIntegrator()
 
     def run(
         self,
@@ -124,12 +125,15 @@ class Simulator:
                 current_step = min(nominal_step, attempt_step)
             elif rejection_count:
                 current_step = attempt_step
-            elif (
-                result.metrics.predictor_reference_error
-                < 0.25 * self.integrator.config.predictor_reference_cap
+            elif max(
+                result.metrics.predictor_reference_error,
+                result.metrics.embedded_error,
+            ) < 0.25 * min(
+                self.integrator.config.predictor_reference_cap,
+                self.integrator.config.embedded_error_cap,
             ):
                 current_step = min(nominal_step, attempt_step * 1.25)
             else:
                 current_step = attempt_step
 
-        return SimulationResult(tuple(points), history)
+        return SimulationResult(tuple(points), history, circuit.linear_backend)

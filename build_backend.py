@@ -15,6 +15,8 @@ def _metadata() -> bytes:
         "Version: 1.0.0\n"
         "Summary: Bounded Adams-Bashforth circuit simulation reference implementation\n"
         "Requires-Python: >=3.11\n"
+        "Provides-Extra: sparse\n"
+        'Requires-Dist: scipy>=1.11; extra == "sparse"\n'
         "\n"
     ).encode()
 
@@ -28,8 +30,15 @@ def build_wheel(wheel_directory: str, config_settings=None, metadata_directory=N
     target = Path(wheel_directory) / _wheel_name()
     records: list[tuple[str, str, str]] = []
 
+    def write_bytes(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
+        info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+        info.compress_type = zipfile.ZIP_DEFLATED
+        info.create_system = 3
+        info.external_attr = 0o100644 << 16
+        archive.writestr(info, data)
+
     def add_bytes(archive: zipfile.ZipFile, name: str, data: bytes) -> None:
-        archive.writestr(name, data)
+        write_bytes(archive, name, data)
         digest = base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b"=").decode()
         records.append((name, f"sha256={digest}", str(len(data))))
 
@@ -52,7 +61,7 @@ def build_wheel(wheel_directory: str, config_settings=None, metadata_directory=N
         writer = csv.writer(buffer, lineterminator="\n")
         writer.writerows(records)
         writer.writerow((f"{dist_info}/RECORD", "", ""))
-        archive.writestr(f"{dist_info}/RECORD", buffer.getvalue().encode())
+        write_bytes(archive, f"{dist_info}/RECORD", buffer.getvalue().encode())
     return target.name
 
 
