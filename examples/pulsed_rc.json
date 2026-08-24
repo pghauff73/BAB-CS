@@ -1,0 +1,42 @@
+{
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "V1",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "width": 0.0005,
+        "fall": 0.0,
+        "period": 0.0015
+      }
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "vin",
+      "negative": "out",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out",
+      "negative": "0",
+      "capacitance": 1e-6
+    }
+  ],
+  "simulation": {
+    "stop_time": 0.004,
+    "nominal_step": 0.00005
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "predictor_reference_cap": 100.0
+  }
+}

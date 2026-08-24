@@ -1,0 +1,18 @@
+[project]
+name = "bab-cs"
+version = "1.0.0"
+description = "Bounded Adams-Bashforth circuit simulation reference implementation"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+babcs = "babcs.cli:main"
+
+[build-system]
+requires = []
+build-backend = "build_backend"
+backend-path = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
