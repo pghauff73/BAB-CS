@@ -7,7 +7,8 @@ Audit date: August 24, 2026
 - **Local implementation:** achieved against the committed source snapshot identified below.
 - **Local deterministic qualification:** achieved.
 - **Installed-wheel qualification:** achieved.
-- **Live external comparison:** achieved with `ngspice-46` for the four declared mappings.
+- **Live external comparison:** achieved locally with `ngspice-46` and remotely
+  with `ngspice-42` for the four declared mappings.
 - **Remote GitHub workflow evidence:** achieved for the exact implementation
   commit through CI, scheduled comparisons, and release qualification.
 - **Release publication:** not performed by this qualification change; publishing
@@ -19,12 +20,12 @@ program was part of the original v1 release evidence.
 
 ## Qualified Snapshot
 
-- Parent commit: `46b8ad886bb25445208099b4627f45f6a9da4d5b`
+- Implementation base commit: `46b8ad886bb25445208099b4627f45f6a9da4d5b`
 - Qualified implementation commit:
-  `ee38e8503c0eaa08f0e3c592050032d5c18c1383`
+  `3dafe404d5a7d134c26f3a0d7fc73d7e3777dd95`
 - Working tree at qualification: clean.
 - Deterministic source-tree SHA-256:
-  `169f81b882e154acf26fe218d8c620cacdbcc437c5fd82e972918e061b87ecfc`
+  `55b3a7464a2f76b2ddad157096b7eb348e4e85aeec0eb0f37166f2ec490e4458`
 - Source files in hash: 61.
 - Hash scope: Git tracked and untracked non-ignored files, excluding generated
   `artifacts/`, `build/`, and `dist/` content and this self-referential audit.
@@ -49,14 +50,13 @@ BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
   PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
-Result: 96 tests passed, zero skipped, in 76.130 seconds.
+Result: 97 tests passed, zero skipped, in 78.596 seconds.
 
 Test log SHA-256:
-`65743138cc593737b26d675bd8a2843edd2101f5d7380b28100468e2bec3cb96`
+`ef4be34f7be96c5ff2328cebf24e6d6b945603bd331a0804568dac97ec31686c`
 
 The default pull-request tier was run across the complete declared Python
-matrix. CPython 3.11.15 and 3.13.14 were supplied by `uv`; CPython 3.12.13 and
-3.14.6 were already available locally.
+matrix in remote CI.
 
 ```bash
 for version in 3.11 3.12 3.13 3.14; do
@@ -65,17 +65,9 @@ for version in 3.11 3.12 3.13 3.14; do
 done
 ```
 
-Each interpreter passed 96 tests with the scheduled and release-only
-long-horizon cases skipped, matching the intended pull-request tier.
-
-- CPython 3.11.15 log SHA-256:
-  `a18fb328c48d8ea458373b7e356c02f5b3d98288f56eb88c3ae5cccf7658f99e`
-- CPython 3.12.13 log SHA-256:
-  `dd82dd5a345de700bde7f77e61318d6d7c7bb7b8539b973b88c20c333c2318d5`
-- CPython 3.13.14 log SHA-256:
-  `1356204a267c0ab4ec4bf65a4c11b63ac236da4e4448d9ac18b7b7d6283b7c1e`
-- CPython 3.14.6 installed-wheel log SHA-256:
-  `03d5458e0e18894e0ce4b0008146e6d328ba681e8b5e72cd2914ebc09ce2b177`
+Each CPython 3.11 through 3.14 job passed 97 tests with the scheduled and
+release-only long-horizon cases skipped, matching the intended pull-request
+tier. The exact run is recorded under TC-011.
 
 ### Deterministic Method Matrix
 
@@ -97,18 +89,19 @@ numerical artifacts and a separate timing report.
 - Median timing range: `1.770298695191741e-05` to
   `1.0386381130083464` seconds; timing is not a correctness gate.
 
-Artifact hashes:
+The performance range above is from the local timed run. Final remote artifact
+hashes at the qualified implementation commit are:
 
 - Numerical JSON:
-  `4e96d2868dd5c6db2b74345537a5f439c78b69fc706d7d35476b1408a0242046`
+  `d5f63ea03cff855952b2158ab447a97163ed25f4aab06f93e5881421e86e8e4e`
 - Flat CSV:
   `0de55953c57faa4ceb6f43570fc1cdd9efacf1aa4b9e0d031bdf30745b433195`
 - SVG plot:
   `98742d51cbc017b2dd08d5ec57ad280ed9390b2fd96c4b279ae2e5450a0c843b`
 - Timing JSON for this run:
-  `04c7ab45da8a3e9cb034dcfce8677cb81da4e59cd5c1b773fe1619ab56da45c8`
+  `f26b12458dbbfa83bbfc0dbab453eec8944ccbeec90d49c9e4b885db3e7991e8`
 - Timed-run log:
-  `9b766d333b0b589774c6cab7fd86e621e1b8563ac430f84834708393eaace8e8`
+  `4686cb36196522a712671ba92ddc0198bad224137d22fbd1cb1fd9a29b6d5963`
 
 The timing hash is provenance for this run only and is not expected to be
 reproducible across machines or loads.
@@ -132,14 +125,16 @@ For active LC at the declared matrix points:
 
 ### External `ngspice` Evidence
 
-All reports identify the same source-tree hash shown above.
+The table below records the final remote `ngspice-42` reports. All four reports
+identify the qualified commit, report `dirty: false`, and identify the same
+source-tree hash shown above.
 
 | Case | Samples | Maximum absolute difference | Report SHA-256 |
 | --- | ---: | ---: | --- |
-| `rc_step` | 24 | `0.005129168242569024` | `433103817b3a5bcd42c49096969f1cc606b434c078a87bbb47a1e13409869093` |
-| `rl_step` | 24 | `0.0005129168232507718` | `d8f29d403a6336d2b4210517904ec74076af0a4fea02314a9ce549568974fabd` |
-| `diode_clip` | 265 | `0.0031176977073201495` | `a4cdb7df0dba59258b198197c733cae7e8d7bace286fce66fb95c31e6a524e33` |
-| `switched_rc` | 96 | `0.08037580482940321` | `d2aef014533edd289e1a8ce2b042f7c5342655cabf162fa4635d7d5301b7e1c6` |
+| `rc_step` | 24 | `0.005129168242569024` | `ca42d5e482c78de3fca6ea08606ee10fc955656d3c1c376913b05d1f2d29cb03` |
+| `rl_step` | 24 | `0.0005129168232507718` | `09892144ed19049e29c38d19f29dafe976b8160e9f79ac151d51e04f803bde9d` |
+| `diode_clip` | 264 | `0.0030983774729334713` | `8bc1b1e6ed3d47525cd4705003262504746696568270562c41757b6478d7932e` |
+| `switched_rc` | 101 | `0.07878138132636461` | `2ed0cf45ebfa6119d257610b25a4b078840ede4b107c7f5d262828d58a901fdf` |
 
 Generated-netlist SHA-256 values:
 
@@ -150,10 +145,10 @@ Generated-netlist SHA-256 values:
 
 Raw-output SHA-256 values:
 
-- `rc_step`: `110e4d3c1da84268614c827168e197757343f3962f7e16630425e5867259c24e`
-- `rl_step`: `519cd0827a1dd79861dc1b0dd204e8226972ba4deb6c61a05aee758ac8841a65`
-- `diode_clip`: `ebc8ab589bd6aae8b39f12903812e5e74d09b1df4a68da6e0519d6a6a64b6354`
-- `switched_rc`: `6e8012748a7bd9a9c9d30f397388634152a82652e40bacb9260372d99b79a628`
+- `rc_step`: `58f24ba7758753d34ba84bcd15e1ff0da164d13844aaedd9436366379a9df3af`
+- `rl_step`: `a1f8de03d35bd4f1f8acdf2820c9ec9fbfa3f8fd9ad2c25492b914c3ef2ddb4c`
+- `diode_clip`: `92403432105ea523745bd881f4f5da4dc727a2987cb71786b80fee41a5d71f32`
+- `switched_rc`: `1d461a433f332111b6e05bcbb8782c73791c1918cefc451ea6f5f21473c31c4e`
 
 External differences are cross-implementation evidence for the generated
 semantic mapping. They do not establish exact physical truth or identify which
@@ -163,14 +158,12 @@ implementation is responsible for a discrepancy.
 
 - Wheel: `bab_cs-1.0.0-py3-none-any.whl`.
 - Wheel SHA-256:
-  `df36c9a4e2ac57aff204c62e542ed5cba385c844a7c74e0dcffed0e073ca4338`.
+  `c4293b66d2dd27000da1e3b060690f460ad13fa2cc1285381221cbe981e2c791`.
 - Import path was verified inside the clean virtual environment rather than from
   `src/`.
 - `pip check` reported no broken requirements.
-- Installed-wheel fast suite: 96 tests passed, with only the scheduled and
+- Installed-wheel fast suite: 97 tests passed, with only the scheduled and
   release long-horizon tests skipped by default.
-- Installed-wheel test log SHA-256:
-  `03d5458e0e18894e0ce4b0008146e6d328ba681e8b5e72cd2914ebc09ce2b177`.
 - Installed-wheel numerical JSON, CSV, and SVG matched the source-run artifacts
   byte-for-byte.
 
@@ -286,24 +279,26 @@ implementation is responsible for a discrepancy.
   commit, environment, and report hashes.
 - All workflow files parse as valid YAML, and their commands were reproduced
   locally, including the complete Python 3.11 through 3.14 default matrix.
-- `CI` push run `32728382145` passed at the qualified implementation commit,
+- `CI` push run `32729607872` passed at the qualified implementation commit,
   including CPython 3.11 through 3.14 and the wheel job.
-- `Scheduled Comparisons` dispatch run `32728407551` passed at the same commit,
+- `Scheduled Comparisons` dispatch run `32729633142` passed at the same commit,
   including the no-skip long-horizon suite, complete deterministic method
   matrix, and all four live `ngspice` mappings.
-- `Release Qualification` dispatch run `32728410398` passed at the same commit,
+- `Release Qualification` dispatch run `32729636093` passed at the same commit,
   including the no-skip source suite, candidate-wheel build, installed-wheel
   verification, provenance capture, and artifact upload.
 - The release-qualification wheel SHA-256 is
-  `c6539b326b5f9b8228f31612a291cd9b74798757278c2f3712d6990e62c57ae1`.
+  `c4293b66d2dd27000da1e3b060690f460ad13fa2cc1285381221cbe981e2c791`.
 - The scheduled numerical CSV and SVG matched the installed-wheel CSV and SVG
   byte-for-byte, with SHA-256 values
   `0de55953c57faa4ceb6f43570fc1cdd9efacf1aa4b9e0d031bdf30745b433195`
   and `98742d51cbc017b2dd08d5ec57ad280ed9390b2fd96c4b279ae2e5450a0c843b`.
 - The remote reports record source-tree SHA-256
-  `169f81b882e154acf26fe218d8c620cacdbcc437c5fd82e972918e061b87ecfc`
+  `55b3a7464a2f76b2ddad157096b7eb348e4e85aeec0eb0f37166f2ec490e4458`
   and manifest SHA-256
   `7b805a88a1cd86e7569ff0d9fa0dbbd5f9db2b6f3c841808af12062b4866d406`.
+- All four external reports record `dirty: false`; generated evidence no longer
+  contaminates source-cleanliness provenance.
 
 ### TC-012 — Documentation and Evidence Audit: Achieved
 
@@ -317,7 +312,7 @@ implementation is responsible for a discrepancy.
 
 ## Completion-Gate Audit
 
-- Existing BAB-CSv1 regression requirements: pass within the 96-test no-skip
+- Existing BAB-CSv1 regression requirements: pass within the 97-test no-skip
   suite.
 - Isolated hard failure gates: pass.
 - Independent recursive-bound recomputation: pass.
@@ -329,7 +324,7 @@ implementation is responsible for a discrepancy.
 - Installed candidate wheel comparison: pass.
 - Requirement-to-evidence audit: present.
 - Exact-candidate remote CI, scheduled, and release workflows: pass at
-  `ee38e8503c0eaa08f0e3c592050032d5c18c1383`.
+  `3dafe404d5a7d134c26f3a0d7fc73d7e3777dd95`.
 - Human review before release publication: retained as a separate gate; no new
   release was published by this qualification run.
 
