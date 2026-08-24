@@ -156,18 +156,38 @@ class Circuit:
                 raise ValueError("element names must not be empty")
             if element.positive == element.negative:
                 raise ValueError(f"{element.name}: element terminals must differ")
-            if isinstance(element, Resistor) and element.resistance <= 0.0:
-                raise ValueError(f"{element.name}: resistance must be positive")
-            if isinstance(element, Capacitor) and element.capacitance <= 0.0:
-                raise ValueError(f"{element.name}: capacitance must be positive")
-            if isinstance(element, Inductor) and element.inductance <= 0.0:
-                raise ValueError(f"{element.name}: inductance must be positive")
+            if isinstance(element, Resistor) and (
+                not math.isfinite(element.resistance) or element.resistance <= 0.0
+            ):
+                raise ValueError(f"{element.name}: resistance must be positive and finite")
+            if isinstance(element, Capacitor):
+                if not math.isfinite(element.capacitance) or element.capacitance <= 0.0:
+                    raise ValueError(f"{element.name}: capacitance must be positive and finite")
+                if not math.isfinite(element.initial_voltage):
+                    raise ValueError(f"{element.name}: initial voltage must be finite")
+            if isinstance(element, Inductor):
+                if not math.isfinite(element.inductance) or element.inductance <= 0.0:
+                    raise ValueError(f"{element.name}: inductance must be positive and finite")
+                if not math.isfinite(element.initial_current):
+                    raise ValueError(f"{element.name}: initial current must be finite")
             if isinstance(element, Diode):
-                if element.saturation_current <= 0.0 or element.thermal_voltage <= 0.0:
-                    raise ValueError(f"{element.name}: diode parameters must be positive")
+                if (
+                    not math.isfinite(element.saturation_current)
+                    or not math.isfinite(element.thermal_voltage)
+                    or element.saturation_current <= 0.0
+                    or element.thermal_voltage <= 0.0
+                ):
+                    raise ValueError(f"{element.name}: diode parameters must be positive and finite")
             if isinstance(element, Switch):
-                if element.on_resistance <= 0.0 or element.off_resistance <= 0.0:
-                    raise ValueError(f"{element.name}: switch resistances must be positive")
+                if (
+                    not math.isfinite(element.on_resistance)
+                    or not math.isfinite(element.off_resistance)
+                    or element.on_resistance <= 0.0
+                    or element.off_resistance <= 0.0
+                ):
+                    raise ValueError(f"{element.name}: switch resistances must be positive and finite")
+                if not math.isfinite(element.threshold):
+                    raise ValueError(f"{element.name}: switch threshold must be finite")
 
     @property
     def dynamic_size(self) -> int:
@@ -206,9 +226,13 @@ class Circuit:
         newton_relative_tolerance: float = 1.0e-9,
         newton_max_iterations: int = 30,
     ) -> CircuitEvaluation:
+        if not math.isfinite(time):
+            raise ValueError("evaluation time must be finite")
         state = tuple(float(value) for value in dynamic_state)
         if len(state) != self.dynamic_size:
             raise ValueError(f"expected {self.dynamic_size} dynamic values, received {len(state)}")
+        if any(not math.isfinite(value) for value in state):
+            raise CircuitSolveError("dynamic state must be finite")
         algebraic = self.solve_algebraic(
             time,
             state,
@@ -279,6 +303,8 @@ class Circuit:
         relative_tolerance: float = 1.0e-9,
         max_iterations: int = 30,
     ) -> AlgebraicSolution:
+        if not math.isfinite(time) or any(not math.isfinite(value) for value in dynamic_state):
+            raise CircuitSolveError("algebraic solve inputs must be finite")
         if initial_guess is None:
             unknowns = [0.0] * self.algebraic_size
             for branch in self.constraint_branches:
@@ -294,6 +320,8 @@ class Circuit:
             unknowns = [float(value) for value in initial_guess]
             if len(unknowns) != self.algebraic_size:
                 raise ValueError("algebraic initial guess has the wrong size")
+            if any(not math.isfinite(value) for value in unknowns):
+                raise CircuitSolveError("algebraic initial guess must be finite")
 
         if self.algebraic_size == 0:
             return AlgebraicSolution((), {GROUND: 0.0}, {}, 0.0, 0)

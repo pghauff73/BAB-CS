@@ -57,12 +57,18 @@ class CommandLineTests(unittest.TestCase):
                     ]
                 )
             self.assertEqual(exit_code, 0)
-            self.assertIn("voltage:out", csv_path.read_text(encoding="utf-8").splitlines()[0])
+            csv_header = csv_path.read_text(encoding="utf-8").splitlines()[0]
+            self.assertIn("voltage:out", csv_header)
+            self.assertIn("history_reset_reason", csv_header)
+            self.assertIn("reference_circuit_evaluations", csv_header)
             summary = json.loads(summary_path.read_text(encoding="utf-8"))
             self.assertGreater(summary["accepted_steps"], 0)
             self.assertGreater(summary["ab_steps"], 0)
+            self.assertGreater(summary["reference_solves"], 0)
+            self.assertGreater(summary["reference_circuit_evaluations"], 0)
+            self.assertIn("maximum_anchor_reference_error", summary)
+            self.assertIn("rejection_reasons", summary)
 
 
 if __name__ == "__main__":
     unittest.main()
-

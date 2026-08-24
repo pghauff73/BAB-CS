@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import unittest
 
 from babcs import Capacitor, Circuit, CurrentSource, Diode, Inductor, Resistor, Switch, VoltageSource
@@ -48,6 +49,44 @@ class CircuitModelTests(unittest.TestCase):
         circuit = Circuit([CurrentSource("I1", "n", "0", Constant(1.0))])
         with self.assertRaises(CircuitSolveError):
             circuit.evaluate(0.0, ())
+
+    def test_conflicting_voltage_constraints_fail_closed(self) -> None:
+        circuit = Circuit(
+            [
+                VoltageSource("V1", "n", "0", Constant(1.0)),
+                VoltageSource("V2", "n", "0", Constant(2.0)),
+            ]
+        )
+        with self.assertRaises(CircuitSolveError):
+            circuit.evaluate(0.0, ())
+
+    def test_unsupported_capacitor_loop_and_inductor_cutset_fail_closed(self) -> None:
+        circuits = (
+            Circuit(
+                [
+                    Capacitor("C1", "a", "b", 1.0e-6, 1.0),
+                    Capacitor("C2", "b", "a", 1.0e-6, 1.0),
+                ]
+            ),
+            Circuit(
+                [
+                    Inductor("L1", "n", "0", 1.0e-3, 1.0),
+                    Inductor("L2", "n", "0", 1.0e-3, 1.0),
+                ]
+            ),
+        )
+        for circuit in circuits:
+            with self.subTest(dynamic_names=circuit.dynamic_names), self.assertRaises(
+                CircuitSolveError
+            ):
+                circuit.evaluate(0.0, circuit.initial_dynamic_state())
+
+    def test_non_finite_model_and_state_inputs_fail_closed(self) -> None:
+        with self.assertRaises(ValueError):
+            Circuit([Resistor("R1", "n", "0", math.nan)])
+        circuit = Circuit([Capacitor("C1", "n", "0", 1.0e-6)])
+        with self.assertRaises(CircuitSolveError):
+            circuit.evaluate(0.0, (math.nan,))
 
     def test_controlled_switch_changes_conductance(self) -> None:
         circuit = Circuit(

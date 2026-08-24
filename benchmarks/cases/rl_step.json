@@ -1,0 +1,39 @@
+{
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "V1",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "vin",
+      "negative": "out",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L1",
+      "positive": "out",
+      "negative": "0",
+      "inductance": 0.001,
+      "initial_current": 0.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.0001,
+    "nominal_step": 0.00001
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  }
+}

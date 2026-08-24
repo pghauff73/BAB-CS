@@ -19,6 +19,8 @@ class SimulationPoint:
     metrics: StepMetrics | None
     event_boundary: bool = False
     rejection_count: int = 0
+    rejection_reasons: tuple[str, ...] = ()
+    history_reset_reason: str = ""
 
     @property
     def time(self) -> float:
@@ -75,6 +77,7 @@ class Simulator:
 
             attempt_step = proposed_step
             rejection_count = 0
+            rejection_reasons: list[str] = []
             while True:
                 try:
                     result = self.integrator.step(circuit, state, history, attempt_step)
@@ -84,6 +87,7 @@ class Simulator:
                     break
                 except StepRejected as error:
                     rejection_count += 1
+                    rejection_reasons.append(error.reason)
                     history = self.integrator.record_rejection(history)
                     if rejection_count >= self.integrator.config.maximum_rejections:
                         raise RuntimeError(
@@ -97,12 +101,22 @@ class Simulator:
 
             state = result.state
             history = result.history
+            if reached_event:
+                history_reset_reason = "event"
+            elif result.metrics.safety_reanchor:
+                history_reset_reason = "safety_reanchor"
+            elif result.metrics.periodic_reanchor:
+                history_reset_reason = "periodic_reanchor"
+            else:
+                history_reset_reason = ""
             points.append(
                 SimulationPoint(
                     state=state,
                     metrics=result.metrics,
                     event_boundary=reached_event,
                     rejection_count=rejection_count,
+                    rejection_reasons=tuple(rejection_reasons),
+                    history_reset_reason=history_reset_reason,
                 )
             )
             if reached_event:

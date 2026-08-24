@@ -20,6 +20,10 @@ def _inside(time: float, start: float, end: float) -> bool:
 class Constant:
     level: float
 
+    def __post_init__(self) -> None:
+        if not math.isfinite(self.level):
+            raise ValueError("constant waveform level must be finite")
+
     def value(self, time: float) -> float:
         del time
         return self.level
@@ -36,6 +40,13 @@ class Sine:
     frequency: float
     phase_radians: float = 0.0
     delay: float = 0.0
+
+    def __post_init__(self) -> None:
+        if not all(
+            math.isfinite(value)
+            for value in (self.offset, self.amplitude, self.frequency, self.phase_radians, self.delay)
+        ):
+            raise ValueError("sine waveform parameters must be finite")
 
     def value(self, time: float) -> float:
         if time < self.delay:
@@ -54,6 +65,8 @@ class PiecewiseLinear:
     def __post_init__(self) -> None:
         if not self.points:
             raise ValueError("piecewise-linear waveform requires at least one point")
+        if any(not math.isfinite(value) for point in self.points for value in point):
+            raise ValueError("piecewise-linear points must be finite")
         if any(right[0] <= left[0] for left, right in zip(self.points, self.points[1:])):
             raise ValueError("piecewise-linear times must be strictly increasing")
 
@@ -81,6 +94,11 @@ class Pulse:
     period: float = 0.0
 
     def __post_init__(self) -> None:
+        if not all(
+            math.isfinite(value)
+            for value in (self.low, self.high, self.delay, self.rise, self.width, self.fall, self.period)
+        ):
+            raise ValueError("pulse parameters must be finite")
         if min(self.delay, self.rise, self.width, self.fall, self.period) < 0.0:
             raise ValueError("pulse times must be non-negative")
         if self.period and self.period < self.rise + self.width + self.fall:

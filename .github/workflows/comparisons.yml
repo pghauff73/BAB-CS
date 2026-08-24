@@ -1,0 +1,113 @@
+name: Scheduled Comparisons
+
+on:
+  schedule:
+    - cron: "17 2 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comparisons-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  numerical:
+    name: Long-Horizon and Method Matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Compile qualification sources
+        run: python -m compileall -q -f src tests tools
+
+      - name: Run scheduled qualification suite
+        env:
+          BABCS_LONG_TESTS: "1"
+          PYTHONPATH: src
+        run: python -m unittest discover -s tests -v
+
+      - name: Run full comparison matrix
+        env:
+          PYTHONPATH: src
+        run: |
+          mkdir -p artifacts/comparisons
+          python tools/compare_methods.py \
+            --output artifacts/comparisons/numerical.json \
+            --csv-output artifacts/comparisons/numerical.csv \
+            --plot-output artifacts/comparisons/error-by-step.svg \
+            --timing-output artifacts/comparisons/timing.json \
+            --timing-repeats 3 | tee artifacts/comparisons/run.log
+          sha256sum \
+            artifacts/comparisons/numerical.json \
+            artifacts/comparisons/numerical.csv \
+            artifacts/comparisons/error-by-step.svg \
+            artifacts/comparisons/timing.json \
+            artifacts/comparisons/run.log \
+            > artifacts/comparisons/SHA256SUMS
+
+      - name: Upload numerical evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bab-cs-comparisons
+          path: artifacts/comparisons
+          if-no-files-found: error
+          retention-days: 30
+
+  external:
+    name: ngspice Cross-Implementation Evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+
+      - name: Install ngspice
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ngspice
+          ngspice --version
+
+      - name: Run external comparisons
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/external
+          for case in rc_step rl_step diode_clip switched_rc; do
+            python tools/compare_external.py "benchmarks/cases/${case}.json" \
+              --output "artifacts/external/${case}.json" \
+              --netlist-output "artifacts/external/${case}.cir" \
+              --raw-output "artifacts/external/${case}.dat" \
+              --log-output "artifacts/external/${case}.log"
+          done
+          sha256sum \
+            artifacts/external/*.json \
+            artifacts/external/*.cir \
+            artifacts/external/*.dat \
+            artifacts/external/*.log \
+            > artifacts/external/SHA256SUMS
+
+      - name: Upload external evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bab-cs-ngspice-comparisons
+          path: artifacts/external
+          if-no-files-found: error
+          retention-days: 30

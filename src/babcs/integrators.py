@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -18,6 +19,18 @@ class ImplicitSettings:
     max_iterations: int = 20
     minimum_damping: float = 2.0**-14
 
+    def __post_init__(self) -> None:
+        if not all(math.isfinite(value) for value in (self.absolute_tolerance, self.relative_tolerance)):
+            raise ValueError("implicit tolerances must be finite")
+        if self.absolute_tolerance <= 0.0 or self.relative_tolerance <= 0.0:
+            raise ValueError("implicit tolerances must be positive")
+        if not math.isfinite(self.minimum_damping):
+            raise ValueError("implicit minimum_damping must be finite")
+        if self.max_iterations < 0:
+            raise ValueError("implicit max_iterations must be non-negative")
+        if not 0.0 < self.minimum_damping <= 1.0:
+            raise ValueError("implicit minimum_damping must lie in (0, 1]")
+
 
 @dataclass(frozen=True)
 class ImplicitStepResult:
@@ -25,6 +38,17 @@ class ImplicitStepResult:
     method: str
     iterations: int
     residual_norm: float
+    circuit_evaluations: int
+    algebraic_iterations: int
+
+
+@dataclass(frozen=True)
+class ReferenceWindowResult:
+    evaluations: tuple[CircuitEvaluation, ...]
+    steps: int
+    reference_iterations: int
+    circuit_evaluations: int
+    algebraic_iterations: int
 
 
 def implicit_step(
@@ -47,9 +71,30 @@ def implicit_step(
         method_name = "backward_euler"
 
     target_time = current.time + step
+    circuit_evaluations = 0
+    algebraic_iterations = 0
+
+    def evaluate(
+        time: float,
+        state: Sequence[float],
+        algebraic_guess: Sequence[float] | None,
+    ) -> CircuitEvaluation:
+        nonlocal circuit_evaluations, algebraic_iterations
+        evaluation = circuit.evaluate(time, state, algebraic_guess)
+        circuit_evaluations += 1
+        algebraic_iterations += evaluation.algebraic.iterations
+        return evaluation
+
     if circuit.dynamic_size == 0:
-        evaluation = circuit.evaluate(target_time, (), current.algebraic.unknowns)
-        return ImplicitStepResult(evaluation, method_name, 0, evaluation.algebraic.residual_norm)
+        evaluation = evaluate(target_time, (), current.algebraic.unknowns)
+        return ImplicitStepResult(
+            evaluation,
+            method_name,
+            0,
+            evaluation.algebraic.residual_norm,
+            circuit_evaluations,
+            algebraic_iterations,
+        )
 
     current_state = list(current.dynamic_state)
     if initial_guess is None:
@@ -66,7 +111,7 @@ def implicit_step(
 
     def step_residual(state: list[float]) -> list[float]:
         nonlocal algebraic_guess
-        evaluation = circuit.evaluate(target_time, state, algebraic_guess)
+        evaluation = evaluate(target_time, state, algebraic_guess)
         algebraic_guess = evaluation.algebraic.unknowns
         if method_name == "backward_euler":
             return [
@@ -117,8 +162,15 @@ def implicit_step(
             norm_inf(candidate), norm_inf(current_state), 1.0
         )
         if residual_norm <= tolerance:
-            evaluation = circuit.evaluate(target_time, candidate, algebraic_guess)
-            return ImplicitStepResult(evaluation, method_name, iteration, residual_norm)
+            evaluation = evaluate(target_time, candidate, algebraic_guess)
+            return ImplicitStepResult(
+                evaluation,
+                method_name,
+                iteration,
+                residual_norm,
+                circuit_evaluations,
+                algebraic_iterations,
+            )
         if iteration == settings.max_iterations:
             break
 
@@ -165,6 +217,27 @@ def integrate_reference_window(
     method: str = "trapezoidal",
     settings: ImplicitSettings = ImplicitSettings(),
 ) -> list[CircuitEvaluation]:
+    return list(
+        integrate_reference_window_with_stats(
+            circuit,
+            initial,
+            target_times,
+            maximum_step,
+            method=method,
+            settings=settings,
+        ).evaluations
+    )
+
+
+def integrate_reference_window_with_stats(
+    circuit: Circuit,
+    initial: CircuitEvaluation,
+    target_times: Sequence[float],
+    maximum_step: float,
+    *,
+    method: str = "trapezoidal",
+    settings: ImplicitSettings = ImplicitSettings(),
+) -> ReferenceWindowResult:
     if maximum_step <= 0.0:
         raise ValueError("reference maximum step must be positive")
     if any(right <= left for left, right in zip(target_times, target_times[1:])):
@@ -174,6 +247,10 @@ def integrate_reference_window(
 
     current = initial
     outputs: list[CircuitEvaluation] = []
+    steps = 0
+    reference_iterations = 0
+    circuit_evaluations = 0
+    algebraic_iterations = 0
     for target_time in target_times:
         while current.time < target_time:
             remaining = target_time - current.time
@@ -182,7 +259,17 @@ def integrate_reference_window(
                 break
             result = implicit_step(circuit, method, current, step, settings=settings)
             current = result.evaluation
+            steps += 1
+            reference_iterations += result.iterations
+            circuit_evaluations += result.circuit_evaluations
+            algebraic_iterations += result.algebraic_iterations
         if abs(current.time - target_time) > 64.0 * max(abs(target_time), 1.0) * 2.220446049250313e-16:
             raise IntegrationError("reference replay failed to reach its target time")
         outputs.append(current)
-    return outputs
+    return ReferenceWindowResult(
+        evaluations=tuple(outputs),
+        steps=steps,
+        reference_iterations=reference_iterations,
+        circuit_evaluations=circuit_evaluations,
+        algebraic_iterations=algebraic_iterations,
+    )

@@ -8,7 +8,7 @@ from .integrators import (
     ImplicitSettings,
     IntegrationError,
     implicit_step,
-    integrate_reference_window,
+    integrate_reference_window_with_stats,
 )
 from .linalg import matrix_inf_norm, weighted_rms
 from .model import Circuit, CircuitEvaluation, CircuitSolveError
@@ -56,6 +56,8 @@ class BABCSConfig:
         )
         if any(value <= 0.0 for value in positive_values):
             raise ValueError("BAB-CS tolerances and limits must be positive")
+        if any(not math.isfinite(value) for value in positive_values):
+            raise ValueError("BAB-CS tolerances and limits must be finite")
         if not 0.0 < self.target_contraction < 1.0:
             raise ValueError("target_contraction must lie strictly between zero and one")
         if not 0.0 <= self.minimum_correction_gain <= self.maximum_correction_gain <= 1.0:
@@ -66,6 +68,13 @@ class BABCSConfig:
             raise ValueError("maximum_rejections must be positive")
         if self.rollout_mode not in {"disabled", "shadow", "active"}:
             raise ValueError("rollout_mode must be disabled, shadow, or active")
+        if self.maximum_step_ratio < 1.0:
+            raise ValueError("maximum_step_ratio must be at least one")
+        valid_implicit_methods = {"backward_euler", "trapezoidal", "bdf2"}
+        if self.reference_method.lower().replace("-", "_") not in valid_implicit_methods:
+            raise ValueError("reference_method must be backward_euler, trapezoidal, or bdf2")
+        if self.startup_method.lower().replace("-", "_") not in valid_implicit_methods:
+            raise ValueError("startup_method must be backward_euler, trapezoidal, or bdf2")
 
 
 @dataclass(frozen=True)
@@ -113,6 +122,19 @@ class StepMetrics:
     certified_contractive: bool
     reference_iterations: int
     projection_iterations: int
+    residual_ratio: float = 0.0
+    local_defect: float = 0.0
+    reference_solve_count: int = 0
+    reference_circuit_evaluations: int = 0
+    reference_algebraic_iterations: int = 0
+    predictor_projection_iterations: int = 0
+    explicit_projection_count: int = 0
+    differential_jacobian_evaluations: int = 0
+    replay_steps: int = 0
+    replay_reference_iterations: int = 0
+    replay_circuit_evaluations: int = 0
+    replay_algebraic_iterations: int = 0
+    pre_reset_estimated_bound: float = 0.0
     periodic_reanchor: bool = False
     safety_reanchor: bool = False
     anchor_reference_error: float = 0.0
@@ -311,12 +333,14 @@ class BoundedAdamsBashforthIntegrator:
                 corrected_state,
                 reference.algebraic.unknowns,
             )
+            explicit_projection_count = 2
         except CircuitSolveError:
             corrected = reference
             correction_gain = 1.0
             closed_loop_gain = 0.0
             method = "implicit_projection_fallback"
             fallback = True
+            explicit_projection_count = 1
 
         energy_balance_error, energy_injection_ratio = self._energy_metrics(current, corrected, step)
         if not all(math.isfinite(value) for value in (energy_balance_error, energy_injection_ratio)):
@@ -409,6 +433,15 @@ class BoundedAdamsBashforthIntegrator:
             certified_contractive=certified,
             reference_iterations=reference_result.iterations,
             projection_iterations=corrected.algebraic.iterations,
+            residual_ratio=residual_ratio,
+            local_defect=local_defect,
+            reference_solve_count=1,
+            reference_circuit_evaluations=reference_result.circuit_evaluations,
+            reference_algebraic_iterations=reference_result.algebraic_iterations,
+            predictor_projection_iterations=predicted.algebraic.iterations,
+            explicit_projection_count=explicit_projection_count,
+            differential_jacobian_evaluations=2,
+            pre_reset_estimated_bound=estimated_bound,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -490,6 +523,9 @@ class BoundedAdamsBashforthIntegrator:
             certified_contractive=True,
             reference_iterations=result.iterations,
             projection_iterations=evaluation.algebraic.iterations,
+            reference_solve_count=1,
+            reference_circuit_evaluations=result.circuit_evaluations,
+            reference_algebraic_iterations=result.algebraic_iterations,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -567,6 +603,9 @@ class BoundedAdamsBashforthIntegrator:
             certified_contractive=True,
             reference_iterations=result.iterations,
             projection_iterations=evaluation.algebraic.iterations,
+            reference_solve_count=1,
+            reference_circuit_evaluations=result.circuit_evaluations,
+            reference_algebraic_iterations=result.algebraic_iterations,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -593,7 +632,7 @@ class BoundedAdamsBashforthIntegrator:
         maximum_step = max(maximum_step, self.config.minimum_step)
 
         try:
-            reference_states = integrate_reference_window(
+            replay = integrate_reference_window_with_stats(
                 circuit,
                 anchor,
                 target_times,
@@ -601,12 +640,13 @@ class BoundedAdamsBashforthIntegrator:
                 method=self.config.reference_method,
                 settings=self.config.implicit_settings,
             )
-        except IntegrationError as error:
+        except (CircuitSolveError, IntegrationError) as error:
             raise StepRejected(
                 f"independent re-anchor failed: {error}",
                 max(result.state.accepted_step * 0.5, self.config.minimum_step),
             ) from error
 
+        reference_states = replay.evaluations
         anchored_current = reference_states[-1]
         anchor_error = self._scaled_state_error(
             current.dynamic_state,
@@ -644,11 +684,19 @@ class BoundedAdamsBashforthIntegrator:
             result.metrics,
             method=new_state.method,
             corrected_reference_error=0.0,
+            algebraic_residual=anchored_current.algebraic.residual_norm,
+            full_residual=circuit.full_residual_norm(anchored_current),
             estimated_bound=0.0,
+            residual_ratio=0.0,
+            local_defect=0.0,
             certified_contractive=True,
             periodic_reanchor=True,
             safety_reanchor=safety_reanchor,
             anchor_reference_error=anchor_error,
+            replay_steps=replay.steps,
+            replay_reference_iterations=replay.reference_iterations,
+            replay_circuit_evaluations=replay.circuit_evaluations,
+            replay_algebraic_iterations=replay.algebraic_iterations,
         )
         return StepResult(new_state, new_history, metrics)
 

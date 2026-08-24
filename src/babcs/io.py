@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+from collections import Counter
 from dataclasses import fields
 from pathlib import Path
 from typing import Any
@@ -100,6 +101,7 @@ def _element_from_data(data: object):
 def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> None:
     node_names = list(circuit.nodes)
     metric_names = [
+        "correction_gain",
         "predictor_reference_error",
         "corrected_reference_error",
         "algebraic_residual",
@@ -107,12 +109,36 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
         "energy_balance_error",
         "energy_injection_ratio",
         "stiffness_indicator",
+        "predictor_amplification",
         "closed_loop_gain",
         "estimated_bound",
+        "residual_ratio",
+        "local_defect",
         "anchor_reference_error",
+        "reference_iterations",
+        "projection_iterations",
+        "reference_solve_count",
+        "reference_circuit_evaluations",
+        "reference_algebraic_iterations",
+        "predictor_projection_iterations",
+        "explicit_projection_count",
+        "differential_jacobian_evaluations",
+        "replay_steps",
+        "replay_reference_iterations",
+        "replay_circuit_evaluations",
+        "replay_algebraic_iterations",
+        "pre_reset_estimated_bound",
     ]
     columns = (
-        ["time", "method", "event_boundary", "rejection_count"]
+        [
+            "time",
+            "accepted_step",
+            "method",
+            "event_boundary",
+            "history_reset_reason",
+            "rejection_count",
+            "rejection_reasons",
+        ]
         + [f"state:{name}" for name in circuit.dynamic_names]
         + [f"voltage:{node}" for node in node_names]
         + metric_names
@@ -123,9 +149,12 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
         for point in result.points:
             row: dict[str, object] = {
                 "time": point.time,
+                "accepted_step": point.state.accepted_step,
                 "method": point.state.method,
                 "event_boundary": int(point.event_boundary),
+                "history_reset_reason": point.history_reset_reason,
                 "rejection_count": point.rejection_count,
+                "rejection_reasons": " | ".join(point.rejection_reasons),
             }
             row.update(
                 {
@@ -151,6 +180,15 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
 
 def summary_data(result: SimulationResult) -> dict[str, object]:
     metrics = [point.metrics for point in result.points if point.metrics is not None]
+    accepted_steps = [point.state.accepted_step for point in result.points[1:]]
+    rejection_categories = Counter(
+        _rejection_category(reason)
+        for point in result.points
+        for reason in point.rejection_reasons
+    )
+    reset_reasons = Counter(
+        point.history_reset_reason for point in result.points if point.history_reset_reason
+    )
     return {
         "points": len(result.points),
         "start_time": result.points[0].time,
@@ -161,6 +199,11 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
         "safety_reanchors": result.final_history.safety_reanchors,
         "implicit_fallbacks": result.final_history.implicit_fallbacks,
         "history_generation": result.final_history.generation,
+        "minimum_accepted_step": min(accepted_steps, default=0.0),
+        "maximum_accepted_step": max(accepted_steps, default=0.0),
+        "mean_accepted_step": (
+            sum(accepted_steps) / len(accepted_steps) if accepted_steps else 0.0
+        ),
         "maximum_predictor_reference_error": max(
             (metric.predictor_reference_error for metric in metrics), default=0.0
         ),
@@ -173,11 +216,51 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
             (metric.energy_injection_ratio for metric in metrics), default=0.0
         ),
         "maximum_estimated_bound": max((metric.estimated_bound for metric in metrics), default=0.0),
+        "maximum_pre_reset_estimated_bound": max(
+            (metric.pre_reset_estimated_bound for metric in metrics), default=0.0
+        ),
+        "maximum_anchor_reference_error": max(
+            (metric.anchor_reference_error for metric in metrics), default=0.0
+        ),
         "contractive_steps": sum(metric.certified_contractive for metric in metrics),
         "ab_steps": sum(metric.ab_used for metric in metrics),
+        "reference_solves": sum(metric.reference_solve_count for metric in metrics),
+        "reference_iterations": sum(metric.reference_iterations for metric in metrics),
+        "reference_circuit_evaluations": sum(
+            metric.reference_circuit_evaluations for metric in metrics
+        ),
+        "reference_algebraic_iterations": sum(
+            metric.reference_algebraic_iterations for metric in metrics
+        ),
+        "explicit_projections": sum(metric.explicit_projection_count for metric in metrics),
+        "predictor_projection_iterations": sum(
+            metric.predictor_projection_iterations for metric in metrics
+        ),
+        "corrected_projection_iterations": sum(
+            metric.projection_iterations for metric in metrics
+        ),
+        "differential_jacobian_evaluations": sum(
+            metric.differential_jacobian_evaluations for metric in metrics
+        ),
+        "replay_steps": sum(metric.replay_steps for metric in metrics),
+        "replay_reference_iterations": sum(
+            metric.replay_reference_iterations for metric in metrics
+        ),
+        "replay_circuit_evaluations": sum(
+            metric.replay_circuit_evaluations for metric in metrics
+        ),
+        "replay_algebraic_iterations": sum(
+            metric.replay_algebraic_iterations for metric in metrics
+        ),
+        "rejection_reasons": dict(sorted(rejection_categories.items())),
+        "history_resets": dict(sorted(reset_reasons.items())),
     }
+
+
+def _rejection_category(reason: str) -> str:
+    prefix = reason.split(":", 1)[0].strip().lower()
+    return "_".join(prefix.replace("-", " ").split())
 
 
 def write_summary(path: str | Path, result: SimulationResult) -> None:
     Path(path).write_text(json.dumps(summary_data(result), indent=2, sort_keys=True) + "\n", encoding="utf-8")
-

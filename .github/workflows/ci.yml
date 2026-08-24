@@ -33,7 +33,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Compile sources
-        run: python -m compileall -q -f src tests
+        run: python -m compileall -q -f src tests tools
 
       - name: Run regression suite
         env:
@@ -58,6 +58,19 @@ jobs:
             cmp "/tmp/babcs-a/${case}.csv" "/tmp/babcs-b/${case}.csv"
             cmp "/tmp/babcs-a/${case}.json" "/tmp/babcs-b/${case}.json"
           done
+
+      - name: Verify deterministic comparison smoke
+        if: matrix.python-version == '3.14'
+        env:
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/compare_methods.py --case rc_step --quick \
+            --output /tmp/babcs-comparison-a.json
+          python tools/compare_methods.py --case rc_step --quick \
+            --output /tmp/babcs-comparison-b.json
+          cmp /tmp/babcs-comparison-a.json /tmp/babcs-comparison-b.json
 
   wheel:
     name: Build validated wheel

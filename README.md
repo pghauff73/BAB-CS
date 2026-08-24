@@ -100,6 +100,51 @@ Run tests:
 PYTHONPATH=src python -m unittest discover -s tests -v
 ```
 
+Run the scheduled long-horizon tier locally:
+
+```bash
+BABCS_LONG_TESTS=1 PYTHONPATH=src python -m unittest discover -s tests -v
+```
+
+Run the complete release-qualification tier, including the 1,000-period LC
+case:
+
+```bash
+BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
+  PYTHONPATH=src python -m unittest discover -s tests -v
+```
+
+Generate deterministic method-comparison evidence:
+
+```bash
+PYTHONPATH=src python tools/compare_methods.py \
+  --output /tmp/babcs-comparison.json \
+  --csv-output /tmp/babcs-comparison.csv \
+  --plot-output /tmp/babcs-comparison.svg \
+  --timing-output /tmp/babcs-timing.json \
+  --timing-repeats 3
+```
+
+The numerical JSON, CSV, and SVG exclude wall-clock measurements and are
+byte-reproducible for the same source, manifest, interpreter, and platform.
+Timing is written separately because it is characterization evidence, not a
+correctness threshold.
+
+When `ngspice` is installed, generate optional cross-implementation evidence:
+
+```bash
+PYTHONPATH=src python tools/compare_external.py \
+  benchmarks/cases/rc_step.json \
+  --output /tmp/babcs-ngspice.json \
+  --netlist-output /tmp/babcs-ngspice.cir \
+  --raw-output /tmp/babcs-ngspice.dat \
+  --log-output /tmp/babcs-ngspice.log
+```
+
+See `docs/COMPARISON_PROTOCOL.md` and `docs/EXTERNAL_COMPARISON.md` for the
+authority hierarchy, metrics, fixed-timestep/fixed-accuracy/fixed-work
+interpretation, and claim boundaries.
+
 Build a wheel:
 
 ```bash
@@ -174,3 +219,20 @@ force an implicit startup step after the event.
   not a proof against the unknown exact physical trajectory.
 - Periodic anchors replay endpoints and the preceding history state; they do not
   rewrite already emitted intermediate output samples.
+- Active BAB-CS performs an implicit reference solve on every eligible AB step.
+  Its current architecture targets bounded, inspectable behavior rather than
+  outperforming a pure implicit method.
+
+## Qualification Automation
+
+- `.github/workflows/ci.yml` runs the bounded pull-request matrix, deterministic
+  examples and comparison smoke, then builds and smoke-tests the wheel.
+- `.github/workflows/comparisons.yml` runs weekly long-horizon, full method,
+  repeated timing, and optional `ngspice` evidence jobs without blocking pull
+  requests.
+- `.github/workflows/release-qualification.yml` runs the complete source suite,
+  tests the installed candidate wheel, and records source, wheel, report, and
+  environment provenance for release review.
+
+Any changed numerical threshold, baseline, or deterministic artifact requires
+human review before release publication.

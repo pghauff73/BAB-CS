@@ -1,0 +1,191 @@
+{
+  "schema_version": 1,
+  "sample_count": 100,
+  "accuracy_targets": [0.01, 0.001, 0.0001],
+  "work_budgets": [100, 500, 2000, 10000],
+  "cases": [
+    {
+      "id": "rc_step",
+      "input": "cases/rc_step.json",
+      "state_indices": [0],
+      "methods": ["backward_euler", "trapezoidal", "bdf2", "shadow", "active", "raw_ab2"],
+      "nominal_steps": [0.0001, 0.00005, 0.000025],
+      "anchor_intervals": [16],
+      "authority": {
+        "type": "analytic",
+        "model": "rc",
+        "parameters": {
+          "resistance": 1000.0,
+          "capacitance": 1e-6,
+          "source_voltage": 1.0,
+          "initial_voltage": 0.0
+        }
+      },
+      "raw_model": {
+        "model": "rc",
+        "parameters": {
+          "resistance": 1000.0,
+          "capacitance": 1e-6,
+          "source_voltage": 1.0
+        }
+      }
+    },
+    {
+      "id": "rl_step",
+      "input": "cases/rl_step.json",
+      "state_indices": [0],
+      "methods": ["backward_euler", "trapezoidal", "bdf2", "shadow", "active", "raw_ab2"],
+      "nominal_steps": [0.00001, 0.000005, 0.0000025],
+      "anchor_intervals": [16],
+      "authority": {
+        "type": "analytic",
+        "model": "rl",
+        "parameters": {
+          "resistance": 10.0,
+          "inductance": 0.001,
+          "source_voltage": 1.0,
+          "initial_current": 0.0
+        }
+      },
+      "raw_model": {
+        "model": "rl",
+        "parameters": {
+          "resistance": 10.0,
+          "inductance": 0.001,
+          "source_voltage": 1.0
+        }
+      }
+    },
+    {
+      "id": "rlc_damped",
+      "input": "cases/rlc_damped.json",
+      "state_indices": [0, 1],
+      "methods": ["trapezoidal", "bdf2", "active", "raw_ab2"],
+      "nominal_steps": [0.000004, 0.000002, 0.000001],
+      "anchor_intervals": [20],
+      "authority": {
+        "type": "analytic",
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": 100.0,
+          "capacitance": 1e-6,
+          "inductance": 0.001,
+          "initial_voltage": 1.0,
+          "initial_current": 0.0
+        }
+      },
+      "raw_model": {
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": 100.0,
+          "capacitance": 1e-6,
+          "inductance": 0.001
+        }
+      }
+    },
+    {
+      "id": "rlc_overdamped",
+      "input": "cases/rlc_overdamped.json",
+      "state_indices": [0, 1],
+      "methods": ["trapezoidal", "bdf2", "active", "raw_ab2"],
+      "nominal_steps": [0.000002, 0.000001, 0.0000005],
+      "anchor_intervals": [20],
+      "authority": {
+        "type": "analytic",
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": 10.0,
+          "capacitance": 1e-6,
+          "inductance": 0.001,
+          "initial_voltage": 1.0,
+          "initial_current": 0.0
+        }
+      },
+      "raw_model": {
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": 10.0,
+          "capacitance": 1e-6,
+          "inductance": 0.001
+        }
+      }
+    },
+    {
+      "id": "driven_rc",
+      "input": "cases/driven_rc.json",
+      "state_indices": [0],
+      "methods": ["backward_euler", "trapezoidal", "bdf2", "shadow", "active"],
+      "nominal_steps": [0.00004, 0.00002, 0.00001],
+      "anchor_intervals": [20],
+      "authority": {
+        "type": "analytic",
+        "model": "driven_rc",
+        "parameters": {
+          "resistance": 1000.0,
+          "capacitance": 1e-6,
+          "amplitude": 1.0,
+          "frequency": 250.0,
+          "initial_voltage": 0.0
+        }
+      }
+    },
+    {
+      "id": "lc_long",
+      "input": "cases/lc_long.json",
+      "state_indices": [0, 1],
+      "methods": ["trapezoidal", "active", "raw_ab2"],
+      "nominal_steps": [1.6557647109660166e-6, 8.278823554830083e-7],
+      "anchor_intervals": [10, 20, 100],
+      "oscillator": {
+        "period": 0.000198691765315922,
+        "capacitance": 1e-6,
+        "inductance": 0.001
+      },
+      "authority": {
+        "type": "analytic",
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": "inf",
+          "capacitance": 1e-6,
+          "inductance": 0.001,
+          "initial_voltage": 1.0,
+          "initial_current": 0.0
+        }
+      },
+      "raw_model": {
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": "inf",
+          "capacitance": 1e-6,
+          "inductance": 0.001
+        }
+      }
+    },
+    {
+      "id": "diode_clip",
+      "input": "cases/diode_clip.json",
+      "state_indices": [0],
+      "methods": ["trapezoidal", "shadow", "active"],
+      "nominal_steps": [0.000004, 0.000002, 0.000001],
+      "anchor_intervals": [50],
+      "authority": {
+        "type": "refined_replay",
+        "method": "trapezoidal",
+        "maximum_step": 1.25e-7
+      }
+    },
+    {
+      "id": "switched_rc",
+      "input": "cases/switched_rc.json",
+      "state_indices": [0],
+      "methods": ["trapezoidal", "active"],
+      "nominal_steps": [0.00002, 0.00001, 0.000005],
+      "anchor_intervals": [50],
+      "authority": {
+        "type": "refined_replay",
+        "method": "trapezoidal",
+        "maximum_step": 6.25e-7
+      }
+    }
+  ]
+}
