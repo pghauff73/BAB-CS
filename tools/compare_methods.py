@@ -927,15 +927,7 @@ def source_metadata(repository_root: Path) -> dict[str, Any]:
             capture_output=True,
             text=True,
         ).stdout.strip()
-        dirty = bool(
-            subprocess.run(
-                ["git", "status", "--porcelain"],
-                cwd=repository_root,
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout
-        )
+        dirty = _source_scope_dirty(repository_root)
     except (OSError, subprocess.CalledProcessError):
         commit = "unknown"
         dirty = True
@@ -961,6 +953,26 @@ def source_metadata(repository_root: Path) -> dict[str, Any]:
             "directories and docs/TESTS_AND_COMPARISONS_AUDIT.md."
         ),
     }
+
+
+def _source_scope_dirty(repository_root: Path) -> bool:
+    tracked = subprocess.run(
+        ["git", "diff", "--name-only", "-z", "HEAD", "--"],
+        cwd=repository_root,
+        check=True,
+        capture_output=True,
+    ).stdout
+    untracked = subprocess.run(
+        ["git", "ls-files", "-z", "--others", "--exclude-standard"],
+        cwd=repository_root,
+        check=True,
+        capture_output=True,
+    ).stdout
+    return any(
+        _include_source_path(Path(value.decode("utf-8")))
+        for value in (*tracked.split(b"\0"), *untracked.split(b"\0"))
+        if value
+    )
 
 
 def _source_files(repository_root: Path) -> tuple[Path, ...]:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +10,7 @@ from tools.compare_methods import (
     ComparisonConfigurationError,
     execute_manifest,
     load_manifest,
+    source_metadata,
     write_csv_report,
     write_report,
     write_svg_plot,
@@ -20,6 +22,42 @@ MANIFEST = REPOSITORY_ROOT / "benchmarks" / "manifest.json"
 
 
 class ComparisonRunnerTests(unittest.TestCase):
+    def test_source_dirty_flag_uses_the_source_hash_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            source = repository / "src" / "example.py"
+            source.parent.mkdir()
+            source.write_text("VALUE = 1\n", encoding="utf-8")
+            subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "config", "user.email", "tests@example.invalid"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "config", "user.name", "BAB-CS Tests"],
+                cwd=repository,
+                check=True,
+            )
+            subprocess.run(["git", "add", "src/example.py"], cwd=repository, check=True)
+            subprocess.run(
+                ["git", "commit", "-q", "-m", "initial"],
+                cwd=repository,
+                check=True,
+            )
+
+            self.assertFalse(source_metadata(repository)["dirty"])
+            artifact = repository / "artifacts" / "comparison.json"
+            artifact.parent.mkdir()
+            artifact.write_text("{}\n", encoding="utf-8")
+            audit = repository / "docs" / "TESTS_AND_COMPARISONS_AUDIT.md"
+            audit.parent.mkdir()
+            audit.write_text("evidence\n", encoding="utf-8")
+            self.assertFalse(source_metadata(repository)["dirty"])
+
+            source.write_text("VALUE = 2\n", encoding="utf-8")
+            self.assertTrue(source_metadata(repository)["dirty"])
+
     def test_manifest_declares_all_standard_methods(self) -> None:
         manifest = load_manifest(MANIFEST)
         methods = {
