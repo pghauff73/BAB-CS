@@ -23,6 +23,9 @@ from .linalg import matrix_inf_norm, weighted_rms
 from .model import Circuit, CircuitEvaluation, CircuitSolveError
 
 
+DEFERRED_NATIVE_JACOBIAN_MINIMUM_SIZE = 64
+
+
 @dataclass(frozen=True)
 class BABCSConfig:
     rollout_mode: str = "shadow"
@@ -295,6 +298,16 @@ class BoundedAdamsBashforthIntegrator:
         if requested_method == "ab2" and not self._can_use_ab(history, step):
             return self._implicit_startup_step(circuit, state, history, step)
 
+        scheduled_reference = (
+            self.config.rollout_mode == "shadow"
+            or self.config.reference_interval_steps == 1
+            or history.accepted_steps % self.config.reference_interval_steps == 0
+        )
+        prepare_sparse_chord = (
+            scheduled_reference
+            or circuit.dynamic_size < DEFERRED_NATIVE_JACOBIAN_MINIMUM_SIZE
+        )
+
         try:
             candidate_result = candidate_step(
                 circuit,
@@ -304,6 +317,7 @@ class BoundedAdamsBashforthIntegrator:
                 previous_evaluation=history.previous_evaluation,
                 previous_step=history.previous_step,
                 implicit_settings=self.config.implicit_settings,
+                prepare_sparse_chord=prepare_sparse_chord,
             )
         except CandidateUnavailable:
             return self._implicit_startup_step(circuit, state, history, step)
@@ -335,11 +349,6 @@ class BoundedAdamsBashforthIntegrator:
                     max(step * 0.5, self.config.minimum_step),
                 )
 
-        scheduled_reference = (
-            self.config.rollout_mode == "shadow"
-            or self.config.reference_interval_steps == 1
-            or history.accepted_steps % self.config.reference_interval_steps == 0
-        )
         reference_result = None
         reference = None
         predictor_error = 0.0

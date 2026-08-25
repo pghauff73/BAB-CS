@@ -186,6 +186,13 @@ created by NumPy advanced indexing instead of copying it again. This smaller
 follow-up reduced the 32-channel mixed workload by 1.1% and the 64-channel
 mixed workload by 0.8% on average with exact traces
 [[17]](REFERENCES.md#ref-17).
+For active modes that intentionally defer the independent reference, candidate
+projection now omits dense dynamic-Jacobian storage at 64 or more dynamic
+states. If a later stiffness or bound checkpoint forces authority, the same
+owned sensitivity result is upgraded before the chord attempt. At a reference
+interval of eight, balanced 64-channel runs improved mixed, pulsed, and switched
+workloads by 1.1%, 1.4%, and 1.6% on average with exact traces
+[[17]](REFERENCES.md#ref-17).
 
 The current simulator also compiles pure built-in breakpoint schedules once per
 run, deduplicating identical timing while preserving custom waveform calls and
@@ -207,7 +214,7 @@ than to expose only a final waveform.
 
 ## Evidence and Release State
 
-The qualification surface now comprises 219 test methods across model,
+The qualification surface now comprises 222 test methods across model,
 linear-algebra, integrator, candidate, nonlinear, event, long-horizon,
 comparison, packaging, and release-evidence modules [[32]](REFERENCES.md#ref-32).
 Long and very-long tests are opt-in tiers, and optional sparse tests execute
@@ -273,9 +280,16 @@ The next research phase follows directly from this current position. Private
 raw sparse values now feed a combined KLU factor-and-solve handle, native
 sensitivity has an independent Jacobian-only assembly kernel, and mixed C+L
 trapezoidal replay uses derivative-defect evidence with complete-window retry.
-The highest-value remaining paths are KLU right-hand-side and result residency,
-diagnostics for factorization and generated-kernel cache policy, native residual
-ownership, and evidence-gated anchor scheduling with a maximum elapsed authority
-age. Device expansion, state-dependent event localization, broader DAE topology
-handling, and stronger bound-coverage arguments remain larger scientific
-programs rather than small optimizations [[17]](REFERENCES.md#ref-17).
+Direct instrumentation found one initial KLU workspace miss, identity hits
+thereafter, and zero evictions in the qualified large workloads, so widening
+cache policy is not the next measured gain. Cross-anchor replay-refinement
+retention was also rejected: it reduced retry and replay counts but slowed the
+measured one- and 32-channel workloads and was not uniformly closer to an
+eight-substep authority. A Backward Euler defect prototype likewise over-
+refined the default RC replay. The highest-value remaining paths are a
+method-specific BDF2 replay estimator, KLU buffer residency, native residual
+ownership, and evidence-gated anchor scheduling with a maximum elapsed
+authority age. Device expansion, state-dependent event localization, broader
+DAE topology handling, and stronger bound-coverage arguments remain larger
+scientific programs rather than small optimizations
+[[17]](REFERENCES.md#ref-17).

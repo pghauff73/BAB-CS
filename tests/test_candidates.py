@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import unittest
+from unittest.mock import patch
 
 from babcs import (
     BABCSConfig,
@@ -29,6 +30,27 @@ def rc_circuit() -> Circuit:
             Capacitor("C1", "out", "0", 1.0e-6),
         ]
     )
+
+
+def diode_channel_circuit(count: int) -> Circuit:
+    elements = []
+    for index in range(count):
+        source = f"vin{index}"
+        output = f"out{index}"
+        elements.extend(
+            [
+                VoltageSource(
+                    f"V{index}",
+                    source,
+                    "0",
+                    Sine(0.0, 1.0 + index * 0.01, 1_000.0),
+                ),
+                Resistor(f"R{index}", source, output, 1_000.0),
+                Diode(f"D{index}", output, "0"),
+                Capacitor(f"C{index}", output, "0", 1.0e-6),
+            ]
+        )
+    return Circuit(elements, linear_backend="auto")
 
 
 REFERENCE_BY_CANDIDATE = {
@@ -95,6 +117,85 @@ class CandidateIntegratorTests(unittest.TestCase):
                 )
                 self.assertIsNotNone(result.base_jacobian_norm)
                 self.assertLessEqual(result.algebraic_iterations, maximum_iterations)
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_explicit_candidate_can_defer_dense_native_jacobian(self) -> None:
+        elements = []
+        for index in range(16):
+            source = f"vin{index}"
+            output = f"out{index}"
+            elements.extend(
+                [
+                    VoltageSource(
+                        f"V{index}",
+                        source,
+                        "0",
+                        Sine(0.0, 1.0 + index * 0.01, 1_000.0),
+                    ),
+                    Resistor(f"R{index}", source, output, 1_000.0),
+                    Diode(f"D{index}", output, "0"),
+                    Capacitor(f"C{index}", output, "0", 1.0e-6),
+                ]
+            )
+        circuit = Circuit(elements, linear_backend="auto")
+        current = circuit.evaluate(0.0, circuit.initial_dynamic_state())
+
+        deferred = candidate_step(
+            circuit,
+            "rk23",
+            current,
+            2.0e-6,
+            prepare_sparse_chord=False,
+        )
+        deferred_native = circuit._latest_native_differential_sensitivity
+
+        eager = candidate_step(
+            circuit,
+            "rk23",
+            current,
+            2.0e-6,
+            prepare_sparse_chord=True,
+        )
+        eager_native = circuit._latest_native_differential_sensitivity
+
+        self.assertIsNotNone(deferred_native)
+        self.assertIsNotNone(eager_native)
+        assert deferred_native is not None and eager_native is not None
+        self.assertIsNone(deferred_native.differential_jacobian)
+        self.assertIsNotNone(eager_native.differential_jacobian)
+        self.assertEqual(deferred.base_jacobian_norm, eager.base_jacobian_norm)
+        self.assertEqual(deferred.evaluation, eager.evaluation)
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_controller_defers_native_jacobian_only_above_crossover(self) -> None:
+        for channel_count, expected_prepare in ((16, True), (64, False)):
+            with self.subTest(channel_count=channel_count):
+                circuit = diode_channel_circuit(channel_count)
+                integrator = BoundedIntegrator(
+                    BABCSConfig(
+                        rollout_mode="active",
+                        candidate_method="rk23",
+                        reference_interval_steps=8,
+                        predictor_reference_cap=1.0e9,
+                        embedded_error_cap=1.0e9,
+                        energy_injection_cap=1.0e9,
+                        stiffness_limit=1.0e9,
+                        anchor_interval_steps=1_000,
+                    )
+                )
+                state, history = integrator.initialize(circuit)
+                first = integrator.step(circuit, state, history, 2.0e-6)
+
+                with patch(
+                    "babcs.bounded.candidate_step",
+                    wraps=candidate_step,
+                ) as bounded_candidate_step:
+                    integrator.step(circuit, first.state, first.history, 2.0e-6)
+
+                self.assertEqual(
+                    bounded_candidate_step.call_args.kwargs["prepare_sparse_chord"],
+                    expected_prepare,
+                )
 
     def test_all_supported_candidates_share_the_bounded_controller(self) -> None:
         self.assertEqual(set(REFERENCE_BY_CANDIDATE), CANDIDATE_METHODS)

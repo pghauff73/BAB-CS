@@ -1247,6 +1247,61 @@ class CircuitModelTests(unittest.TestCase):
         self.assertTrue(update.requires_contraction)
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_sparse_chord_materializes_deferred_differential_jacobian(self) -> None:
+        circuit = Circuit(_diode_channel_elements(16), linear_backend="auto")
+        state = circuit.initial_dynamic_state()
+        source = circuit.evaluate(2.5e-5, state)
+        native = circuit._native_differential_sensitivity(
+            source,
+            materialize_differential_jacobian=False,
+        )
+        self.assertIsNotNone(native)
+        assert native is not None
+        self.assertIsNone(native.differential_jacobian)
+        target = circuit.evaluate(2.6e-5, state, source.algebraic.unknowns)
+        residual = tuple(0.001 * (index + 1) for index in range(circuit.dynamic_size))
+
+        with patch.object(
+            circuit,
+            "_materialize_native_differential_jacobian",
+            wraps=circuit._materialize_native_differential_jacobian,
+        ) as materialize:
+            chord = circuit.sparse_implicit_update(
+                target,
+                1.0,
+                1.0e-6,
+                residual,
+            )
+        exact = circuit.sparse_implicit_update(
+            target,
+            1.0,
+            1.0e-6,
+            residual,
+            allow_chord=False,
+        )
+
+        self.assertEqual(materialize.call_count, 1)
+        self.assertIsNotNone(chord)
+        self.assertIsNotNone(exact)
+        assert chord is not None and exact is not None
+        self.assertTrue(chord.requires_contraction)
+        self.assertIsNotNone(
+            circuit._latest_native_differential_sensitivity.differential_jacobian
+        )
+        for chord_value, exact_value in zip(
+            chord.dynamic_update,
+            exact.dynamic_update,
+            strict=True,
+        ):
+            self.assertAlmostEqual(chord_value, exact_value, places=13)
+        for chord_value, exact_value in zip(
+            chord.algebraic_update,
+            exact.algebraic_update,
+            strict=True,
+        ):
+            self.assertAlmostEqual(chord_value, exact_value, places=13)
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_chord_uses_ulp_aware_two_step_evidence_age(self) -> None:
         circuit = Circuit(_diode_channel_elements(16), linear_backend="auto")
         state = circuit.initial_dynamic_state()

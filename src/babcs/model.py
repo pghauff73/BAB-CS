@@ -294,7 +294,7 @@ class _AlgebraicProjection:
 class _NativeDifferentialSensitivity:
     factorization: ReusableLinearFactorization
     sensitivities: Any
-    differential_jacobian: Any
+    differential_jacobian: Any | None
     differential_jacobian_norm: float
     numpy: Any
 
@@ -2159,10 +2159,15 @@ class Circuit:
         evaluation: CircuitEvaluation,
         target_time: float,
         target_state: Sequence[float],
+        *,
+        prepare_sparse_chord: bool = True,
     ) -> _AlgebraicProjection | None:
         if len(target_state) != self.dynamic_size:
             raise ValueError("algebraic projection state has the wrong size")
-        native = self._native_differential_sensitivity(evaluation)
+        native = self._native_differential_sensitivity(
+            evaluation,
+            materialize_differential_jacobian=prepare_sparse_chord,
+        )
         if native is None:
             return None
 
@@ -2221,6 +2226,8 @@ class Circuit:
     def _native_differential_sensitivity(
         self,
         evaluation: CircuitEvaluation,
+        *,
+        materialize_differential_jacobian: bool = True,
     ) -> _NativeDifferentialSensitivity | None:
         if (
             type(self) is not Circuit
@@ -2349,6 +2356,14 @@ class Circuit:
         if sensitivities is None:
             return None
 
+        if not materialize_differential_jacobian:
+            return self._native_differential_sensitivity_without_jacobian(
+                evaluation,
+                factorization,
+                sensitivities,
+                numpy,
+            )
+
         differential_jacobian = numpy.empty(
             (self.dynamic_size, self.dynamic_size),
             dtype=float,
@@ -2423,6 +2438,124 @@ class Circuit:
         self._latest_native_differential_sensitivity_evaluation = evaluation
         self._latest_native_differential_sensitivity = native
         return native
+
+    def _native_differential_sensitivity_without_jacobian(
+        self,
+        evaluation: CircuitEvaluation,
+        factorization: ReusableLinearFactorization,
+        sensitivities: Any,
+        numpy: Any,
+    ) -> _NativeDifferentialSensitivity:
+        capacitances, inductances = self._native_differential_scales(numpy)
+        maximum = 0.0
+        if self.capacitors:
+            capacitor_sensitivities = sensitivities[:, self._capacitor_branch_indices]
+            row_sums = numpy.sum(
+                numpy.abs(capacitor_sensitivities),
+                axis=0,
+            )
+            scaled_maximum = float(
+                numpy.max(row_sums / capacitances, initial=0.0)
+            )
+            if math.isnan(scaled_maximum):
+                return scaled_maximum
+            if scaled_maximum > maximum:
+                maximum = scaled_maximum
+        if self.inductors:
+            positive_columns = self._inductor_positive_sensitivity_columns
+            positive_nodes = self._inductor_positive_sensitivity_nodes
+            if len(positive_columns) == len(self.inductors):
+                voltage_sensitivities = sensitivities[:, positive_nodes]
+            else:
+                voltage_sensitivities = numpy.zeros(
+                    (self.dynamic_size, len(self.inductors)),
+                    dtype=float,
+                )
+                voltage_sensitivities[:, positive_columns] = sensitivities[
+                    :, positive_nodes
+                ]
+            negative_columns = self._inductor_negative_sensitivity_columns
+            if negative_columns:
+                negative_nodes = self._inductor_negative_sensitivity_nodes
+                if len(negative_columns) == len(self.inductors):
+                    voltage_sensitivities -= sensitivities[:, negative_nodes]
+                else:
+                    voltage_sensitivities[:, negative_columns] -= sensitivities[
+                        :, negative_nodes
+                    ]
+            row_sums = numpy.sum(numpy.abs(voltage_sensitivities), axis=0)
+            scaled_maximum = float(
+                numpy.max(row_sums / inductances, initial=0.0)
+            )
+            if math.isnan(scaled_maximum):
+                return scaled_maximum
+            if scaled_maximum > maximum:
+                maximum = scaled_maximum
+
+        rounding = self.dynamic_size * 2.220446049250313e-16
+        if maximum == 0.0 or not math.isfinite(maximum) or rounding >= 1.0:
+            differential_jacobian_norm = maximum
+        else:
+            differential_jacobian_norm = math.nextafter(
+                maximum / (1.0 - rounding),
+                math.inf,
+            )
+        native = _NativeDifferentialSensitivity(
+            factorization=factorization,
+            sensitivities=sensitivities,
+            differential_jacobian=None,
+            differential_jacobian_norm=differential_jacobian_norm,
+            numpy=numpy,
+        )
+        self._latest_native_differential_sensitivity_evaluation = evaluation
+        self._latest_native_differential_sensitivity = native
+        return native
+
+    def _materialize_native_differential_jacobian(
+        self,
+        native: _NativeDifferentialSensitivity,
+    ) -> _NativeDifferentialSensitivity:
+        if native.differential_jacobian is not None:
+            return native
+        numpy = native.numpy
+        differential_jacobian = numpy.empty(
+            (self.dynamic_size, self.dynamic_size),
+            dtype=float,
+        )
+        capacitances, inductances = self._native_differential_scales(numpy)
+        if self.capacitors:
+            capacitor_sensitivities = native.sensitivities[
+                :, self._capacitor_branch_indices
+            ]
+            differential_jacobian[: len(self.capacitors), :] = (
+                capacitor_sensitivities.transpose() / capacitances[:, None]
+            )
+        if self.inductors:
+            positive_columns = self._inductor_positive_sensitivity_columns
+            positive_nodes = self._inductor_positive_sensitivity_nodes
+            if len(positive_columns) == len(self.inductors):
+                voltage_sensitivities = native.sensitivities[:, positive_nodes]
+            else:
+                voltage_sensitivities = numpy.zeros(
+                    (self.dynamic_size, len(self.inductors)),
+                    dtype=float,
+                )
+                voltage_sensitivities[:, positive_columns] = native.sensitivities[
+                    :, positive_nodes
+                ]
+            negative_columns = self._inductor_negative_sensitivity_columns
+            if negative_columns:
+                negative_nodes = self._inductor_negative_sensitivity_nodes
+                if len(negative_columns) == len(self.inductors):
+                    voltage_sensitivities -= native.sensitivities[:, negative_nodes]
+                else:
+                    voltage_sensitivities[:, negative_columns] -= native.sensitivities[
+                        :, negative_nodes
+                    ]
+            differential_jacobian[len(self.capacitors) :, :] = (
+                voltage_sensitivities.transpose() / inductances[:, None]
+            )
+        return replace(native, differential_jacobian=differential_jacobian)
 
     def differential_jacobian(
         self,
@@ -2631,7 +2764,12 @@ class Circuit:
         ):
             return None
 
+        if native.differential_jacobian is None:
+            native = self._materialize_native_differential_jacobian(native)
+            self._latest_native_differential_sensitivity = native
+
         numpy = native.numpy
+        assert native.differential_jacobian is not None
         implicit_jacobian = -derivative_coefficient * native.differential_jacobian
         diagonal = numpy.diag_indices(self.dynamic_size)
         implicit_jacobian[diagonal] += state_coefficient

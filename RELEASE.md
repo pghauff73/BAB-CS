@@ -190,6 +190,14 @@ sensitivity gather measured a further 1.133% mean reduction at 32 channels and
 0.832% at 64 channels, again with exact state, metric, rejection, and work
 traces.
 
+Deferred-reference candidate steps now omit dense dynamic-Jacobian storage at
+64 or more dynamic states and upgrade the same sensitivity result only if a
+later checkpoint forces implicit authority. Against exact commit `a0d67b5`,
+64-channel mixed, pulsed, and switched workloads at a reference interval of
+eight improved by 1.137%, 1.363%, and 1.613% on average; minimum round gains
+were 0.552%, 0.675%, and 0.992%. State, metric, rejection, fallback, and
+deterministic work traces were exactly equal.
+
 These numbers are local characterization for the named workloads and hardware.
 They are not a claim that BAB-CS is generally faster than `ngspice` or another
 production simulator.
@@ -248,7 +256,7 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 219 tests in 54.997 seconds with long, very-long, SciPy, and KLU tiers
+of all 222 tests in 53.167 seconds with long, very-long, SciPy, and KLU tiers
 enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.

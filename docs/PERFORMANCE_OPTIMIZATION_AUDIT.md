@@ -833,6 +833,36 @@ mean end-to-end reduction with a 0.539% minimum round reduction. Two balanced
 64-channel mixed runs measured a 0.832% mean reduction with a 0.076% minimum.
 State, metric, rejection, and deterministic work traces were exactly equal.
 
+### Deferred-reference Jacobian materialization
+
+The next ownership profile separated native sensitivity evidence from dense
+dynamic-Jacobian storage. Deferred-reference candidate steps need the batched
+algebraic sensitivities and conservative infinity norm, but they do not consume
+the dense dynamic Jacobian unless a later stiffness or bound checkpoint forces
+implicit authority. At 64 or more dynamic states, unscheduled reference steps
+now omit that quadratic allocation and scaling. Scheduled references keep the
+previous eager path, and a forced reference materializes the matrix from the
+same owned sensitivities before attempting the guarded sparse chord update.
+
+The crossover is deliberately evidence-gated at 64 dynamic states. At 32
+channels the whole-run effect remained timing noise. Against exact commit
+`a0d67b5`, three balanced 64-channel rounds at a reference interval of eight
+reduced mixed, pulsed, and switched workloads by 1.137%, 1.363%, and 1.613% on
+average. Minimum round reductions were 0.552%, 0.675%, and 0.992%. Exact state,
+metric, accepted/rejected work, and fallback traces were preserved. A
+128-channel follow-up remained positive for mixed and pulsed workloads, while
+switched timing was inconclusive; the retained 64-state crossover therefore
+rests on the all-positive 64-channel evidence rather than a monotonic-scaling
+claim.
+
+Instrumentation also ruled out broader cache policy as the next gain. Each
+profiled 32- and 64-channel run incurred one KLU workspace miss followed only by
+identity hits, zero evictions, one generated Jacobian-kernel compilation, and
+one numeric refactor per new sensitivity. Existing symbolic reuse is therefore
+already complete for these workloads. The remaining factorization opportunity
+is fewer justified numeric refreshes or a different backend interface, not a
+larger cache.
+
 ### Independent evidence-controlled replay refinement
 
 Direct timing showed that periodic independent replay consumed about 27.1% of
@@ -895,15 +925,15 @@ rather than baseline equality.
   long-horizon regression groups passed before the full run.
 - Full current-source qualification on August 25, 2026 with SciPy 1.18.0 and
   SuiteSparse KLU 2.3.6, `BABCS_LONG_TESTS=1`, and
-  `BABCS_VERY_LONG_TESTS=1`: 219 tests passed in 54.997 seconds, with zero skips.
+  `BABCS_VERY_LONG_TESTS=1`: 222 tests passed in 53.167 seconds, with zero skips.
 - Two independent `bab_cs-1.1.0-py3-none-any.whl` builds were byte-identical.
 - Local candidate wheel SHA-256:
-  `85e5af23ca51bf9e4d861af516d704cbf761b027c37d67501e95499fb412c43c`.
-- Clean dependency-free installed-wheel qualification: 219 tests passed in
-  53.579 seconds with 52 expected optional-backend skips; `pip check` reported
+  `42fe2c5f8a46594d7552364bbf3b503ec7e40cab5b428178bc276a3e85ce2ecc`.
+- Clean dependency-free installed-wheel qualification: 222 tests passed in
+  54.751 seconds with 55 expected optional-backend skips; `pip check` reported
   no broken requirements.
-- Clean installed-wheel NumPy 2.5.2, SciPy 1.18.0, and SuiteSparse KLU 2.3.6
-  qualification: all 219 tests passed in 55.154 seconds with zero skips;
+- Clean installed-wheel SciPy 1.18.1 and SuiteSparse KLU 2.3.6 qualification:
+  all 222 tests passed in 53.665 seconds with zero skips;
   `pip check` reported no broken requirements.
 - Source and installed-wheel comparison matrices each completed all 154
   results. Their JSON, CSV, and SVG outputs were byte-identical.
@@ -922,28 +952,27 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **Native KLU right-hand-side and result residency:** after Jacobian-only
+1. **BDF2 replay estimator:** mixed C+L trapezoidal replay is now evidence-
+   controlled. Test a BDF2-specific defect and cubic refinement law only with
+   independent order, authority, and end-to-end timing evidence.
+2. **Native KLU right-hand-side and result residency:** after Jacobian-only
    assembly, the KLU solve and its mandatory owned input/output buffers dominate
    the native sensitivity profile. Any reusable buffer prototype must preserve
    read-only caller inputs, independent returned solutions, stale-factor replay,
    cross-thread restoration, and deterministic nonfinite rejection.
-2. **Reactive-scale invalidation:** mutation-aware capacitance and inductance
+3. **Reactive-scale invalidation:** mutation-aware capacitance and inductance
    arrays still verify live scalar tuples on every native sensitivity. Weak
    invalidation callbacks may remove that scan, but must not create ownership
    cycles or hide direct element mutation.
-3. **Projection state residency:** the constant multi-RHS conversion is removed,
+4. **Projection state residency:** the constant multi-RHS conversion is removed,
    but target state, accepted state, and accepted algebraic unknowns are still
    converted during sparse projection. Aggregate `numpy.asarray` cost is now
    0.014 of 0.893 internal profiled seconds, so any further residency change
    must remain lazy and demonstrate an end-to-end gain.
-4. **Native residual and norm ownership:** the large-vector norm fast path
+5. **Native residual and norm ownership:** the large-vector norm fast path
    reduced traversal cost without changing storage. Further work should fuse
    residual construction and norm evidence only when the residual vector remains
    available to Newton and `NaN` propagation stays deterministic.
-5. **Replay estimator generalization:** mixed C+L trapezoidal replay is now
-   evidence-controlled. Extend equivalent independent estimators to BDF2 or
-   Backward Euler only with method-specific order evidence, and consider
-   retaining a qualified refinement across anchors without crossing events.
 6. **Cache diagnostics and KLU expansion:** deterministic work reports should
    expose KLU/SciPy cache hits, misses, evictions, refactors, and fallbacks before
    cache policy becomes user-configurable or automatic KLU selection expands to
@@ -957,11 +986,33 @@ An exact-state probe rejected shared accepted-evaluation Jacobian caching: the
 stiffness evaluations do not use the same differential states as the preceding
 block linearizations. Direct profiling also rejected standalone sparse tuple
 ownership; the retained fused path removes only private assembly boundaries and
-returns the required reusable handle. The next optimization phase should
-prototype KLU buffer residency and add sparse-cache observability. Evidence-
-gated anchor scheduling remains useful only with a hard elapsed-time limit and
-exact event boundaries; adaptive subdivision does not by itself justify older
-authority.
+returns the required reusable handle. Direct cache instrumentation then found
+one initial KLU workspace miss, identity hits thereafter, and no evictions in
+the qualified workloads, so broader cache policy is not the next performance
+gain. Cross-anchor refinement retention reduced replay work but slowed both
+measured workloads and was not uniformly closer to eight-substep authority. A
+Backward Euler derivative-defect prototype was ordered under refinement but
+repeatedly selected the maximum subdivision under the default cap, increasing
+RC replay work. Both prototypes were rejected. The next replay experiment is a
+method-specific BDF2 estimator. Evidence-gated anchor scheduling remains useful
+only with a hard elapsed-time limit and exact event boundaries; adaptive
+subdivision does not by itself justify older authority.
+
+The cross-anchor retention prototype reduced one-channel retries from 31 to 17
+and replay steps from 3,248 to 3,056, but increased mean elapsed time by 7.382%.
+At 32 channels it reduced retries from eight to four and replay steps from 752
+to 672, but increased mean elapsed time by 16.226%. Its weighted-RMS distance
+to fixed eight-substep authority improved from 688.55 to 595.99 in the first
+case and worsened from 359.92 to 367.67 in the second. Lower retry counts were
+therefore neither a timing win nor uniform authority improvement.
+
+The Backward Euler prototype used the ordered local defect
+`0.5 h (f_n - f_{n-1})` with square-root refinement scaling. On the default RC
+qualification, its early anchors repeatedly retried at the configured maximum
+four substeps, and total replay work exceeded the existing fixed-four path.
+Larger evidence caps could reduce work, but changing the default authority cap
+to rescue one estimator would weaken the established policy. The prototype is
+not retained.
 
 A weak reactive-value invalidation prototype was also rejected. It reduced the
 isolated cached-scale check from about 0.97 to 0.11 microseconds for 32 capacitor

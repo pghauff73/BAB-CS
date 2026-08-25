@@ -233,6 +233,15 @@ one-line removal measured approximately 1.1% mean end-to-end improvement at 32
 channels and 0.8% at 64 channels with exact traces
 [[17]](REFERENCES.md#ref-17).
 
+Deferred-reference execution then separated sensitivity evidence from storage
+that only implicit correction consumes. At 64 or more dynamic states, an
+unscheduled reference step retains the batched sensitivities and conservative
+Jacobian norm without constructing the dense dynamic matrix. A later forced
+reference upgrades the same owned result before chord correction. Balanced
+64-channel runs at a reference interval of eight improved mixed, pulsed, and
+switched workloads by approximately 1.1%, 1.4%, and 1.6%, with exact state,
+metric, rejection, and work traces [[17]](REFERENCES.md#ref-17).
+
 Independent replay was then measured as 17% to 43% of runtime in the profiled
 anchor configurations. Mixed C+L trapezoidal replay now starts at the minimum
 subdivision and evaluates a three-derivative quadrature defect. Failed evidence
@@ -258,6 +267,17 @@ but native solve gains stayed below 0.7%, contained negative rounds, and the
 switched end-to-end workload regressed by about 0.7% on average. The explicit
 owned allocation and assignment therefore remains the simpler qualified path.
 
+Two replay follow-ups were rejected as well. Carrying a qualified subdivision
+across compatible anchors reduced retries from 31 to 17 in a one-channel run
+and from eight to four in a 32-channel run, but total time increased by about
+7.4% and 16.2%, respectively. It also improved agreement with an eight-substep
+authority in the first case while worsening it in the second, so lower replay
+work did not establish a uniform accuracy or performance gain. A Backward Euler
+derivative-defect estimator was mathematically ordered under refinement, but
+the default evidence cap repeatedly forced the maximum replay subdivision and
+made the RC replay more expensive than fixed four-substep authority. Neither
+prototype is retained.
+
 Deterministic work counters accompany timing. Candidate and reference solves,
 circuit evaluations, algebraic iterations, projections, differential Jacobian
 evaluations, replay work, accepted steps, and rejected attempts are reported
@@ -267,22 +287,25 @@ measurement.
 
 ## Remaining Work
 
-The project’s current high-value performance frontier is therefore clear. The
-KLU solve and its owned right-hand-side/result buffers now dominate the
-qualified large-sensitivity profile. Reusable residency should be prototyped
-only if caller-owned read-only inputs, independent results, stale-factor replay,
-and cross-thread restoration remain exact. Cache hit, miss, eviction, refactor,
-and fallback diagnostics should precede user-configurable cache policy or
-broader automatic KLU adoption. Each proposal must retain source/installed
-equivalence, nonlinear qualification, bound behavior, and exact fallback.
+The project’s current high-value performance frontier is therefore clear.
+Direct instrumentation found one initial KLU workspace miss followed by
+identity hits, zero evictions, and one numeric refactor per new sensitivity in
+the qualified workloads. Broader cache policy would not remove measured work.
+Cross-anchor subdivision retention and the tested Backward Euler estimator have
+now failed their retention gates. The next replay opportunity is a method-
+specific BDF2 estimator with independent order and authority evidence. Reusable
+KLU buffer residency remains a lower-level opportunity only if
+caller-owned read-only inputs, independent results, stale-factor replay, and
+cross-thread restoration remain exact. Each proposal must retain
+source/installed equivalence, nonlinear qualification, bound behavior, and
+exact fallback.
 
 Replay subdivision is now independently evidence-controlled for mixed C+L
-trapezoidal anchors. Remaining replay research should generalize the estimator
-to other reference methods, preserve or coarsen learned refinement across
-anchors without crossing events, and combine any future anchor scheduling with
-a hard maximum elapsed authority age. Merely increasing the anchor interval
-would still weaken refresh frequency without proving that omitted replay work
-was unnecessary [[17]](REFERENCES.md#ref-17).
+trapezoidal anchors. Remaining replay research should test BDF2 with its own
+method-order evidence and combine any future anchor scheduling with a hard
+maximum elapsed authority age. Merely increasing the anchor interval would
+still weaken refresh frequency without proving that omitted replay work was
+unnecessary [[17]](REFERENCES.md#ref-17).
 
 The engineering result is not a single fast kernel. It is a chain of guarded
 specializations whose validity can be traced to topology, state, time,

@@ -71,18 +71,41 @@ def candidate_step(
     previous_evaluation: CircuitEvaluation | None = None,
     previous_step: float | None = None,
     implicit_settings: ImplicitSettings = ImplicitSettings(),
+    prepare_sparse_chord: bool = True,
 ) -> CandidateStepResult:
     normalized = normalize_candidate_method(method)
     if normalized not in CANDIDATE_METHODS:
         raise ValueError(f"unsupported bounded candidate method: {method}")
     if normalized == "explicit_euler":
-        return _explicit_euler_step(circuit, current, step)
+        return _explicit_euler_step(
+            circuit,
+            current,
+            step,
+            prepare_sparse_chord=prepare_sparse_chord,
+        )
     if normalized == "heun":
-        return _heun_step(circuit, current, step)
+        return _heun_step(
+            circuit,
+            current,
+            step,
+            prepare_sparse_chord=prepare_sparse_chord,
+        )
     if normalized == "rk23":
-        return _rk23_step(circuit, current, step)
+        return _rk23_step(
+            circuit,
+            current,
+            step,
+            prepare_sparse_chord=prepare_sparse_chord,
+        )
     if normalized == "ab2":
-        return _ab2_step(circuit, current, step, previous_evaluation, previous_step)
+        return _ab2_step(
+            circuit,
+            current,
+            step,
+            previous_evaluation,
+            previous_step,
+            prepare_sparse_chord=prepare_sparse_chord,
+        )
 
     result = implicit_step(
         circuit,
@@ -165,6 +188,8 @@ def _explicit_euler_step(
     circuit: Circuit,
     current: CircuitEvaluation,
     step: float,
+    *,
+    prepare_sparse_chord: bool,
 ) -> CandidateStepResult:
     candidate_state = tuple(
         value + step * derivative
@@ -175,6 +200,7 @@ def _explicit_euler_step(
         current,
         current.time + step,
         candidate_state,
+        prepare_sparse_chord=prepare_sparse_chord,
     )
     return CandidateStepResult(
         evaluation=evaluation,
@@ -196,6 +222,8 @@ def _heun_step(
     circuit: Circuit,
     current: CircuitEvaluation,
     step: float,
+    *,
+    prepare_sparse_chord: bool,
 ) -> CandidateStepResult:
     euler_state = tuple(
         value + step * derivative
@@ -206,6 +234,7 @@ def _heun_step(
         current,
         current.time + step,
         euler_state,
+        prepare_sparse_chord=prepare_sparse_chord,
     )
     candidate_state = tuple(
         value + 0.5 * step * (first_rate + second_rate)
@@ -243,6 +272,8 @@ def _rk23_step(
     circuit: Circuit,
     current: CircuitEvaluation,
     step: float,
+    *,
+    prepare_sparse_chord: bool,
 ) -> CandidateStepResult:
     second_state = tuple(
         value + 0.5 * step * first_rate
@@ -253,6 +284,7 @@ def _rk23_step(
         current,
         current.time + 0.5 * step,
         second_state,
+        prepare_sparse_chord=prepare_sparse_chord,
     )
     third_state = tuple(
         value + 0.75 * step * second_rate
@@ -328,6 +360,8 @@ def _ab2_step(
     step: float,
     previous_evaluation: CircuitEvaluation | None,
     previous_step: float | None,
+    *,
+    prepare_sparse_chord: bool,
 ) -> CandidateStepResult:
     if previous_evaluation is None or previous_step is None:
         raise CandidateUnavailable("AB2 requires one accepted history state")
@@ -361,6 +395,7 @@ def _ab2_step(
         current,
         current.time + step,
         candidate_state,
+        prepare_sparse_chord=prepare_sparse_chord,
     )
     return CandidateStepResult(
         evaluation=evaluation,
@@ -383,11 +418,14 @@ def _explicit_projection(
     current: CircuitEvaluation,
     target_time: float,
     target_state: Sequence[float],
+    *,
+    prepare_sparse_chord: bool,
 ) -> tuple[CircuitEvaluation, float | None]:
     projection = circuit._predict_sparse_algebraic_projection(
         current,
         target_time,
         target_state,
+        prepare_sparse_chord=prepare_sparse_chord,
     )
     if projection is None:
         return (
