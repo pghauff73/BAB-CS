@@ -65,13 +65,26 @@ class Simulator:
             raise ValueError("nominal_step must be positive")
 
         state, history = self.integrator.initialize(circuit, start_time, initial_dynamic_state)
+        breakpoint_waveforms = (
+            circuit._simulation_breakpoint_waveforms()
+            if type(circuit) is Circuit
+            else None
+        )
         points = [SimulationPoint(state, None)]
         time_tolerance = 64.0 * math.ulp(max(abs(start_time), abs(stop_time), 1.0))
         current_step = nominal_step
 
         while state.time < stop_time - time_tolerance:
             proposed_step = min(current_step, stop_time - state.time)
-            breakpoints = circuit.breakpoints(state.time, state.time + proposed_step)
+            breakpoints = (
+                Circuit._breakpoints_from_waveforms(
+                    breakpoint_waveforms,
+                    state.time,
+                    state.time + proposed_step,
+                )
+                if breakpoint_waveforms is not None
+                else circuit.breakpoints(state.time, state.time + proposed_step)
+            )
             event_time = breakpoints[0] if breakpoints else None
             if breakpoints:
                 proposed_step = event_time - state.time

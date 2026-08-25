@@ -212,9 +212,10 @@ The next performance phase should prioritize sparse symbolic reuse and cache
 observability. A backend capable of reusing symbolic analysis could address a
 remaining large-network cost that numeric CSC reuse does not remove. Cache hit,
 miss, eviction, and fallback metrics should be added before cache policy becomes
-configurable. The benchmark-only ULP-aware evidence-age change should remain
-outside production until the complete nonlinear and release suite is repeated
-[[17]](REFERENCES.md#ref-17).
+configurable. The implemented ULP-aware two-step evidence window, compiled
+built-in breakpoint schedules, and bounded sparse-kernel compile cache provide
+new baselines for that work; the corrected three-step extension remains
+rejected [[17]](REFERENCES.md#ref-17).
 
 The next numerical phase should investigate independently controlled replay
 adaptivity. A credible design would estimate replay error, enforce maximum

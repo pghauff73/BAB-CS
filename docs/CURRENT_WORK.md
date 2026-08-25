@@ -160,6 +160,13 @@ uses exact coupled block or guarded Schur updates where qualified
 are guarded by structural, finiteness, residual, contraction, topology, and
 fallback checks rather than being allowed to alter authority.
 
+The current simulator also compiles pure built-in breakpoint schedules once per
+run, deduplicating identical timing while preserving custom waveform calls and
+subclass dispatch. The mathematical two-step Schur evidence window is now
+ULP-aware, and demand-gated sparse assembly compilation is shared across
+identical topologies without embedding mutable device values
+[[17]](REFERENCES.md#ref-17).
+
 The CLI reads JSON circuit descriptions, permits rollout, candidate,
 reference, backend, contraction, interval, and bound-cap overrides, and writes
 deterministic JSON summaries and CSV step histories [[11]](REFERENCES.md#ref-11).
@@ -171,7 +178,7 @@ than to expose only a final waveform.
 
 ## Evidence and Release State
 
-The qualification surface now comprises 191 test methods across model,
+The qualification surface now comprises 196 test methods across model,
 linear-algebra, integrator, candidate, nonlinear, event, long-horizon,
 comparison, packaging, and release-evidence modules [[32]](REFERENCES.md#ref-32).
 Long and very-long tests are opt-in tiers, and optional sparse tests execute
@@ -234,10 +241,10 @@ long-time numerical error [[11]](REFERENCES.md#ref-11)
 [[15]](REFERENCES.md#ref-15).
 
 The next research phase follows directly from this current position. The
-highest-value paths are symbolic sparse-factorization reuse, ULP-aware evidence
-age after full requalification, better native ownership of sparse state and
-residual data, diagnostics for cache policy, independently error-controlled
-replay refinement, and evidence-gated anchor scheduling. Device expansion,
+highest-value paths are symbolic sparse-factorization reuse, better native
+ownership of sparse state and residual data, diagnostics for factorization and
+generated-kernel cache policy, independently error-controlled replay
+refinement, and evidence-gated anchor scheduling. Device expansion,
 state-dependent event localization, broader DAE topology handling, and stronger
 bound-coverage arguments remain larger scientific programs rather than small
 optimizations [[17]](REFERENCES.md#ref-17).

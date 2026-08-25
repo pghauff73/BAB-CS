@@ -14,7 +14,11 @@ from babcs.linalg import (
     solve_factored,
     solve_linear,
 )
-from babcs.model import CircuitSolveError, _within_ulp_time_window
+from babcs.model import (
+    CircuitSolveError,
+    _compile_sparse_algebraic_kernel,
+    _within_ulp_time_window,
+)
 from babcs.waveforms import Constant, Pulse, Sine
 
 
@@ -79,6 +83,40 @@ class CircuitModelTests(unittest.TestCase):
         evaluation = circuit.evaluate(0.0, circuit.initial_dynamic_state())
 
         self.assertEqual(evaluation.dynamic_state_norm, 3.0)
+
+    def test_simulation_breakpoint_compilation_preserves_live_waveforms(self) -> None:
+        class CustomWaveform:
+            def value(self, time: float) -> float:
+                del time
+                return 0.0
+
+            def breakpoints(self, start: float, end: float) -> list[float]:
+                del start, end
+                return []
+
+        shared_schedule_a = Pulse(0.0, 1.0, 1.0e-4, 1.0e-6, 2.0e-5, 1.0e-6, 5.0e-5)
+        shared_schedule_b = Pulse(0.0, 2.0, 1.0e-4, 1.0e-6, 2.0e-5, 1.0e-6, 5.0e-5)
+        first_custom = CustomWaveform()
+        second_custom = CustomWaveform()
+        circuit = Circuit(
+            [
+                VoltageSource("V1", "n1", "0", shared_schedule_a),
+                VoltageSource("V2", "n2", "0", shared_schedule_b),
+                CurrentSource("I1", "n1", "0", first_custom),
+                CurrentSource("I2", "n2", "0", second_custom),
+            ]
+        )
+
+        compiled = circuit._simulation_breakpoint_waveforms()
+
+        self.assertEqual(compiled, (shared_schedule_a, first_custom, second_custom))
+
+        replacement = Pulse(0.0, 3.0, 2.0e-4, 1.0e-6, 2.0e-5, 1.0e-6, 5.0e-5)
+        circuit.voltage_sources[1].waveform = replacement
+        self.assertEqual(
+            circuit._simulation_breakpoint_waveforms(),
+            (shared_schedule_a, replacement, first_custom, second_custom),
+        )
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_evaluation_samples_each_waveform_once_across_newton_and_accounting(self) -> None:
@@ -671,6 +709,24 @@ class CircuitModelTests(unittest.TestCase):
                 circuit.diodes[0].thermal_voltage = 0.03
                 circuit.switches[0].on_resistance = 2.0e-3
             self.assertEqual(assembly(specialized), assembly(fallback))
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_sparse_kernel_compilation_is_shared_by_topology(self) -> None:
+        _compile_sparse_algebraic_kernel.cache_clear()
+        first = Circuit(_diode_channel_elements(16), linear_backend="auto")
+        second_elements = _diode_channel_elements(16)
+        second_elements[1].resistance = 2_000.0
+        second = Circuit(second_elements, linear_backend="auto")
+
+        first_kernel = first._build_compiled_sparse_algebraic_kernel()
+        second_kernel = second._build_compiled_sparse_algebraic_kernel()
+
+        self.assertIs(first_kernel, second_kernel)
+        cache_info = _compile_sparse_algebraic_kernel.cache_info()
+        self.assertEqual(
+            (cache_info.hits, cache_info.misses, cache_info.maxsize),
+            (1, 1, 128),
+        )
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_implicit_block_matches_explicit_schur_update(self) -> None:

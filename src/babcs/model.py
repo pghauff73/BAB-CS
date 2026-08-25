@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field, replace
+from functools import lru_cache
 from typing import Any
 
 from .linalg import (
@@ -26,7 +27,7 @@ from .linalg import (
     solve_linear_multiple,
     validate_linear_backend,
 )
-from .waveforms import Constant, Waveform
+from .waveforms import Constant, Waveform, _breakpoint_schedule_key
 
 
 GROUND = "0"
@@ -52,6 +53,17 @@ def _within_ulp_time_window(
     scale = max(abs(source_time), abs(target_time), maximum_age)
     tolerance = 8.0 * math.ulp(scale)
     return time_delta <= maximum_age + tolerance
+
+
+@lru_cache(maxsize=128)
+def _compile_sparse_algebraic_kernel(source: str) -> Any:
+    namespace = {
+        "exp": math.exp,
+        "exp40": math.exp(40.0),
+        "exp_neg40": math.exp(-40.0),
+    }
+    exec(compile(source, "<babcs-sparse-algebraic>", "exec"), namespace)
+    return namespace["kernel"]
 
 
 def normalize_node(node: str) -> str:
@@ -416,6 +428,36 @@ class Circuit:
             points.update(element.waveform.breakpoints(start, end))
         for element in self.switches:
             points.update(element.control.breakpoints(start, end))
+        return sorted(points)
+
+    def _simulation_breakpoint_waveforms(self) -> tuple[Waveform, ...]:
+        waveforms: list[Waveform] = []
+        schedules: set[tuple[object, ...]] = set()
+        for element in (*self.voltage_sources, *self.current_sources):
+            waveform = element.waveform
+            schedule = _breakpoint_schedule_key(waveform)
+            if schedule is None or schedule not in schedules:
+                waveforms.append(waveform)
+                if schedule is not None:
+                    schedules.add(schedule)
+        for element in self.switches:
+            waveform = element.control
+            schedule = _breakpoint_schedule_key(waveform)
+            if schedule is None or schedule not in schedules:
+                waveforms.append(waveform)
+                if schedule is not None:
+                    schedules.add(schedule)
+        return tuple(waveforms)
+
+    @staticmethod
+    def _breakpoints_from_waveforms(
+        waveforms: Sequence[Waveform],
+        start: float,
+        end: float,
+    ) -> list[float]:
+        points: set[float] = set()
+        for waveform in waveforms:
+            points.update(waveform.breakpoints(start, end))
         return sorted(points)
 
     def _sample_algebraic_inputs(
@@ -1364,14 +1406,8 @@ class Circuit:
                 "    return residual, self._algebraic_sparse_template.with_data(sparse_data)",
             ]
         )
-        namespace = {
-            "exp": math.exp,
-            "exp40": math.exp(40.0),
-            "exp_neg40": math.exp(-40.0),
-        }
         source = "\n".join(lines) + "\n"
-        exec(compile(source, "<babcs-sparse-algebraic>", "exec"), namespace)
-        return namespace["kernel"]
+        return _compile_sparse_algebraic_kernel(source)
 
     def _assemble_sparse_algebraic(
         self,

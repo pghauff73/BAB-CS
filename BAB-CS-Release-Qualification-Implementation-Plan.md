@@ -24,7 +24,10 @@ verify artifacts, and expose direct tests for the qualification contract.
 - Do not create a GitHub release.
 - Do not upload or replace release assets.
 - Do not mark the release approved.
-- Do not implement the benchmark-only ULP-aware sensitivity-age policy.
+- At the time of this implementation plan, do not implement the benchmark-only
+  ULP-aware sensitivity-age policy. That historical scope boundary was later
+  superseded by a separately tested and requalified implementation on August
+  25, 2026; it does not alter the plan's tagging or publication non-authority.
 - Do not convert empirical bound characterization into a formal coverage claim.
 
 ## Requirements

@@ -571,6 +571,67 @@ simulations measured 1.084% at 64 algebraic/32 dynamic unknowns and 0.545% at
 128 algebraic/64 dynamic unknowns, with maximum state delta
 `4.336808689942018e-19`.
 
+### ULP-aware two-step evidence age
+
+The sensitivity-age guard now evaluates the same mathematical two-step window
+with a scale-aware tolerance of eight ULPs. This admits accumulated timestamps
+such as `2.0000000000000053` steps without widening the intended age policy.
+Future evidence, genuinely older evidence, changed switch topology, failed
+contraction, and exact coupled fallback behavior remain unchanged.
+
+Against the immediately preceding fixed-ratio guard, three balanced rounds
+measured mean reductions of 3.751% at 64 algebraic unknowns and 2.197% at 128
+algebraic unknowns on mixed C+L workloads, with minimum round reductions of
+3.558% and 1.959%. Maximum dynamic-state deltas were
+`1.734723475976807e-18` and `3.469446951953614e-18`; maximum metric deltas were
+`1.681e-10` and `1.531e-10`. Smooth and pulsed controls were timing-neutral
+within local noise, while the 64-unknown switched case measured a 0.827% mean
+reduction with exact state and a `6.441069899665308e-12` maximum metric delta.
+
+An attempted three-step extension was rejected after correcting the benchmark
+baseline. The earlier apparent mixed-workload gain compared three steps with a
+stricter ratio test rather than with the implemented ULP-aware two-step guard.
+Against the true current guard, the mixed workloads exposed no additional
+eligible three-step evidence, while pulsed cases could pay extra predictor cost.
+The production policy therefore remains mathematically two steps.
+
+### Compiled simulation breakpoint schedules
+
+For the exact built-in `Circuit` type, `Simulator.run` now compiles the active
+breakpoint providers once per run and deduplicates pure built-in waveform
+schedules by timing signature. Pulse levels, sine amplitudes, and piecewise-
+linear values do not affect their event times, so equivalent schedules share one
+provider. Public `Circuit.breakpoints` behavior is unchanged, custom waveforms
+remain individually observable, circuit subclasses keep their virtual
+`breakpoints` dispatch, and every new simulation run recompiles current element
+assignments.
+
+Against the exact ULP-aware baseline, three balanced rounds measured mean
+reductions of 11.638% and 16.243% for 16- and 32-channel pulsed diode networks,
+with minimum round reductions of 11.322% and 15.635%. Sixteen- and 32-channel
+switched networks measured mean reductions of 18.306% and 22.102%, with minimum
+round reductions of 17.763% and 21.093%. State traces, reported metrics,
+rejection counts, and deterministic candidate-work counts were exactly equal.
+An isolated runtime-path check reduced repeated-schedule query time by 98.177%
+and also improved unique built-in and custom schedules by 1.285% and 7.961%,
+respectively, because the per-run provider list removes repeated element lookup.
+
+### Demand-gated sparse-kernel compile reuse
+
+Generated sparse assembly source depends on topology but reads resistance,
+diode, switch, state, and sampled-input values from the live circuit. The
+demand-gated sparse kernel therefore now uses a bounded 128-entry source cache
+across identical topologies. The startup residual kernel remains per-circuit:
+a broader cache was rejected because its source hashing regressed workloads
+that never reached the heavy sparse-assembly gate.
+
+Against the breakpoint-optimized baseline, repeated 16- and 32-channel switched
+topologies measured incremental mean reductions of 3.973% and 5.938%, with
+minimum round reductions of 3.223% and 5.476%. State and metric traces and all
+deterministic work counts were exactly equal. Smooth, mixed, and short pulsed
+workloads do not invoke this cache; their measured timing variation is therefore
+treated as ambient benchmark noise rather than a causal code-path effect.
+
 ### Current cumulative scaling
 
 A fresh cumulative comparison used five warmups and 15 paired runs in each of
@@ -598,9 +659,9 @@ rather than baseline equality.
 
 - Focused replay, Jacobian, nonlinear, comparison, accuracy, failure-gate, and
   long-horizon regression groups passed before the full run.
-- Full current-source qualification with `BABCS_LONG_TESTS=1` and
-  `BABCS_VERY_LONG_TESTS=1`: 174 tests passed in 40.757 seconds, with zero
-  skips.
+- Full current-source qualification on August 25, 2026 with SciPy 1.18.0,
+  `BABCS_LONG_TESTS=1`, and `BABCS_VERY_LONG_TESTS=1`: 196 tests passed in
+  47.228 seconds, with zero skips.
 - Most recent pre-Schur qualified wheel: `bab_cs-1.0.0-py3-none-any.whl`.
 - Two independent wheel builds were byte-identical.
 - Candidate wheel SHA-256:
@@ -626,34 +687,27 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **ULP-aware evidence age:** the current two-step sensitivity-age gate rejects
-   some mathematically two-step-old evidence because accumulated timestamp
-   rounding produces ratios such as `2.0000000000000053`. A benchmark-only
-   ULP-aware comparison retained the same mathematical two-step window and
-   measured mean reductions of 3.518% and 2.624% on the 64- and 128-unknown
-   mixed C+L workloads. This remains production follow-up work until the
-   complete nonlinear and release qualification is repeated.
-2. **Sparse symbolic reuse:** generated CSC stamping removes Python dense
+1. **Sparse symbolic reuse:** generated CSC stamping removes Python dense
    assembly and conversion, but SuperLU still performs a fresh symbolic and
    numeric factorization. A backend with explicit symbolic-pattern reuse is the
    next large-network factorization opportunity.
-3. **Projection state residency:** the constant multi-RHS conversion is removed,
+2. **Projection state residency:** the constant multi-RHS conversion is removed,
    but target state, accepted state, and accepted algebraic unknowns are still
    converted during sparse projection. Aggregate `numpy.asarray` cost is now
    0.014 of 0.893 internal profiled seconds, so any further residency change
    must remain lazy and demonstrate an end-to-end gain.
-4. **Native residual and norm ownership:** the large-vector norm fast path
+3. **Native residual and norm ownership:** the large-vector norm fast path
    reduced traversal cost without changing storage. Further work should fuse
    residual construction and norm evidence only when the residual vector remains
    available to Newton and `NaN` propagation stays deterministic.
-5. **Adaptive replay accuracy model:** AB3 initialization has largely removed
+4. **Adaptive replay accuracy model:** AB3 initialization has largely removed
    replay Newton corrections, but replay still covers every accepted interval.
    Any substep reduction must be controlled by an independent local accuracy
    estimate, event boundary, maximum elapsed anchor time, and fail-closed retry;
    changing anchor frequency alone does not reduce total replay coverage.
-6. **Cache diagnostics:** deterministic work reports should expose cache hits,
+5. **Cache diagnostics:** deterministic work reports should expose cache hits,
    misses, and evictions before cache policy becomes user-configurable.
-7. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
+6. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
    considered only after the internal recurrence, empirical anchor ratio, event
    boundaries, and maximum elapsed anchor time jointly enforce a fail-closed
    upper bound.
@@ -681,3 +735,17 @@ with a worst round regression of 0.547%. State and metric traces were exactly
 equal. The extra generated code and paired private APIs therefore do not meet
 the retention threshold; evidence is preserved in
 `/tmp/babcs-residual-norm-gain.jsonl`.
+
+A cached COLAMD pre-permutation prototype was also rejected. It recovered the
+first SuperLU factorization's column ordering, rebuilt the fixed CSC column
+layout once, performed later numeric factorizations with `NATURAL` ordering,
+and scattered single- and multi-right-hand-side solutions back to original
+coordinates. Direct repeated factor-plus-solve workloads improved by 8.324%,
+17.385%, and 24.711% at 64, 144, and 256 unknowns. Whole nonlinear simulations,
+however, improved by only about 0.3% at 128 unknowns and 0.5% to 1.5% on average
+at 256 to 512 unknowns, with negative rounds at every larger size. State deltas
+remained at floating-point roundoff and reported metrics were unchanged, but
+the mapping and copy complexity did not meet the end-to-end retention gate.
+Explicit symbolic/numeric reuse therefore remains a backend-interface
+opportunity rather than an in-tree pre-permutation workaround. Evidence is
+preserved under `/tmp/babcs-perm-benchmark/`.

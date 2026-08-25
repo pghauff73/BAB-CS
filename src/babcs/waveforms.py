@@ -143,6 +143,25 @@ class Pulse:
         return sorted(set(points))
 
 
+def _breakpoint_schedule_key(waveform: Waveform) -> tuple[object, ...] | None:
+    if type(waveform) is Constant:
+        return (Constant,)
+    if type(waveform) is Sine:
+        return (Sine, waveform.delay)
+    if type(waveform) is PiecewiseLinear:
+        return (PiecewiseLinear, *(time for time, _ in waveform.points))
+    if type(waveform) is Pulse:
+        return (
+            Pulse,
+            waveform.delay,
+            waveform.rise,
+            waveform.width,
+            waveform.fall,
+            waveform.period,
+        )
+    return None
+
+
 def waveform_from_data(data: float | int | dict[str, object]) -> Waveform:
     if isinstance(data, (int, float)):
         return Constant(float(data))

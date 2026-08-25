@@ -133,9 +133,12 @@ update. Retained algebraic sensitivity and differential-Jacobian evidence form
 a reduced proposal, but the attempt is limited to once per implicit solve and
 reserves capacity for the exact coupled solve. Future timestamps, excessive
 evidence age, changed switch state, singularity, nonfinite updates, and failed
-contraction reject the shortcut. The project intentionally leaves a benchmark-
-only ULP-aware age relaxation outside production until full qualification is
-repeated [[17]](REFERENCES.md#ref-17).
+contraction reject the shortcut. The same mathematical two-step age window now
+uses a scale-aware eight-ULP tolerance so accumulated timestamp representation
+does not reject exactly two-step-old evidence. A broader three-step policy was
+rejected after a corrected baseline showed no additional mixed-workload
+eligibility and possible pulsed-workload overhead
+[[17]](REFERENCES.md#ref-17).
 
 Replay performance work follows the same authority rule. AB3 differential
 extrapolation and quartic algebraic extrapolation improve initial guesses after
@@ -162,6 +165,16 @@ mean dense-to-auto reductions of approximately 62.1%, 92.0%, and 97.6% at 32,
 environment; they are not portable speed guarantees. Small sparse cases with
 negative gains were retained as crossover evidence, which is why the automatic
 policy leaves them dense.
+
+Event-heavy performance now has a separate retained optimization. The exact
+built-in circuit path compiles breakpoint providers once per simulation run and
+deduplicates pure built-in schedules by timing signature. Balanced local runs
+reduced pulsed workloads by approximately 11.6% to 16.2% and switched workloads
+by 18.3% to 22.1%, with exact state, metric, rejection, and work traces. A
+bounded cache for the demand-gated generated sparse assembly kernel added a
+further 4.0% to 5.9% on repeated switched topologies while continuing to read
+all mutable numerical values from the live circuit
+[[17]](REFERENCES.md#ref-17).
 
 The same audit records rejected optimizations. Shared accepted-evaluation
 Jacobian caching was rejected because later stiffness evaluations did not own

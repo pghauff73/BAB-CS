@@ -1,8 +1,19 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
-from babcs import BABCSConfig, BoundedAdamsBashforthIntegrator, Simulator
+from babcs import (
+    BABCSConfig,
+    BoundedAdamsBashforthIntegrator,
+    Capacitor,
+    Circuit,
+    Pulse,
+    Resistor,
+    Simulator,
+    VoltageSource,
+)
+from babcs.waveforms import Constant
 from tests.support.circuits import (
     piecewise_linear_rc_circuit,
     pulsed_rc_circuit,
@@ -11,6 +22,70 @@ from tests.support.circuits import (
 
 
 class EventQualificationTests(unittest.TestCase):
+    def test_simulator_deduplicates_equivalent_builtin_schedules(self) -> None:
+        elements = []
+        for index in range(4):
+            source = f"vin{index}"
+            output = f"out{index}"
+            elements.extend(
+                [
+                    VoltageSource(
+                        f"V{index}",
+                        source,
+                        "0",
+                        Pulse(
+                            0.0,
+                            1.0 + index,
+                            2.0e-5,
+                            1.0e-6,
+                            2.0e-5,
+                            1.0e-6,
+                            5.0e-5,
+                        ),
+                    ),
+                    Resistor(f"R{index}", source, output, 1_000.0),
+                    Capacitor(f"C{index}", output, "0", 1.0e-6),
+                ]
+            )
+        circuit = Circuit(elements)
+        original_breakpoints = Pulse.breakpoints
+        calls = 0
+
+        def counting_breakpoints(
+            waveform: Pulse,
+            start: float,
+            end: float,
+        ) -> list[float]:
+            nonlocal calls
+            calls += 1
+            return original_breakpoints(waveform, start, end)
+
+        with patch.object(Pulse, "breakpoints", counting_breakpoints):
+            result = self._run(circuit, 8.0e-5, 2.0e-6)
+
+        self.assertEqual(calls, len(result.points) - 1)
+
+    def test_simulator_preserves_circuit_breakpoint_overrides(self) -> None:
+        class OverrideCircuit(Circuit):
+            def __init__(self) -> None:
+                super().__init__(
+                    [
+                        VoltageSource("V1", "vin", "0", Constant(1.0)),
+                        Resistor("R1", "vin", "out", 1_000.0),
+                        Capacitor("C1", "out", "0", 1.0e-6),
+                    ]
+                )
+                self.breakpoint_calls = 0
+
+            def breakpoints(self, start: float, end: float) -> list[float]:
+                self.breakpoint_calls += 1
+                return super().breakpoints(start, end)
+
+        circuit = OverrideCircuit()
+        result = self._run(circuit, 1.0e-5, 2.0e-6)
+
+        self.assertEqual(circuit.breakpoint_calls, len(result.points) - 1)
+
     def test_piecewise_linear_breakpoints_are_each_reached_once(self) -> None:
         result = self._run(piecewise_linear_rc_circuit(), 5.0e-4, 8.0e-5)
         event_times = [point.time for point in result.points if point.event_boundary]

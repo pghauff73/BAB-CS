@@ -74,6 +74,8 @@ topology, residual, contraction, and finiteness gates.
   right-hand-side storage.
 - Adds demand-gated generated residual and full sparse assembly kernels for the
   exact built-in `Circuit` type.
+- Reuses demand-gated sparse assembly compilation across identical topologies
+  through a bounded source cache while keeping numerical component values live.
 - Retains mutable component values and sampled inputs at execution time rather
   than embedding them into generated source.
 
@@ -89,8 +91,19 @@ topology, residual, contraction, and finiteness gates.
   iteration for the exact coupled sparse Newton solve.
 - Rejects future evidence, changed switch topology, stale evidence, singular
   systems, and nonfinite updates.
+- Treats representationally two-step-old sensitivity evidence as exactly two
+  steps old through a scale-aware ULP tolerance without widening the age bound.
 - Restores the base algebraic state and residual before exact fallback after a
   failed contraction.
+
+### Event scheduling performance
+
+- Compiles breakpoint providers once per simulation run for the exact built-in
+  `Circuit` type.
+- Deduplicates pure built-in waveform schedules by event timing while preserving
+  custom waveform calls, live assignments between runs, and subclass overrides.
+- Preserves exact event endpoints, history reset, and post-event implicit
+  startup behavior.
 
 ### Determinism and evidence
 
@@ -181,13 +194,14 @@ change.
 - Periodic replay corrects the endpoint and rebuilt history; it does not rewrite
   already emitted intermediate samples.
 
-## Deliberately Excluded Follow-up
+## Qualified Follow-up Incorporated
 
-An ULP-aware sensitivity-age comparison has identified additional mixed C+L
-performance by treating representationally two-step-old evidence as exactly
-two-step-old. That policy is not implemented in this candidate commit and must
-not be described as a `v1.1.0` feature unless it is separately implemented,
-tested, committed, and requalified before the release tag is created.
+The ULP-aware sensitivity-age policy is now implemented as the same
+mathematical two-step window with a scale-aware representational tolerance. It
+has direct regression coverage and passed the August 25, 2026 source-tree run
+of all 196 tests with long, very-long, and SciPy tiers enabled. This local run
+does not replace exact-commit wheel, comparison, workflow, or human-approval
+requirements.
 
 ## Release Qualification Procedure
 

@@ -86,7 +86,10 @@ The `v1.1.0` candidate is expected to qualify:
 - topology and event-boundary history reset behavior;
 - dense, automatic, and forced-SciPy linear backends;
 - sparse CSC stamping, workspace reuse, specialized kernels, guarded chord
-  prediction, and contractively bounded Schur prediction;
+  prediction, contractively bounded Schur prediction, ULP-aware two-step
+  sensitivity age, and bounded sparse-kernel compile reuse;
+- per-run built-in breakpoint schedule compilation with custom-waveform and
+  subclass compatibility;
 - deterministic comparison and wheel construction;
 - installed-wheel operation and CLI behavior;
 - the documented `ngspice` semantic mappings for `rc_step`, `rl_step`,
@@ -97,7 +100,6 @@ The `v1.1.0` candidate is expected to qualify:
 The following are not release claims unless separately implemented and added to
 the exact release commit before qualification begins:
 
-- the benchmark-only ULP-aware sensitivity-age policy;
 - production-SPICE device breadth or production-SPICE replacement status;
 - formal proof that empirical recursive bounds cover unknown physical error;
 - arbitrary analog threshold root finding for switches;
