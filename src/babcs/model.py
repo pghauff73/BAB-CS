@@ -39,6 +39,21 @@ class CircuitSolveError(RuntimeError):
     pass
 
 
+def _within_ulp_time_window(
+    source_time: float,
+    target_time: float,
+    maximum_age: float,
+) -> bool:
+    time_delta = target_time - source_time
+    if time_delta < 0.0 or maximum_age < 0.0:
+        return False
+    if maximum_age == 0.0:
+        return time_delta == 0.0
+    scale = max(abs(source_time), abs(target_time), maximum_age)
+    tolerance = 8.0 * math.ulp(scale)
+    return time_delta <= maximum_age + tolerance
+
+
 def normalize_node(node: str) -> str:
     node_name = str(node).strip()
     return GROUND if node_name.lower() in {"0", "gnd", "ground"} else node_name
@@ -2179,9 +2194,10 @@ class Circuit:
         native = self._latest_native_differential_sensitivity
         if source_evaluation is None or native is None:
             return None
-        time_delta = evaluation.time - source_evaluation.time
-        if time_delta < 0.0 or time_delta > 2.000000000000001 * abs(
-            derivative_coefficient
+        if not _within_ulp_time_window(
+            source_evaluation.time,
+            evaluation.time,
+            2.0 * abs(derivative_coefficient),
         ):
             return None
         source_inputs = (

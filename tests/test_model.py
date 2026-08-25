@@ -14,7 +14,7 @@ from babcs.linalg import (
     solve_factored,
     solve_linear,
 )
-from babcs.model import CircuitSolveError
+from babcs.model import CircuitSolveError, _within_ulp_time_window
 from babcs.waveforms import Constant, Pulse, Sine
 
 
@@ -792,6 +792,48 @@ class CircuitModelTests(unittest.TestCase):
         self.assertIsNotNone(update)
         assert update is not None
         self.assertTrue(update.requires_contraction)
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_sparse_chord_uses_ulp_aware_two_step_evidence_age(self) -> None:
+        circuit = Circuit(_diode_channel_elements(16), linear_backend="auto")
+        state = circuit.initial_dynamic_state()
+        step = 1.0e-6
+        times = [0.0]
+        for _ in range(123):
+            times.append(times[-1] + step)
+        source_time = times[121]
+        target_time = times[123]
+        age_ratio = (target_time - source_time) / step
+        self.assertGreater(age_ratio, 2.000000000000001)
+        self.assertTrue(_within_ulp_time_window(source_time, target_time, 2.0 * step))
+
+        source = circuit.evaluate(source_time, state)
+        self.assertIsNotNone(circuit._native_differential_sensitivity(source))
+        target = circuit.evaluate(target_time, state, source.algebraic.unknowns)
+        accepted = circuit.sparse_implicit_update(
+            target,
+            1.0,
+            step,
+            [0.001] * circuit.dynamic_size,
+        )
+        self.assertIsNotNone(accepted)
+        assert accepted is not None
+        self.assertTrue(accepted.requires_contraction)
+
+        stale_time = source_time + 2.0 * step
+        for _ in range(16):
+            stale_time = math.nextafter(stale_time, math.inf)
+        self.assertFalse(_within_ulp_time_window(source_time, stale_time, 2.0 * step))
+        stale = circuit.evaluate(stale_time, state, source.algebraic.unknowns)
+        rejected = circuit.sparse_implicit_update(
+            stale,
+            1.0,
+            step,
+            [0.001] * circuit.dynamic_size,
+        )
+        self.assertIsNotNone(rejected)
+        assert rejected is not None
+        self.assertFalse(rejected.requires_contraction)
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_chord_rejects_changed_switch_topology(self) -> None:
