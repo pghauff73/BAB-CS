@@ -191,6 +191,34 @@ class ImplicitIntegratorTests(unittest.TestCase):
             coarse.maximum_embedded_error / 3.0,
         )
 
+    def test_reference_replay_reports_ordered_bdf2_error_evidence(self) -> None:
+        circuit = rc_circuit()
+        initial = circuit.evaluate(0.0, circuit.initial_dynamic_state())
+        coarse = integrate_reference_window_with_stats(
+            circuit,
+            initial,
+            (1.0e-5,),
+            1.0e-6,
+            method="bdf2",
+            error_absolute_tolerance=1.0e-9,
+            error_relative_tolerance=1.0e-6,
+        )
+        fine = integrate_reference_window_with_stats(
+            circuit,
+            initial,
+            (1.0e-5,),
+            5.0e-7,
+            method="bdf2",
+            error_absolute_tolerance=1.0e-9,
+            error_relative_tolerance=1.0e-6,
+        )
+
+        self.assertGreater(coarse.maximum_embedded_error, 0.0)
+        self.assertLess(
+            fine.maximum_embedded_error,
+            coarse.maximum_embedded_error / 2.5,
+        )
+
     def test_reference_replay_uses_ab3_after_two_matching_steps(self) -> None:
         circuit = rc_circuit()
         initial = circuit.evaluate(0.0, circuit.initial_dynamic_state())

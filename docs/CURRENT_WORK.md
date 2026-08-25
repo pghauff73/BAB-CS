@@ -193,6 +193,15 @@ owned sensitivity result is upgraded before the chord attempt. At a reference
 interval of eight, balanced 64-channel runs improved mixed, pulsed, and switched
 workloads by 1.1%, 1.4%, and 1.6% on average with exact traces
 [[17]](REFERENCES.md#ref-17).
+For BDF2 reference replay, the implementation now measures both the first
+Backward Euler startup defect and the variable-step BDF2 defect. Because the
+startup term is second order, failed evidence uses square-root refinement and
+restarts the complete trusted-anchor window. The fast path is restricted to
+capacitive circuits with a `Pulse` or piecewise-linear switch control; smooth,
+source-pulsed, and mixed C+L circuits keep the fixed replay ceiling. Against
+exact commit `9a804a3`, balanced switched workloads from one through 64 channels
+improved by 9.1% to 11.2% on average, with every minimum round above 8.8%
+[[17]](REFERENCES.md#ref-17).
 
 The current simulator also compiles pure built-in breakpoint schedules once per
 run, deduplicating identical timing while preserving custom waveform calls and
@@ -214,7 +223,7 @@ than to expose only a final waveform.
 
 ## Evidence and Release State
 
-The qualification surface now comprises 222 test methods across model,
+The qualification surface now comprises 225 test methods across model,
 linear-algebra, integrator, candidate, nonlinear, event, long-horizon,
 comparison, packaging, and release-evidence modules [[32]](REFERENCES.md#ref-32).
 Long and very-long tests are opt-in tiers, and optional sparse tests execute
@@ -285,11 +294,18 @@ thereafter, and zero evictions in the qualified large workloads, so widening
 cache policy is not the next measured gain. Cross-anchor replay-refinement
 retention was also rejected: it reduced retry and replay counts but slowed the
 measured one- and 32-channel workloads and was not uniformly closer to an
-eight-substep authority. A Backward Euler defect prototype likewise over-
-refined the default RC replay. The highest-value remaining paths are a
-method-specific BDF2 replay estimator, KLU buffer residency, native residual
-ownership, and evidence-gated anchor scheduling with a maximum elapsed
-authority age. Device expansion, state-dependent event localization, broader
+eight-substep authority. A standalone Backward Euler defect prototype likewise
+over-refined the default RC replay; its defect is retained only as required
+startup evidence inside the qualified switched BDF2 design. The highest-value
+remaining paths are KLU buffer residency and native residual ownership. A
+dynamic-anchor probe was rejected as a performance path: for uninterrupted
+fixed replay, longer intervals left total replay-step work effectively
+unchanged, while intervals longer than switched-event spacing appeared faster
+only because event history resets suppressed periodic independent replay. That
+is authority elision, not an error-bounded optimization. Any future scheduler
+must distinguish integrator-history reset from independent-authority refresh
+and enforce a maximum elapsed authority age. Device
+expansion, state-dependent event localization, broader
 DAE topology handling, and stronger bound-coverage arguments remain larger
 scientific programs rather than small optimizations
 [[17]](REFERENCES.md#ref-17).

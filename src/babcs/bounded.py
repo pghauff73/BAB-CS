@@ -917,15 +917,26 @@ class BoundedAdamsBashforthIntegrator:
         target_times.append(current.time)
         target_times = sorted(set(target_times))
         window = current.time - anchor.time
+        reference_method = self.config.reference_method.lower().replace("-", "_")
         replay_refinement_substeps = self._anchor_refinement_substeps(circuit)
         adaptive_replay = (
             self.config.adaptive_anchor_refinement
-            and self.config.reference_method.lower().replace("-", "_")
-            == "trapezoidal"
-            and bool(circuit.capacitors)
-            and bool(circuit.inductors)
             and self.config.minimum_anchor_substeps < self.config.anchor_substeps
+            and (
+                (
+                    reference_method == "bdf2"
+                    and bool(circuit.capacitors)
+                    and not circuit.inductors
+                    and circuit._has_piecewise_switch_schedule()
+                )
+                or (
+                    reference_method == "trapezoidal"
+                    and bool(circuit.capacitors)
+                    and bool(circuit.inductors)
+                )
+            )
         )
+        replay_local_error_order = 2.0 if reference_method == "bdf2" else 3.0
         replay_refinement_retries = 0
         replay_steps = 0
         replay_reference_iterations = 0
@@ -975,7 +986,7 @@ class BoundedAdamsBashforthIntegrator:
                 break
             scale = (
                 embedded_error / self.config.anchor_embedded_error_cap
-            ) ** (1.0 / 3.0)
+            ) ** (1.0 / replay_local_error_order)
             replay_refinement_substeps = min(
                 self.config.anchor_substeps,
                 max(
@@ -1074,10 +1085,17 @@ class BoundedAdamsBashforthIntegrator:
         return math.exp(-self.config.contraction_rate * step)
 
     def _anchor_refinement_substeps(self, circuit: Circuit) -> int:
-        del circuit
         if not self.config.adaptive_anchor_refinement:
             return self.config.anchor_substeps
-        if self.config.reference_method.lower().replace("-", "_") != "trapezoidal":
+        reference_method = self.config.reference_method.lower().replace("-", "_")
+        if reference_method == "bdf2":
+            if (
+                not circuit.capacitors
+                or circuit.inductors
+                or not circuit._has_piecewise_switch_schedule()
+            ):
+                return self.config.anchor_substeps
+        elif reference_method != "trapezoidal":
             return self.config.anchor_substeps
         return self.config.minimum_anchor_substeps
 

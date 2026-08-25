@@ -10,14 +10,42 @@ from babcs import (
     Circuit,
     Diode,
     Inductor,
+    Pulse,
     Resistor,
     Sine,
     Simulator,
+    Switch,
     VoltageSource,
 )
 from babcs.io import summary_data
 from tests.support.circuits import rc_charge_circuit
 from tests.support.circuits import pulsed_rc_circuit
+
+
+def switched_capacitive_circuit() -> Circuit:
+    return Circuit(
+        [
+            VoltageSource(
+                "V1",
+                "vin",
+                "0",
+                Pulse(0.0, 1.0, 2.0e-5, 1.0e-6, 2.0e-5, 1.0e-6, 5.0e-5),
+            ),
+            Resistor("R1", "vin", "out", 1_000.0),
+            Diode("D1", "out", "0"),
+            Capacitor("C1", "out", "0", 1.0e-6),
+            Switch(
+                "S1",
+                "out",
+                "0",
+                Pulse(0.0, 1.0, 2.5e-5, 0.0, 1.0e-5, 0.0, 5.0e-5),
+                threshold=0.5,
+                on_resistance=10.0,
+                off_resistance=1.0e9,
+            ),
+        ],
+        linear_backend="auto",
+    )
 
 
 class BoundModelTests(unittest.TestCase):
@@ -237,6 +265,74 @@ class BoundModelTests(unittest.TestCase):
         self.assertTrue(
             all(metrics.replay_embedded_error == 0.0 for metrics in anchor_metrics)
         )
+
+    def test_bdf2_anchor_refinement_is_gated_to_piecewise_switched_capacitive_circuits(self) -> None:
+        integrator = BoundedAdamsBashforthIntegrator(
+            BABCSConfig(
+                rollout_mode="active",
+                reference_method="bdf2",
+                anchor_substeps=4,
+                minimum_anchor_substeps=2,
+            )
+        )
+        pulse = pulsed_rc_circuit()
+        switched = switched_capacitive_circuit()
+        mixed = Circuit([*switched.elements, Inductor("L1", "out", "0", 1.0e-3)])
+
+        self.assertEqual(integrator._anchor_refinement_substeps(pulse), 4)
+        self.assertEqual(integrator._anchor_refinement_substeps(switched), 2)
+        self.assertEqual(integrator._anchor_refinement_substeps(mixed), 4)
+
+    def test_bdf2_switched_replay_reduces_work_with_fixed_eight_authority_bound(self) -> None:
+        def run(adaptive: bool, anchor_substeps: int):
+            return Simulator(
+                BoundedAdamsBashforthIntegrator(
+                    BABCSConfig(
+                        rollout_mode="active",
+                        reference_method="bdf2",
+                        reference_interval_steps=8,
+                        predictor_reference_cap=1.0e9,
+                        embedded_error_cap=1.0e9,
+                        energy_injection_cap=1.0e9,
+                        stiffness_limit=1.0e9,
+                        anchor_interval_steps=16,
+                        anchor_substeps=anchor_substeps,
+                        minimum_anchor_substeps=2,
+                        adaptive_anchor_refinement=adaptive,
+                    )
+                )
+            ).run(switched_capacitive_circuit(), 1.6e-4, 2.0e-6)
+
+        adaptive = run(True, 4)
+        fixed_four = run(False, 4)
+        fixed_eight = run(False, 8)
+        adaptive_metrics = [point.metrics for point in adaptive.points if point.metrics]
+        fixed_four_metrics = [point.metrics for point in fixed_four.points if point.metrics]
+
+        self.assertEqual(sum(metric.replay_steps for metric in adaptive_metrics), 263)
+        self.assertEqual(sum(metric.replay_steps for metric in fixed_four_metrics), 390)
+        self.assertEqual(
+            sum(metric.replay_refinement_retries for metric in adaptive_metrics),
+            1,
+        )
+        self.assertEqual(
+            tuple(point.time for point in adaptive.points),
+            tuple(point.time for point in fixed_eight.points),
+        )
+        maximum_state_delta = max(
+            abs(adaptive_value - authority_value)
+            for adaptive_point, authority_point in zip(
+                adaptive.points,
+                fixed_eight.points,
+                strict=True,
+            )
+            for adaptive_value, authority_value in zip(
+                adaptive_point.state.evaluation.dynamic_state,
+                authority_point.state.evaluation.dynamic_state,
+                strict=True,
+            )
+        )
+        self.assertLess(maximum_state_delta, 5.0e-9)
 
 
 if __name__ == "__main__":

@@ -876,9 +876,10 @@ an ordered local quadrature defect from three independent replay derivatives.
 If the scaled defect exceeds `anchor_embedded_error_cap`, the complete replay
 restarts from the trusted anchor at a cubically predicted finer subdivision.
 The original `anchor_substeps` count remains the ceiling and therefore the
-fail-closed baseline. Nonfinite evidence rejects the step. Pure-C/L policies,
-Backward Euler, BDF2, and disabled adaptivity retain their previous execution
-without estimator overhead; exact event boundaries still reset history.
+fail-closed baseline. Nonfinite evidence rejects the step. Pure-C/L
+trapezoidal policies, Backward Euler, ineligible BDF2 topologies, and disabled
+adaptivity retain their previous execution without estimator overhead; exact
+event boundaries still reset history.
 
 For the 32-channel mixed workload, replay work fell from 322 to 162 steps at a
 16-step anchor profile and from 201 to 101 steps at a 50-step anchor. The
@@ -895,6 +896,47 @@ endpoint was 0.863 weighted RMS from an eight-substep replay, versus 0.091 for
 the fixed four-substep replay; its maximum embedded replay evidence was 0.486
 against the default cap of 1.25. These are bounded calibration results, not a
 claim that two substeps are universally equivalent to eight.
+
+### Qualified switched BDF2 replay refinement
+
+BDF2 replay cannot use only its multistep defect because each independent
+window begins without history and therefore takes one Backward Euler startup
+step. The retained estimator measures both terms. For startup step `h`, the
+state defect is `0.5 h (f_1 - f_0)`. For a variable BDF2 step `h` following a
+step `k`, the defect is
+`h^2 (h + k) / (3 (k + 2h))` multiplied by
+`(f_{n+1} - f_n) / h - (f_n - f_{n-1}) / k`. Both are scaled by the same
+absolute and relative state tolerances. The complete replay restarts from the
+trusted anchor when the maximum evidence exceeds `anchor_embedded_error_cap`.
+Because startup is second order, subdivision prediction uses a square-root
+law; the configured fixed count remains the ceiling.
+
+Broad application did not pass the retention gate. A BDF2-only defect that
+ignored startup appeared faster on source-pulsed cases but under-reported the
+first-step error. Adding the required startup evidence made the pulsed workload
+0.296% slower on average. Smooth sine replay was 14.630% slower before the
+topology gate, and mixed C+L replay retried to the fixed ceiling. The retained
+path is therefore limited to capacitive circuits with a built-in `Pulse` or
+piecewise-linear switch control; custom controls, smooth controls, source-only
+pulses, inductive circuits, and disabled adaptivity retain fixed replay.
+
+Against exact commit `9a804a3`, three balanced rounds with four warmups and 15
+paired samples per round produced the following switched-capacitive results:
+
+| Channels | Mean reduction | Minimum round reduction | Maximum WRMS versus fixed eight |
+| ---: | ---: | ---: | ---: |
+| 1 | 10.307% | 9.127% | 0.263 |
+| 16 | 9.094% | 8.853% | 0.264 |
+| 32 | 11.229% | 10.923% | 0.266 |
+| 64 | 11.116% | 10.388% | 0.384 |
+
+Replay steps fell from 390 to 263 in every case. Replay circuit evaluations
+fell from 393 to 269 through 32 channels and to 271 at 64 channels. Candidate
+and scheduled-reference work, rejection counts, accepted time grids, and event
+boundaries were unchanged. Maximum adaptive-versus-fixed-four state deltas were
+`2.799e-9`, `3.219e-9`, `3.667e-9`, and `1.255e-8` from one through 64
+channels. Fixed four remained closer to fixed eight, so the result is a bounded
+performance trade rather than a claim of increased reference accuracy.
 
 ### Current cumulative scaling
 
@@ -925,15 +967,15 @@ rather than baseline equality.
   long-horizon regression groups passed before the full run.
 - Full current-source qualification on August 25, 2026 with SciPy 1.18.0 and
   SuiteSparse KLU 2.3.6, `BABCS_LONG_TESTS=1`, and
-  `BABCS_VERY_LONG_TESTS=1`: 222 tests passed in 53.167 seconds, with zero skips.
+  `BABCS_VERY_LONG_TESTS=1`: 225 tests passed in 55.254 seconds, with zero skips.
 - Two independent `bab_cs-1.1.0-py3-none-any.whl` builds were byte-identical.
 - Local candidate wheel SHA-256:
-  `42fe2c5f8a46594d7552364bbf3b503ec7e40cab5b428178bc276a3e85ce2ecc`.
-- Clean dependency-free installed-wheel qualification: 222 tests passed in
-  54.751 seconds with 55 expected optional-backend skips; `pip check` reported
+  `42f3d49f8f59e73b3f44df9d8407d0d05494fc0f2c9299079ac23b946fdbd447`.
+- Clean dependency-free installed-wheel qualification: 225 tests passed in
+  56.326 seconds with 55 expected optional-backend skips; `pip check` reported
   no broken requirements.
 - Clean installed-wheel SciPy 1.18.1 and SuiteSparse KLU 2.3.6 qualification:
-  all 222 tests passed in 53.665 seconds with zero skips;
+  all 225 tests passed in 56.559 seconds with zero skips;
   `pip check` reported no broken requirements.
 - Source and installed-wheel comparison matrices each completed all 154
   results. Their JSON, CSV, and SVG outputs were byte-identical.
@@ -952,14 +994,15 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **BDF2 replay estimator:** mixed C+L trapezoidal replay is now evidence-
-   controlled. Test a BDF2-specific defect and cubic refinement law only with
-   independent order, authority, and end-to-end timing evidence.
-2. **Native KLU right-hand-side and result residency:** after Jacobian-only
+1. **Native KLU right-hand-side and result residency:** after Jacobian-only
    assembly, the KLU solve and its mandatory owned input/output buffers dominate
    the native sensitivity profile. Any reusable buffer prototype must preserve
    read-only caller inputs, independent returned solutions, stale-factor replay,
    cross-thread restoration, and deterministic nonfinite rejection.
+2. **Native residual and norm ownership:** the large-vector norm fast path
+   reduced traversal cost without changing storage. Further work should fuse
+   residual construction and norm evidence only when the residual vector remains
+   available to Newton and `NaN` propagation stays deterministic.
 3. **Reactive-scale invalidation:** mutation-aware capacitance and inductance
    arrays still verify live scalar tuples on every native sensitivity. Weak
    invalidation callbacks may remove that scan, but must not create ownership
@@ -969,19 +1012,15 @@ or faster than ngspice.
    converted during sparse projection. Aggregate `numpy.asarray` cost is now
    0.014 of 0.893 internal profiled seconds, so any further residency change
    must remain lazy and demonstrate an end-to-end gain.
-5. **Native residual and norm ownership:** the large-vector norm fast path
-   reduced traversal cost without changing storage. Further work should fuse
-   residual construction and norm evidence only when the residual vector remains
-   available to Newton and `NaN` propagation stays deterministic.
-6. **Cache diagnostics and KLU expansion:** deterministic work reports should
+5. **Cache diagnostics and KLU expansion:** deterministic work reports should
    expose KLU/SciPy cache hits, misses, evictions, refactors, and fallbacks before
    cache policy becomes user-configurable or automatic KLU selection expands to
    additional solve classes.
-7. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
-   considered only after the internal recurrence, empirical anchor ratio, event
-   boundaries, and maximum elapsed anchor time jointly enforce a fail-closed
-   upper bound.
-
+6. **Authority-refresh semantics before scheduling:** a future dynamic anchor
+   policy must distinguish event-driven history reset from independently
+   recomputed authority, honor exact event boundaries, and enforce a hard maximum
+   elapsed authority age. The current probe found no safe performance gain, so
+   this is a correctness prerequisite rather than the next optimization.
 An exact-state probe rejected shared accepted-evaluation Jacobian caching: the
 stiffness evaluations do not use the same differential states as the preceding
 block linearizations. Direct profiling also rejected standalone sparse tuple
@@ -991,12 +1030,20 @@ one initial KLU workspace miss, identity hits thereafter, and no evictions in
 the qualified workloads, so broader cache policy is not the next performance
 gain. Cross-anchor refinement retention reduced replay work but slowed both
 measured workloads and was not uniformly closer to eight-substep authority. A
-Backward Euler derivative-defect prototype was ordered under refinement but
-repeatedly selected the maximum subdivision under the default cap, increasing
-RC replay work. Both prototypes were rejected. The next replay experiment is a
-method-specific BDF2 estimator. Evidence-gated anchor scheduling remains useful
-only with a hard elapsed-time limit and exact event boundaries; adaptive
-subdivision does not by itself justify older authority.
+standalone Backward Euler derivative-defect prototype was ordered under
+refinement but repeatedly selected the maximum subdivision under the default
+cap, increasing RC replay work. Cross-anchor retention and general Backward
+Euler adaptation were rejected; the same startup term is retained only inside
+the qualified switched BDF2 estimator. Dynamic anchor scheduling was then
+rejected as the next replay optimization. Over 256 uninterrupted accepted
+steps, fixed replay intervals of 16, 32, 64, and 128 each performed 1,024 replay
+steps; fewer anchors simply reintegrated longer complete windows. In the
+switched BDF2 workload, intervals above the event spacing appeared 31--34%
+faster, but periodic independent replay fell to zero because event handling
+reset the step counter and adopted the event state as the next anchor. The
+remaining state delta was small, but no independent authority justified it.
+Adaptive subdivision does not justify older or omitted authority, and an event
+history reset must not be treated as an authority refresh.
 
 The cross-anchor retention prototype reduced one-channel retries from 31 to 17
 and replay steps from 3,248 to 3,056, but increased mean elapsed time by 7.382%.
@@ -1012,7 +1059,8 @@ qualification, its early anchors repeatedly retried at the configured maximum
 four substeps, and total replay work exceeded the existing fixed-four path.
 Larger evidence caps could reduce work, but changing the default authority cap
 to rescue one estimator would weaken the established policy. The prototype is
-not retained.
+not retained as a general Backward Euler policy; its startup defect remains
+necessary inside BDF2 replay.
 
 A weak reactive-value invalidation prototype was also rejected. It reduced the
 isolated cached-scale check from about 0.97 to 0.11 microseconds for 32 capacitor

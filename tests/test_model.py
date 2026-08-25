@@ -124,6 +124,17 @@ class CircuitModelTests(unittest.TestCase):
             circuit._simulation_breakpoint_waveforms(),
             (shared_schedule_a, replacement, first_custom, second_custom),
         )
+        switched = Circuit(
+            [
+                VoltageSource("V3", "vin", "0", Constant(1.0)),
+                Resistor("R3", "vin", "n3", 1_000.0),
+                Capacitor("C3", "n3", "0", 1.0e-6),
+                Switch("S3", "n3", "0", shared_schedule_a),
+            ]
+        )
+        self.assertTrue(switched._has_piecewise_switch_schedule())
+        switched.switches[0].control = Sine(0.0, 1.0, 1_000.0)
+        self.assertFalse(switched._has_piecewise_switch_schedule())
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_evaluation_samples_each_waveform_once_across_newton_and_accounting(self) -> None:

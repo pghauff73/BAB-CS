@@ -252,6 +252,25 @@ at a 50-step anchor and balanced end-to-end timing improved by 13.45% on average
 with a 12.85% minimum round gain. The adaptive endpoint remained within 0.864
 weighted RMS of an eight-substep authority in the calibration run.
 
+BDF2 required a different estimator because every independent replay window
+starts without multistep history. Its first step is Backward Euler, so the
+startup evidence is `0.5 h (f_1 - f_0)`. For a following variable-step BDF2
+step of length `h` after a step of length `k`, the state-defect estimate is
+`h^2 (h + k) / (3 (k + 2h))` times the difference between the two adjacent
+derivative slopes. The maximum weighted defect controls the complete-window
+retry. The startup term is second order, so the refinement law uses a square
+root rather than pretending the whole replay is third order.
+
+The broad BDF2 prototype exposed useful negative evidence. Smooth sine replay
+became about 14.6% slower, source-pulsed replay was neutral after startup error
+was included, and mixed C+L replay retried to the fixed ceiling. The retained
+path therefore applies only to capacitive circuits with piecewise-controlled
+switches. Across balanced one-, 16-, 32-, and 64-channel switched runs, mean
+end-to-end reductions were 10.307%, 9.094%, 11.229%, and 11.116%; minimum round
+reductions were 9.127%, 8.853%, 10.923%, and 10.388%. Replay steps fell from
+390 to 263. Maximum distance from an eight-substep authority remained below
+0.384 weighted RMS in every scaling case.
+
 The same audit records rejected optimizations. Shared accepted-evaluation
 Jacobian caching was rejected because later stiffness evaluations did not own
 the same differential state. An exact-index accounting prototype improved an
@@ -267,16 +286,17 @@ but native solve gains stayed below 0.7%, contained negative rounds, and the
 switched end-to-end workload regressed by about 0.7% on average. The explicit
 owned allocation and assignment therefore remains the simpler qualified path.
 
-Two replay follow-ups were rejected as well. Carrying a qualified subdivision
+Two broader replay follow-ups were rejected as well. Carrying a qualified subdivision
 across compatible anchors reduced retries from 31 to 17 in a one-channel run
 and from eight to four in a 32-channel run, but total time increased by about
 7.4% and 16.2%, respectively. It also improved agreement with an eight-substep
 authority in the first case while worsening it in the second, so lower replay
 work did not establish a uniform accuracy or performance gain. A Backward Euler
-derivative-defect estimator was mathematically ordered under refinement, but
+standalone derivative-defect estimator was mathematically ordered under refinement, but
 the default evidence cap repeatedly forced the maximum replay subdivision and
 made the RC replay more expensive than fixed four-substep authority. Neither
-prototype is retained.
+prototype is retained as a general Backward Euler replay policy; the same term
+is still required to bound BDF2 startup.
 
 Deterministic work counters accompany timing. Candidate and reference solves,
 circuit evaluations, algebraic iterations, projections, differential Jacobian
@@ -291,21 +311,29 @@ The project’s current high-value performance frontier is therefore clear.
 Direct instrumentation found one initial KLU workspace miss followed by
 identity hits, zero evictions, and one numeric refactor per new sensitivity in
 the qualified workloads. Broader cache policy would not remove measured work.
-Cross-anchor subdivision retention and the tested Backward Euler estimator have
-now failed their retention gates. The next replay opportunity is a method-
-specific BDF2 estimator with independent order and authority evidence. Reusable
-KLU buffer residency remains a lower-level opportunity only if
+Cross-anchor subdivision retention and general Backward Euler adaptation have
+failed their retention gates, while switched BDF2 replay now has method-
+specific startup, order, authority, and timing evidence. Dynamic anchor
+scheduling also failed its performance gate. In uninterrupted fixed replay,
+increasing the interval did not reduce total replay steps because fewer anchors
+reintegrated proportionally longer windows. In switched runs, intervals above
+the event spacing appeared 31--34% faster only because event history resets
+prevented periodic independent replay altogether. That apparent gain removes
+authority rather than making it cheaper. Reusable KLU buffer residency is now
+the next measured opportunity, but only if
 caller-owned read-only inputs, independent results, stale-factor replay, and
 cross-thread restoration remain exact. Each proposal must retain
 source/installed equivalence, nonlinear qualification, bound behavior, and
 exact fallback.
 
 Replay subdivision is now independently evidence-controlled for mixed C+L
-trapezoidal anchors. Remaining replay research should test BDF2 with its own
-method-order evidence and combine any future anchor scheduling with a hard
-maximum elapsed authority age. Merely increasing the anchor interval would
-still weaken refresh frequency without proving that omitted replay work was
-unnecessary [[17]](REFERENCES.md#ref-17).
+trapezoidal anchors and qualified piecewise-switched BDF2 anchors. Remaining
+replay research must first separate an event-driven integrator-history reset
+from an independently recomputed authority refresh, then enforce a hard maximum
+elapsed authority age. Merely increasing the anchor interval either preserves
+roughly the same complete-window work or weakens refresh frequency without
+proving that omitted replay work was unnecessary
+[[17]](REFERENCES.md#ref-17).
 
 The engineering result is not a single fast kernel. It is a chain of guarded
 specializations whose validity can be traced to topology, state, time,

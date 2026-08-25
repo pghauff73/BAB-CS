@@ -36,6 +36,8 @@ from .linalg import (
 )
 from .waveforms import (
     Constant,
+    PiecewiseLinear,
+    Pulse,
     Waveform,
     _breakpoint_schedule_key,
     _waveform_value_key,
@@ -571,6 +573,12 @@ class Circuit:
                 if schedule is not None:
                     schedules.add(schedule)
         return tuple(waveforms)
+
+    def _has_piecewise_switch_schedule(self) -> bool:
+        return any(
+            type(element.control) in {PiecewiseLinear, Pulse}
+            for element in self.switches
+        )
 
     @staticmethod
     def _breakpoints_from_waveforms(

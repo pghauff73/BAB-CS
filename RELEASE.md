@@ -55,6 +55,9 @@ topology, residual, contraction, and finiteness gates.
 - Uses independent derivative-defect evidence to reduce mixed C+L trapezoidal
   replay refinement, with complete-interval restart and fixed-resolution
   fallback.
+- Uses independent startup and variable-step defect evidence to reduce BDF2
+  replay refinement only for qualified capacitive circuits with piecewise-
+  controlled switches; all other BDF2 topologies retain fixed replay.
 - Uses AB3 differential extrapolation only as a replay initial guess after two
   matching uniform substeps.
 - Uses quartic algebraic extrapolation only as a guarded initial guess on
@@ -198,6 +201,15 @@ eight improved by 1.137%, 1.363%, and 1.613% on average; minimum round gains
 were 0.552%, 0.675%, and 0.992%. State, metric, rejection, fallback, and
 deterministic work traces were exactly equal.
 
+Qualified switched-capacitive BDF2 replay now combines the Backward Euler
+startup defect with a variable-step BDF2 derivative defect and restarts the
+complete anchor window when either exceeds the configured cap. Against exact
+commit `9a804a3`, balanced one-, 16-, 32-, and 64-channel switched workloads
+improved by 10.307%, 9.094%, 11.229%, and 11.116% on average; every minimum
+round improved by at least 8.853%. Replay steps fell from 390 to 263. Smooth,
+source-pulsed, and mixed C+L BDF2 circuits retain fixed replay because their
+broader prototypes did not pass the timing gate.
+
 These numbers are local characterization for the named workloads and hardware.
 They are not a claim that BAB-CS is generally faster than `ngspice` or another
 production simulator.
@@ -256,7 +268,7 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 222 tests in 53.167 seconds with long, very-long, SciPy, and KLU tiers
+of all 225 tests in 55.254 seconds with long, very-long, SciPy, and KLU tiers
 enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.

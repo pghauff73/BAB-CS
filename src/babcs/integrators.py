@@ -409,6 +409,7 @@ def integrate_reference_window_with_stats(
     error_absolute_tolerance: float | None = None,
     error_relative_tolerance: float | None = None,
 ) -> ReferenceWindowResult:
+    requested_method = method.lower().replace("-", "_")
     if maximum_step <= 0.0:
         raise ValueError("reference maximum step must be positive")
     if any(right <= left for left, right in zip(target_times, target_times[1:])):
@@ -537,18 +538,33 @@ def integrate_reference_window_with_stats(
                 initial_algebraic_guess=initial_algebraic_guess,
                 settings=settings,
             )
-            if (
-                error_absolute_tolerance is not None
-                and previous_evaluation is not None
-                and result.method == "trapezoidal"
-            ):
-                embedded_error = _trapezoidal_embedded_error(
-                    previous_evaluation,
-                    current,
-                    result.evaluation,
-                    error_absolute_tolerance,
-                    error_relative_tolerance,
-                )
+            embedded_error = None
+            if error_absolute_tolerance is not None:
+                assert error_relative_tolerance is not None
+                if result.method == "backward_euler" and requested_method == "bdf2":
+                    embedded_error = _backward_euler_embedded_error(
+                        current,
+                        result.evaluation,
+                        error_absolute_tolerance,
+                        error_relative_tolerance,
+                    )
+                elif previous_evaluation is not None and result.method == "bdf2":
+                    embedded_error = _bdf2_embedded_error(
+                        previous_evaluation,
+                        current,
+                        result.evaluation,
+                        error_absolute_tolerance,
+                        error_relative_tolerance,
+                    )
+                elif previous_evaluation is not None and result.method == "trapezoidal":
+                    embedded_error = _trapezoidal_embedded_error(
+                        previous_evaluation,
+                        current,
+                        result.evaluation,
+                        error_absolute_tolerance,
+                        error_relative_tolerance,
+                    )
+            if embedded_error is not None:
                 if math.isnan(embedded_error):
                     maximum_embedded_error = embedded_error
                 elif embedded_error > maximum_embedded_error:
@@ -583,6 +599,68 @@ def integrate_reference_window_with_stats(
 def _matching_replay_step(left: float, right: float) -> bool:
     tolerance = 64.0 * max(abs(left), abs(right), 1.0) * 2.220446049250313e-16
     return abs(left - right) <= tolerance
+
+
+def _backward_euler_embedded_error(
+    current: CircuitEvaluation,
+    following: CircuitEvaluation,
+    absolute_tolerance: float,
+    relative_tolerance: float,
+) -> float:
+    step = following.time - current.time
+    if step <= 0.0:
+        return math.inf
+    defect = [
+        0.5 * step * (following_derivative - current_derivative)
+        for current_derivative, following_derivative in zip(
+            current.derivative,
+            following.derivative,
+            strict=True,
+        )
+    ]
+    return weighted_rms(
+        defect,
+        current.dynamic_state,
+        following.dynamic_state,
+        absolute_tolerance,
+        relative_tolerance,
+    )
+
+
+def _bdf2_embedded_error(
+    previous: CircuitEvaluation,
+    current: CircuitEvaluation,
+    following: CircuitEvaluation,
+    absolute_tolerance: float,
+    relative_tolerance: float,
+) -> float:
+    previous_step = current.time - previous.time
+    step = following.time - current.time
+    if previous_step <= 0.0 or step <= 0.0:
+        return math.inf
+    coefficient = (
+        step * step * (previous_step + step) / (3.0 * (previous_step + 2.0 * step))
+    )
+    defect = [
+        coefficient
+        * (
+            (following_derivative - current_derivative) / step
+            - (current_derivative - previous_derivative) / previous_step
+        )
+        for previous_derivative, current_derivative, following_derivative in zip(
+            previous.derivative,
+            current.derivative,
+            following.derivative,
+            strict=True,
+        )
+    ]
+    return weighted_rms(
+        defect,
+        current.dynamic_state,
+        following.dynamic_state,
+        absolute_tolerance,
+        relative_tolerance,
+    )
 
 
 def _trapezoidal_embedded_error(

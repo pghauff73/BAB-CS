@@ -12,7 +12,7 @@ Packaging tests establish that installed code is the code that was examined
 [[15]](REFERENCES.md#ref-15) [[18]](REFERENCES.md#ref-18). No one layer is
 allowed to imply all the others.
 
-The current test tree contains 222 test methods across nineteen modules
+The current test tree contains 225 test methods across nineteen modules
 [[32]](REFERENCES.md#ref-32). Coverage includes circuit construction,
 projection, waveform breakpoints, dense and sparse linear algebra, implicit
 methods, all bounded candidates, error recurrence, rollout modes, events,
@@ -24,7 +24,7 @@ intended environment.
 
 A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 and
 SuiteSparse KLU 2.3.6 with both `BABCS_LONG_TESTS=1` and
-`BABCS_VERY_LONG_TESTS=1`. All 222 tests passed in 53.167 seconds with zero
+`BABCS_VERY_LONG_TESTS=1`. All 225 tests passed in 55.254 seconds with zero
 skips. This establishes that the essay set was updated
 against a live green source tree; it does not replace the clean-environment,
 installed-wheel, exact-artifact, workflow, and human-review requirements of
@@ -32,7 +32,8 @@ release qualification.
 
 Direct numerical tests begin with exact formulas and invariants. Variable-step
 AB2 coefficients are checked independently. Backward Euler, trapezoidal, and
-BDF2 startup and history behavior are exercised. Candidate aliases, orders,
+BDF2 startup, variable-step defect, history behavior, topology gating, replay-
+work reduction, and fixed-eight authority distance are exercised. Candidate aliases, orders,
 embedded defects, amplification models, correction gains, and fast-path
 checkpoints are tested. Circuit tests verify state sign conventions, unknown
 ordering, residual construction, dense/sparse structural equivalence, and
