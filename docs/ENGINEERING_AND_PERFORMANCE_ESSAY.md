@@ -41,11 +41,13 @@ not depend on a compiled external package.
 ## Sparse Execution
 
 The optional sparse path uses SciPy’s CSC matrices and SuperLU factorization
-interface [[7]](REFERENCES.md#ref-7) [[9]](REFERENCES.md#ref-9). BAB-CS exposes
-`dense`, `auto`, and `scipy` backend choices. `auto` is a measured policy rather
-than an alias for sparse. It considers problem size, matrix density, whether a
-structure can be reused, and whether multiple right-hand sides can amortize
-setup. Small or dense systems remain on the dense implementation.
+interface [[7]](REFERENCES.md#ref-7) [[9]](REFERENCES.md#ref-9). A second optional
+adapter can use a compatible system SuiteSparse KLU 2 library through `ctypes`
+[[35]](REFERENCES.md#ref-35). BAB-CS exposes `dense`, `auto`, `scipy`, and `klu`
+backend choices. `auto` is a measured policy rather than an alias for sparse. It
+considers problem size, matrix density, whether a structure can be reused, and
+whether multiple right-hand sides can amortize setup. Small or dense systems
+remain on the dense implementation.
 
 One high-value optimization was to make topology a compiled asset. For eligible
 circuits, the model builds the CSC row indices, column pointers, device stamp
@@ -64,6 +66,16 @@ independent after workspace reuse [[17]](REFERENCES.md#ref-17)
 [[27]](REFERENCES.md#ref-27). Bounded cache ownership is important because an
 unbounded structural cache would exchange numerical speed for process-level
 memory drift.
+
+KLU adds a distinct bounded workspace that retains symbolic analysis and
+refactors numeric values for exact repeated CSC patterns. The 128-entry
+per-thread LRU has an identity fast path for hot circuit-owned structures and an
+exact structural fallback for separately constructed circuits. Reusable factor
+objects hold immutable matrix values and weak workspace references, so stale,
+evicted, or cross-thread solves can restore the correct factor without allowing
+native memory to escape the cache bound. Unscaled U diagonals must pass the same
+absolute pivot threshold as the existing solvers, and automatic KLU failure
+falls back to SciPy.
 
 Ordering is also evidence-gated. Repeated structures initially use a general
 fill-reducing ordering. After enough observations, the implementation may probe
@@ -181,6 +193,14 @@ two new changes reduced the repeated 16- and 32-channel switched workloads by
 4.1% and 6.0% against their exact pre-loop baseline
 [[17]](REFERENCES.md#ref-17).
 
+Qualified KLU reuse adds another large-network gain. Automatic adoption is
+limited to native sensitivity systems with at least 128 algebraic unknowns and
+32 right-hand sides. Balanced local runs reduced 32-channel sine, mixed, pulsed,
+and switched workloads by approximately 2.0%, 4.2%, 4.3%, and 3.1%, respectively,
+with exact state, metric, rejection, and deterministic work traces. This is a
+backend- and host-specific result, not a portable guarantee
+[[17]](REFERENCES.md#ref-17).
+
 The same audit records rejected optimizations. Shared accepted-evaluation
 Jacobian caching was rejected because later stiffness evaluations did not own
 the same differential state. An exact-index accounting prototype improved an
@@ -199,13 +219,13 @@ measurement.
 ## Remaining Work
 
 The project’s current high-value performance frontier is therefore clear.
-Sparse symbolic-pattern reuse could remove repeated symbolic factorization that
-SuperLU’s exposed path still performs. Native sparse residual and device-value
-ownership may remove more Python assembly and conversion work after the retained
-topology and switch-sampling gains. Cache hit, miss, and eviction diagnostics
-should precede user-configurable cache policy. Each proposal must retain
-source/installed equivalence, nonlinear qualification, bound behavior, and exact
-fallback.
+Native sparse numerical-value ownership may remove repeated tuple-to-NumPy
+copies after KLU symbolic/numeric reuse, hot-topology adoption, and switch-
+sampling gains. Native sparse residual and device-value ownership may remove
+more Python assembly work. Cache hit, miss, eviction, refactor, and fallback
+diagnostics should precede user-configurable cache policy or broader automatic
+KLU adoption. Each proposal must retain source/installed equivalence, nonlinear
+qualification, bound behavior, and exact fallback.
 
 Adaptive replay is a separate research problem from replay initialization.
 AB3 can make each substep cheaper, but replay still covers every accepted

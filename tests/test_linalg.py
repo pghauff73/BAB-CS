@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import math
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 
+import babcs._klu as klu_module
 import babcs.linalg as linalg_module
 from babcs.linalg import (
     LinearBackendUnavailableError,
@@ -11,6 +13,7 @@ from babcs.linalg import (
     SingularMatrixError,
     factor_linear,
     finite_difference_jacobian,
+    klu_sparse_available,
     matrix_inf_norm,
     norm_inf,
     solve_linear,
@@ -167,7 +170,7 @@ class LinearAlgebraTests(unittest.TestCase):
         sparse_factor.assert_not_called()
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
-    def test_scipy_backend_matches_dense_for_sparse_multiple_rhs(self) -> None:
+    def test_auto_sparse_backend_matches_dense_for_multiple_rhs(self) -> None:
         size = 16
         matrix = [[0.0] * size for _ in range(size)]
         for index in range(size):
@@ -385,6 +388,139 @@ class LinearAlgebraTests(unittest.TestCase):
             linalg_module.MAXIMUM_SCIPY_WORKSPACES_PER_THREAD,
         )
 
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_backend_matches_dense_for_multiple_rhs(self) -> None:
+        matrix = SparseMatrix(
+            3,
+            (4.0, -1.0, -1.0, 4.0, -1.0, -1.0, 4.0),
+            (0, 1, 0, 1, 2, 1, 2),
+            (0, 2, 5, 7),
+        )
+        right_hand_sides = ([1.0, 2.0, 3.0], [3.0, 2.0, 1.0])
+
+        factorization = factor_linear(matrix, backend="klu")
+        actual = solve_factored_multiple_array(factorization, right_hand_sides)
+        expected = solve_linear_multiple(matrix.to_dense(), right_hand_sides)
+
+        self.assertEqual(factorization.backend, "klu")
+        self.assertIsNotNone(actual)
+        assert actual is not None
+        for actual_solution, expected_solution in zip(
+            actual.tolist(),
+            expected,
+            strict=True,
+        ):
+            for actual_value, expected_value in zip(
+                actual_solution,
+                expected_solution,
+                strict=True,
+            ):
+                self.assertAlmostEqual(actual_value, expected_value, places=12)
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_solve_does_not_mutate_read_only_native_right_hand_sides(self) -> None:
+        components = linalg_module._numpy_component()
+        assert components is not None
+        matrix = SparseMatrix(
+            3,
+            (4.0, -1.0, -1.0, 4.0, -1.0, -1.0, 4.0),
+            (0, 1, 0, 1, 2, 1, 2),
+            (0, 2, 5, 7),
+        )
+        right_hand_sides = components.asarray(
+            ([1.0, 2.0, 3.0], [3.0, 2.0, 1.0]),
+            dtype=float,
+        )
+        right_hand_sides.setflags(write=False)
+        expected = right_hand_sides.copy()
+
+        solve_factored_multiple_array(
+            factor_linear(matrix, backend="klu"),
+            right_hand_sides,
+        )
+
+        self.assertTrue(components.array_equal(right_hand_sides, expected))
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_workspace_restores_stale_factorizations(self) -> None:
+        first_matrix = SparseMatrix(
+            3,
+            (4.0, -1.0, -1.0, 4.0, -1.0, -1.0, 4.0),
+            (0, 1, 0, 1, 2, 1, 2),
+            (0, 2, 5, 7),
+        )
+        second_matrix = first_matrix.with_data(
+            (5.0, -1.0, -1.0, 5.0, -1.0, -1.0, 5.0)
+        )
+        first_factorization = factor_linear(first_matrix, backend="klu")
+        second_factorization = factor_linear(second_matrix, backend="klu")
+
+        second_actual = solve_factored(second_factorization, [1.0, 2.0, 3.0])
+        first_actual = solve_factored(first_factorization, [1.0, 2.0, 3.0])
+
+        first_expected = solve_linear(first_matrix.to_dense(), [1.0, 2.0, 3.0])
+        second_expected = solve_linear(second_matrix.to_dense(), [1.0, 2.0, 3.0])
+        for actual, expected in zip(first_actual, first_expected, strict=True):
+            self.assertAlmostEqual(actual, expected, places=12)
+        for actual, expected in zip(second_actual, second_expected, strict=True):
+            self.assertAlmostEqual(actual, expected, places=12)
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_factorization_restores_in_another_thread(self) -> None:
+        matrix = SparseMatrix(
+            3,
+            (4.0, -1.0, -1.0, 4.0, -1.0, -1.0, 4.0),
+            (0, 1, 0, 1, 2, 1, 2),
+            (0, 2, 5, 7),
+        )
+        factorization = factor_linear(matrix, backend="klu")
+
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            actual = executor.submit(
+                solve_factored,
+                factorization,
+                [1.0, 2.0, 3.0],
+            ).result()
+
+        expected = solve_linear(matrix.to_dense(), [1.0, 2.0, 3.0])
+        for actual_value, expected_value in zip(actual, expected, strict=True):
+            self.assertAlmostEqual(actual_value, expected_value, places=12)
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_backend_preserves_singularity_and_pivot_gates(self) -> None:
+        with self.assertRaises(SingularMatrixError):
+            factor_linear([[1.0, 2.0], [2.0, 4.0]], backend="klu")
+        with self.assertRaises(SingularMatrixError):
+            factor_linear(
+                [[1.0, 1.0], [1.0, 1.0 + 1.0e-15]],
+                backend="klu",
+            )
+        with self.assertRaises(SingularMatrixError):
+            factor_linear([[1.0, 0.0], [0.0, 1.0e-15]], backend="klu")
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_workspace_cache_has_bounded_per_thread_capacity(self) -> None:
+        klu_module.clear_klu_workspaces()
+        for size in range(1, 132):
+            factor_linear(
+                SparseMatrix(
+                    size,
+                    (1.0,) * size,
+                    tuple(range(size)),
+                    tuple(range(size + 1)),
+                ),
+                backend="klu",
+            )
+
+        self.assertLessEqual(
+            len(klu_module._KLU_WORKSPACES.values),
+            klu_module.MAXIMUM_KLU_WORKSPACES_PER_THREAD,
+        )
+        self.assertLessEqual(
+            len(klu_module._KLU_WORKSPACES.identities),
+            klu_module.MAXIMUM_KLU_WORKSPACES_PER_THREAD,
+        )
+
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_scipy_backend_preserves_singularity_gate(self) -> None:
         with self.assertRaises(SingularMatrixError):
@@ -394,6 +530,11 @@ class LinearAlgebraTests(unittest.TestCase):
         with patch("babcs.linalg._scipy_sparse_components", return_value=None):
             with self.assertRaises(LinearBackendUnavailableError):
                 factor_linear([[1.0]], backend="scipy")
+
+    def test_explicit_klu_backend_fails_when_dependency_is_missing(self) -> None:
+        with patch("babcs._klu._klu_components", return_value=None):
+            with self.assertRaises(LinearBackendUnavailableError):
+                factor_linear([[1.0]], backend="klu")
 
     def test_unknown_linear_backend_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "linear backend"):

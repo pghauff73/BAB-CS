@@ -146,9 +146,13 @@ The implementation remains dependency-free by default. A dense partial-
 pivoting solver supports small cases, while `auto` and `scipy` backends can use
 SciPy’s SuperLU interface for eligible sparse systems
 [[7]](REFERENCES.md#ref-7) [[9]](REFERENCES.md#ref-9) [[27]](REFERENCES.md#ref-27).
-The automatic policy considers matrix size, structural density, reuse, and
-multi-right-hand-side opportunity rather than sending every circuit through a
-sparse solver. Explicit sparse selection fails clearly if SciPy is unavailable.
+A compatible system SuiteSparse KLU 2 library adds bounded symbolic/numeric
+refactorization through `auto` for qualified large batched sensitivities or
+through explicit `klu` selection [[35]](REFERENCES.md#ref-35). The automatic
+policy considers matrix size, structural density, reuse, and multi-right-hand-
+side opportunity rather than sending every circuit through a sparse solver.
+Unavailable explicit backends fail clearly; automatic KLU failure restores
+SciPy.
 
 Substantial current engineering work targets sparse and nonlinear overhead.
 The circuit compiles CSC structure and device stamp locations, reuses bounded
@@ -159,6 +163,15 @@ uses exact coupled block or guarded Schur updates where qualified
 [[17]](REFERENCES.md#ref-17) [[25]](REFERENCES.md#ref-25). These optimizations
 are guarded by structural, finiteness, residual, contraction, topology, and
 fallback checks rather than being allowed to alter authority.
+
+The KLU adapter retains symbolic and numeric state in a bounded 128-entry
+per-thread LRU, checks unscaled U pivots against the existing singularity
+threshold, owns every overwritten right-hand-side buffer, and can restore stale,
+evicted, or cross-thread factors from immutable matrix data. Automatic use is
+limited to sensitivity matrices with at least 128 algebraic unknowns and 32
+right-hand sides. Paired local runs reduced four 32-channel workloads by about
+2.0% to 4.3% with exact state, metric, rejection, and work traces
+[[17]](REFERENCES.md#ref-17).
 
 The current simulator also compiles pure built-in breakpoint schedules once per
 run, deduplicating identical timing while preserving custom waveform calls and
@@ -180,11 +193,11 @@ than to expose only a final waveform.
 
 ## Evidence and Release State
 
-The qualification surface now comprises 196 test methods across model,
+The qualification surface now comprises 211 test methods across model,
 linear-algebra, integrator, candidate, nonlinear, event, long-horizon,
 comparison, packaging, and release-evidence modules [[32]](REFERENCES.md#ref-32).
 Long and very-long tests are opt-in tiers, and optional sparse tests execute
-when SciPy is available. The suite includes direct formula checks, analytic
+when SciPy or KLU is available. The suite includes direct formula checks, analytic
 convergence, refined-replay comparisons, failure injection, topology rejection,
 event-history behavior, energy and phase separation, deterministic output, and
 evidence-tampering rejection.
@@ -207,7 +220,7 @@ prove general superiority over ngspice’s much broader production simulator.
 
 Continuous integration mirrors these layers. Normal CI spans supported Python
 versions, deterministic examples, comparison smoke, wheel construction, clean
-installation, and optional sparse qualification. Scheduled workflows run the
+installation, and optional SciPy/KLU sparse qualification. Scheduled workflows run the
 longer matrix and external comparisons. The release-qualification workflow
 records exact source and environment identity, runs full source and installed-
 wheel suites, builds the wheel twice, compares source and installed numerical
@@ -243,10 +256,10 @@ long-time numerical error [[11]](REFERENCES.md#ref-11)
 [[15]](REFERENCES.md#ref-15).
 
 The next research phase follows directly from this current position. The
-highest-value paths are symbolic sparse-factorization reuse, better native
-ownership of sparse state and residual data after hot-topology adoption,
-diagnostics for factorization and generated-kernel cache policy, independently
-error-controlled replay refinement, and evidence-gated anchor scheduling. Device expansion,
-state-dependent event localization, broader DAE topology handling, and stronger
-bound-coverage arguments remain larger scientific programs rather than small
-optimizations [[17]](REFERENCES.md#ref-17).
+highest-value paths are native ownership of sparse numerical values and residual
+data after KLU and hot-topology adoption, diagnostics for factorization and
+generated-kernel cache policy, independently error-controlled replay refinement,
+and evidence-gated anchor scheduling. Device expansion, state-dependent event
+localization, broader DAE topology handling, and stronger bound-coverage
+arguments remain larger scientific programs rather than small optimizations
+[[17]](REFERENCES.md#ref-17).

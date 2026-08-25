@@ -135,3 +135,6 @@ BAB-CS actually implements and what it is permitted to claim.
 
 <a id="ref-34"></a>
 34. [BAB-CSv1 completion audit](BAB_CSV1_COMPLETION_AUDIT.md).
+
+<a id="ref-35"></a>
+35. [Optional SuiteSparse KLU adapter](../src/babcs/_klu.py).

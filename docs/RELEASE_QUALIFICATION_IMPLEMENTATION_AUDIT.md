@@ -49,16 +49,16 @@ The implementation boundary is deliberate:
 
 - validates exact `v<package-version>` tags and exact candidate/SHA prefixes;
 - supports non-publishing manual candidate runs;
-- installs SciPy and `ngspice`;
-- records UTC creation time, OS, platform, Python, pip, SciPy, `ngspice`, and
-  GitHub workflow identity;
+- installs SciPy, SuiteSparse KLU, and `ngspice`;
+- records UTC creation time, OS, platform, Python, pip, SciPy, KLU, `ngspice`,
+  and GitHub workflow identity;
 - compiles production, tool, test, and backend sources;
-- runs dependency-free and SciPy long/very-long source suites;
+- runs dependency-free and SciPy/KLU long/very-long source suites;
 - generates numerical and timing evidence and inspects the full matrix;
 - runs all four external mappings;
 - builds the wheel twice and compares exact bytes;
 - inspects and retains one exact wheel;
-- performs dependency-free and SciPy installed-wheel qualification;
+- performs dependency-free and SciPy/KLU installed-wheel qualification;
 - compares source and installed JSON, CSV, and SVG bytes;
 - writes and re-verifies the complete evidence manifest; and
 - uploads the evidence with 90-day Actions retention while retaining
@@ -99,7 +99,7 @@ states what is still required for an actual `v1.1.0` decision.
 | `RQ-003` | Implemented with human gate | `validate_release_identity` accepts only `v1.1.0` or exact `candidate-<SHA-prefix>` identity | Pending annotated tag creation after approval and remote tag resolution |
 | `RQ-004` | Implemented | Workflow writes `compile.log` from forced `compileall` over `src`, `tests`, `tools`, and `build_backend.py` | Pending final exact-commit workflow log |
 | `RQ-005` | Implemented | Workflow enables both long tiers; manifest parser requires one successful unittest summary | Pending final source test log and reviewer confirmation of skips |
-| `RQ-006` | Implemented | Clean SciPy environment, recorded version, install log, and full source suite | Pending final SciPy source evidence |
+| `RQ-006` | Implemented | Clean SciPy environment, installed system KLU, recorded versions, install log, and full source suite | Pending final SciPy/KLU source evidence |
 | `RQ-007` | Implemented | `tests/test_candidates.py`, comparison manifest, complete-matrix inspector | Pending final discovery and comparison reports |
 | `RQ-008` | Implemented | `tests/test_bound_model.py` reconstructs recurrence; comparison reports retain bound metrics | Pending final test and numerical evidence |
 | `RQ-009` | Implemented | BAB-CS and long-horizon tests cover replay, pre-reset evidence, history rebuild, and reset; comparison metrics retain anchors | Pending final test and comparison evidence |

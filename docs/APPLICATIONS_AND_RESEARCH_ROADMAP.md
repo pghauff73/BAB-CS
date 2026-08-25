@@ -57,11 +57,13 @@ without letting machine load decide the result.
 
 The seventh area is sparse-solver research for repeated circuit structures.
 The optional backend compiles CSC topology, reuses bounded workspaces, batches
-sensitivities, and compares dense and sparse crossover behavior
-[[17]](REFERENCES.md#ref-17) [[27]](REFERENCES.md#ref-27). This provides a
-compact environment for testing symbolic reuse, ordering policy, state
-residency, block factorization, and cache diagnostics before attempting the same
-ideas in a full production simulator.
+sensitivities, reuses KLU symbolic/numeric state for qualified large batched
+systems, and compares dense and sparse crossover behavior
+[[17]](REFERENCES.md#ref-17) [[27]](REFERENCES.md#ref-27)
+[[35]](REFERENCES.md#ref-35). This provides a compact environment for testing
+ordering policy, state residency, block factorization, cache diagnostics, and
+safe backend fallback before attempting the same ideas in a full production
+simulator.
 
 The eighth area is reproducible scientific packaging. The project can build a
 deterministic wheel, inspect its metadata and members, qualify the installed
@@ -190,8 +192,8 @@ qualification work packages [[18]](REFERENCES.md#ref-18).
 The fourth completed phase optimized execution. It reduced repeated Jacobian,
 projection, replay, nonlinear, and linear-algebra work; introduced optional
 sparse execution; compiled topology and CSC stamps; reused workspaces; batched
-sensitivities; added guarded chord and Schur predictors; and retained only
-changes that survived end-to-end measurement and regression checks
+sensitivities; added bounded KLU symbolic/numeric reuse, guarded chord and Schur
+predictors; and retained only changes that survived end-to-end measurement and regression checks
 [[17]](REFERENCES.md#ref-17).
 
 The fifth completed infrastructure phase built release qualification. Canonical
@@ -202,20 +204,21 @@ verification, and pinned CI workflows are implemented
 human release decision remains intentionally outside that infrastructure.
 
 The immediate next phase should complete the governed `v1.1.0` release process.
-One clean source commit must be frozen, the full dependency-free and SciPy
+One clean source commit must be frozen, the full dependency-free and SciPy/KLU
 qualification tiers must run, the comparison and ngspice evidence must be
 reviewed, two wheel builds must match, the installed wheel must reproduce source
 reports, and a human approver must name the exact hashes before tagging or
 publication [[19]](REFERENCES.md#ref-19) [[21]](REFERENCES.md#ref-21).
 
-The next performance phase should prioritize sparse symbolic reuse and cache
-observability. A backend capable of reusing symbolic analysis could address a
-remaining large-network cost that numeric CSC reuse does not remove. Cache hit,
-miss, eviction, and fallback metrics should be added before cache policy becomes
-configurable. The implemented ULP-aware two-step evidence window, compiled
-built-in breakpoint schedules, bounded sparse-kernel source and hot-topology
-caches, and duplicate built-in switch-control sampling provide new baselines for
-that work; the corrected three-step extension remains rejected
+The next performance phase should prioritize native sparse numerical-value
+ownership and cache observability. KLU now reuses symbolic and numeric structure,
+but circuit values still cross an immutable tuple-to-NumPy boundary before each
+factor. Cache hit, miss, eviction, refactor, and fallback metrics should be added
+before cache policy becomes configurable or automatic KLU adoption broadens.
+The implemented ULP-aware two-step evidence window, compiled built-in breakpoint
+schedules, bounded sparse-kernel source and hot-topology caches, duplicate built-
+in switch-control sampling, and qualified KLU adapter provide the new baselines;
+the corrected three-step extension remains rejected
 [[17]](REFERENCES.md#ref-17).
 
 The next numerical phase should investigate independently controlled replay

@@ -5,7 +5,8 @@
 BAB-CSv1 is a dependency-free-by-default Python reference implementation of
 **Bounded Adams-Bashforth Circuit Simulation** with a reusable error-bounding
 controller. SciPy is an optional acceleration dependency for larger sparse
-linear systems.
+linear systems, and a compatible system SuiteSparse KLU 2 library can add
+bounded symbolic/numeric reuse.
 The controller can wrap explicit Euler, Heun, Bogacki-Shampine RK23,
 variable-step AB2, backward Euler, trapezoidal, or BDF2 candidates. It combines
 semiexplicit modified nodal analysis, algebraic projection, an independent
@@ -137,12 +138,16 @@ PYTHONPATH=src python -m babcs simulate examples/rc_step.json \
 The default `dense` backend preserves the dependency-free deterministic path.
 Install the optional sparse backend with `python -m pip install ".[sparse]"`,
 then select `--linear-backend auto`. Auto mode retains dense solves below the
-measured crossover and uses SciPy SuperLU only for sufficiently large sparse
-systems. `--linear-backend scipy` forces the optional backend and fails clearly
-when SciPy is unavailable. Large sparse nonlinear solves may reuse the previous
-validated factorization only as a guarded chord predictor. Its proposed update
-must reduce the current residual under the normal line search; any factor or
-line-search failure clears it and immediately restores a fresh Jacobian solve.
+measured crossover and uses SciPy SuperLU for eligible sparse systems. When
+NumPy and a compatible system SuiteSparse KLU 2 shared library are also present,
+auto mode uses bounded KLU symbolic/numeric reuse only for large batched native
+sensitivity systems and falls back to SciPy on any KLU failure.
+`--linear-backend scipy` forces SuperLU. `--linear-backend klu` forces KLU and
+fails clearly when NumPy or the compatible shared library is unavailable. Large
+sparse nonlinear solves may reuse the previous validated factorization only as
+a guarded chord predictor. Its proposed update must reduce the current residual
+under the normal line search; any factor or line-search failure clears it and
+immediately restores a fresh Jacobian solve.
 
 Run tests:
 
@@ -261,7 +266,8 @@ checked together by `tests/test_build_backend.py`.
 }
 ```
 
-`linear_backend` may be `dense`, `auto`, or `scipy`; it defaults to `dense`.
+`linear_backend` may be `dense`, `auto`, `scipy`, or `klu`; it defaults to
+`dense`.
 See `examples/rc_step.json`, `examples/lc_tank.json`, and
 `examples/pulsed_rc.json` for complete cases.
 
@@ -285,8 +291,10 @@ directly from the event state.
 
 - Dense Gaussian elimination remains the deterministic dependency-free
   backend. In `auto` mode, eligible larger sparse systems use precompiled CSC
-  stamping, reusable bounded workspaces, and native batched sensitivity solves;
-  small, structurally dense, and extension-circuit paths remain dense.
+  stamping, reusable bounded workspaces, and native batched sensitivity solves.
+  A compatible KLU 2 library is used only for qualified large batched
+  sensitivities; otherwise auto uses SuperLU or dense fallback. Small,
+  structurally dense, and extension-circuit paths remain dense.
 - The semiexplicit element-state formulation rejects higher-index topologies.
 - Device coverage is intentionally small.
 - Switch events are derived from waveform breakpoints, not arbitrary analog

@@ -10,6 +10,7 @@ from typing import Any
 from weakref import WeakMethod
 
 from .linalg import (
+    _numpy_component,
     _scipy_sparse_components,
     LinearBackendUnavailableError,
     LinearMatrix,
@@ -23,7 +24,9 @@ from .linalg import (
     finite_difference_jacobian,
     matrix_inf_norm,
     norm_inf,
+    klu_sparse_available,
     scipy_sparse_available,
+    sparse_linear_available,
     solve_factored,
     solve_factored_multiple_array,
     solve_linear,
@@ -41,6 +44,8 @@ from .waveforms import (
 GROUND = "0"
 MAXIMUM_LINEAR_CACHE_ENTRIES = 128
 REUSABLE_ALGEBRAIC_INPUT_MINIMUM_SIZE = 64
+KLU_NATIVE_SENSITIVITY_MINIMUM_ALGEBRAIC_SIZE = 128
+KLU_NATIVE_SENSITIVITY_MINIMUM_RIGHT_HAND_SIDES = 32
 COMPILED_SPARSE_ALGEBRAIC_MINIMUM_CALLS = 256
 DEDUPLICATED_SWITCH_CONTROL_MINIMUM_COUNT = 32
 MAXIMUM_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES = 128
@@ -293,6 +298,11 @@ class Circuit:
         if self.linear_backend == "scipy" and not scipy_sparse_available():
             raise LinearBackendUnavailableError(
                 "the scipy linear backend requires the optional scipy dependency"
+            )
+        if self.linear_backend == "klu" and not klu_sparse_available():
+            raise LinearBackendUnavailableError(
+                "the KLU linear backend requires NumPy and a compatible "
+                "SuiteSparse KLU 2 library"
             )
         self.elements = [self._normalize_element(element) for element in elements]
         self._validate()
@@ -1954,9 +1964,9 @@ class Circuit:
             return self._sparse_algebraic_enabled
         if backend == "dense" or self.algebraic_size == 0:
             enabled = False
-        elif backend == "scipy":
+        elif backend in {"klu", "scipy"}:
             enabled = True
-        elif not scipy_sparse_available():
+        elif not sparse_linear_available():
             return False
         else:
             minimum_size = (
@@ -2112,10 +2122,9 @@ class Circuit:
         )
         if not isinstance(algebraic_jacobian, SparseMatrix):
             return None
-        components = _scipy_sparse_components()
-        if components is None:
+        numpy = _numpy_component()
+        if numpy is None:
             return None
-        numpy, _, _ = components
         native_right_hand_sides = (
             self._native_differential_sensitivity_right_hand_sides
         )
@@ -2128,14 +2137,45 @@ class Circuit:
             self._native_differential_sensitivity_right_hand_sides = (
                 native_right_hand_sides
             )
+        factor_backend = self.linear_backend
+        automatic_klu = (
+            factor_backend == "auto"
+            and self.algebraic_size
+            >= KLU_NATIVE_SENSITIVITY_MINIMUM_ALGEBRAIC_SIZE
+            and self.dynamic_size
+            >= KLU_NATIVE_SENSITIVITY_MINIMUM_RIGHT_HAND_SIDES
+            and klu_sparse_available()
+        )
+        if automatic_klu:
+            factor_backend = "klu"
         try:
-            factorization = factor_linear(algebraic_jacobian, backend="scipy")
+            factorization = factor_linear(
+                algebraic_jacobian,
+                backend=factor_backend,
+            )
             sensitivities = solve_factored_multiple_array(
                 factorization,
                 native_right_hand_sides,
             )
-        except SingularMatrixError as error:
-            raise CircuitSolveError(f"differential sensitivity solve failed: {error}") from error
+        except (LinearBackendUnavailableError, SingularMatrixError) as error:
+            if automatic_klu:
+                try:
+                    factorization = factor_linear(
+                        algebraic_jacobian,
+                        backend="scipy",
+                    )
+                    sensitivities = solve_factored_multiple_array(
+                        factorization,
+                        native_right_hand_sides,
+                    )
+                except (LinearBackendUnavailableError, SingularMatrixError) as fallback_error:
+                    raise CircuitSolveError(
+                        f"differential sensitivity solve failed: {fallback_error}"
+                    ) from fallback_error
+            else:
+                raise CircuitSolveError(
+                    f"differential sensitivity solve failed: {error}"
+                ) from error
         if sensitivities is None:
             return None
 
@@ -2374,7 +2414,11 @@ class Circuit:
         block_matrix = self._implicit_block_sparse_template.with_data(block_data)
         right_hand_side = [0.0] * self.algebraic_size
         right_hand_side.extend(-float(value) for value in residual)
-        solution = solve_linear(block_matrix, right_hand_side, backend="scipy")
+        solution = solve_linear(
+            block_matrix,
+            right_hand_side,
+            backend=self.linear_backend,
+        )
         return SparseImplicitUpdate(
             algebraic_update=tuple(solution[: self.algebraic_size]),
             dynamic_update=tuple(solution[self.algebraic_size :]),

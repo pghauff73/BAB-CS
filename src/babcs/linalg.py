@@ -8,10 +8,20 @@ from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any, Literal
 
+from ._klu import (
+    KluFactorizationError,
+    KluLinearFactorization,
+    KluSingularError,
+    KluUnavailableError,
+    factor_sparse as _factor_sparse_klu,
+    klu_available,
+    solve_factorized_multiple as _solve_factorized_multiple_klu,
+)
 
-LinearBackend = Literal["auto", "dense", "scipy"]
+LinearBackend = Literal["auto", "dense", "klu", "scipy"]
+ResolvedLinearBackend = Literal["dense", "klu", "scipy"]
 ScipyColumnOrdering = Literal["COLAMD", "NATURAL"]
-LINEAR_BACKENDS: tuple[LinearBackend, ...] = ("auto", "dense", "scipy")
+LINEAR_BACKENDS: tuple[LinearBackend, ...] = ("auto", "dense", "klu", "scipy")
 SCIPY_SPARSE_REUSABLE_MINIMUM_SIZE = 16
 SCIPY_SPARSE_SINGLE_SOLVE_MINIMUM_SIZE = 32
 SCIPY_SPARSE_MULTI_RHS_MINIMUM_COUNT = 8
@@ -51,7 +61,9 @@ class ScipyLinearFactorization:
         return "scipy"
 
 
-ReusableLinearFactorization = LinearFactorization | ScipyLinearFactorization
+ReusableLinearFactorization = (
+    LinearFactorization | KluLinearFactorization | ScipyLinearFactorization
+)
 
 
 @dataclass
@@ -125,9 +137,20 @@ def validate_linear_backend(backend: str) -> LinearBackend:
 
 
 @lru_cache(maxsize=1)
-def _scipy_sparse_components() -> tuple[Any, Any, Any] | None:
+def _numpy_component() -> Any | None:
     try:
         import numpy
+    except ImportError:
+        return None
+    return numpy
+
+
+@lru_cache(maxsize=1)
+def _scipy_sparse_components() -> tuple[Any, Any, Any] | None:
+    numpy = _numpy_component()
+    if numpy is None:
+        return None
+    try:
         from scipy.sparse import csc_matrix
         from scipy.sparse.linalg import splu
     except ImportError:
@@ -137,6 +160,14 @@ def _scipy_sparse_components() -> tuple[Any, Any, Any] | None:
 
 def scipy_sparse_available() -> bool:
     return _scipy_sparse_components() is not None
+
+
+def klu_sparse_available() -> bool:
+    return klu_available()
+
+
+def sparse_linear_available() -> bool:
+    return klu_available() or scipy_sparse_available()
 
 
 @lru_cache(maxsize=128)
@@ -188,12 +219,19 @@ def _selected_linear_backend(
     backend: str,
     *,
     minimum_size: int = SCIPY_SPARSE_REUSABLE_MINIMUM_SIZE,
-) -> LinearBackend:
+) -> ResolvedLinearBackend:
     selected = validate_linear_backend(backend)
     if selected == "dense":
         return selected
-    components = _scipy_sparse_components()
+    if selected == "klu":
+        if not klu_available():
+            raise LinearBackendUnavailableError(
+                "the KLU linear backend requires NumPy and a compatible "
+                "SuiteSparse KLU 2 library"
+            )
+        return selected
     if selected == "scipy":
+        components = _scipy_sparse_components()
         if components is None:
             raise LinearBackendUnavailableError(
                 "the scipy linear backend requires the optional scipy dependency"
@@ -201,7 +239,7 @@ def _selected_linear_backend(
         return selected
 
     size = matrix.size if isinstance(matrix, SparseMatrix) else len(matrix)
-    if size < minimum_size or components is None:
+    if size < minimum_size:
         return "dense"
     nonzero_entries = (
         matrix.nonzero_count
@@ -209,6 +247,8 @@ def _selected_linear_backend(
         else sum(value != 0.0 for row in matrix for value in row)
     )
     if nonzero_entries > SCIPY_SPARSE_MAXIMUM_DENSITY * size * size:
+        return "dense"
+    if _scipy_sparse_components() is None:
         return "dense"
     return "scipy"
 
@@ -224,6 +264,28 @@ def _square_matrix_size(matrix: LinearMatrix) -> int:
 
 def _dense_matrix(matrix: LinearMatrix) -> Sequence[Sequence[float]]:
     return matrix.to_dense() if isinstance(matrix, SparseMatrix) else matrix
+
+
+def _sparse_matrix(matrix: LinearMatrix) -> SparseMatrix:
+    if isinstance(matrix, SparseMatrix):
+        return matrix
+    size = len(matrix)
+    data: list[float] = []
+    row_indices: list[int] = []
+    column_pointers = [0]
+    for column in range(size):
+        for row in range(size):
+            value = matrix[row][column]
+            if value != 0.0:
+                data.append(float(value))
+                row_indices.append(row)
+        column_pointers.append(len(data))
+    return SparseMatrix(
+        size,
+        tuple(data),
+        tuple(row_indices),
+        tuple(column_pointers),
+    )
 
 
 def norm_inf(values: Sequence[float]) -> float:
@@ -305,16 +367,14 @@ def solve_linear(
         raise ValueError("linear system must be square")
     if size == 0:
         return []
-    if (
-        _selected_linear_backend(
-            matrix,
-            backend,
-            minimum_size=SCIPY_SPARSE_SINGLE_SOLVE_MINIMUM_SIZE,
-        )
-        == "scipy"
-    ):
+    selected_backend = _selected_linear_backend(
+        matrix,
+        backend,
+        minimum_size=SCIPY_SPARSE_SINGLE_SOLVE_MINIMUM_SIZE,
+    )
+    if selected_backend != "dense":
         return solve_factored(
-            factor_linear(matrix, pivot_tolerance, backend="scipy"),
+            factor_linear(matrix, pivot_tolerance, backend=selected_backend),
             right_hand_side,
         )
     matrix = _dense_matrix(matrix)
@@ -378,7 +438,10 @@ def factor_linear(
     size = _square_matrix_size(matrix)
     if size == 0:
         return LinearFactorization((), (), pivot_tolerance)
-    if _selected_linear_backend(matrix, backend) == "scipy":
+    selected_backend = _selected_linear_backend(matrix, backend)
+    if selected_backend == "klu":
+        return _factor_linear_klu(matrix, pivot_tolerance)
+    if selected_backend == "scipy":
         return _factor_linear_scipy(matrix, pivot_tolerance)
     matrix = _dense_matrix(matrix)
 
@@ -423,6 +486,28 @@ def factor_linear(
         tuple(permutation),
         minimum_pivot,
     )
+
+
+def _factor_linear_klu(
+    matrix: LinearMatrix,
+    pivot_tolerance: float,
+) -> KluLinearFactorization:
+    sparse_matrix = _sparse_matrix(matrix)
+    minimum_pivot = pivot_tolerance * max(matrix_inf_norm(sparse_matrix), 1.0)
+    try:
+        return _factor_sparse_klu(
+            sparse_matrix.size,
+            sparse_matrix.data,
+            sparse_matrix.row_indices,
+            sparse_matrix.column_pointers,
+            minimum_pivot,
+        )
+    except KluUnavailableError as error:
+        raise LinearBackendUnavailableError(str(error)) from error
+    except KluSingularError as error:
+        raise SingularMatrixError(str(error)) from error
+    except KluFactorizationError as error:
+        raise SingularMatrixError("KLU matrix factorization failed") from error
 
 
 def _factor_linear_scipy(
@@ -579,6 +664,20 @@ def solve_factored(
     factorization: ReusableLinearFactorization,
     right_hand_side: Sequence[float],
 ) -> list[float]:
+    if isinstance(factorization, KluLinearFactorization):
+        if len(right_hand_side) != factorization.size:
+            raise ValueError("linear right-hand side has the wrong size")
+        try:
+            return _solve_factorized_multiple_klu(
+                factorization,
+                (right_hand_side,),
+            )[0].tolist()
+        except KluUnavailableError as error:
+            raise LinearBackendUnavailableError(str(error)) from error
+        except KluSingularError as error:
+            raise SingularMatrixError(str(error)) from error
+        except KluFactorizationError as error:
+            raise SingularMatrixError("KLU matrix solve failed") from error
     if isinstance(factorization, ScipyLinearFactorization):
         if len(right_hand_side) != factorization.size:
             raise ValueError("linear right-hand side has the wrong size")
@@ -650,6 +749,17 @@ def solve_factored_multiple_array(
     factorization: ReusableLinearFactorization,
     right_hand_sides: Sequence[Sequence[float]],
 ) -> Any | None:
+    if isinstance(factorization, KluLinearFactorization):
+        if any(len(right_hand_side) != factorization.size for right_hand_side in right_hand_sides):
+            raise ValueError("linear right-hand side has the wrong size")
+        try:
+            return _solve_factorized_multiple_klu(factorization, right_hand_sides)
+        except KluUnavailableError as error:
+            raise LinearBackendUnavailableError(str(error)) from error
+        except KluSingularError as error:
+            raise SingularMatrixError(str(error)) from error
+        except KluFactorizationError as error:
+            raise SingularMatrixError("KLU matrix solve failed") from error
     if not isinstance(factorization, ScipyLinearFactorization):
         return None
     if any(len(right_hand_side) != factorization.size for right_hand_side in right_hand_sides):
@@ -693,9 +803,14 @@ def solve_linear_multiple(
         if right_hand_side_count >= SCIPY_SPARSE_MULTI_RHS_MINIMUM_COUNT
         else SCIPY_SPARSE_SINGLE_SOLVE_MINIMUM_SIZE
     )
-    if _selected_linear_backend(matrix, backend, minimum_size=minimum_size) == "scipy":
+    selected_backend = _selected_linear_backend(
+        matrix,
+        backend,
+        minimum_size=minimum_size,
+    )
+    if selected_backend != "dense":
         return solve_factored_multiple(
-            factor_linear(matrix, pivot_tolerance, backend="scipy"),
+            factor_linear(matrix, pivot_tolerance, backend=selected_backend),
             right_hand_sides,
         )
     matrix = _dense_matrix(matrix)

@@ -12,7 +12,7 @@ Packaging tests establish that installed code is the code that was examined
 [[15]](REFERENCES.md#ref-15) [[18]](REFERENCES.md#ref-18). No one layer is
 allowed to imply all the others.
 
-The current test tree contains 196 test methods across nineteen modules
+The current test tree contains 211 test methods across nineteen modules
 [[32]](REFERENCES.md#ref-32). Coverage includes circuit construction,
 projection, waveform breakpoints, dense and sparse linear algebra, implicit
 methods, all bounded candidates, error recurrence, rollout modes, events,
@@ -23,8 +23,8 @@ qualification still depends on the required tiers running successfully in the
 intended environment.
 
 A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 with
-both `BABCS_LONG_TESTS=1` and `BABCS_VERY_LONG_TESTS=1`. All 200 tests passed in
-41.801 seconds with zero skips. This establishes that the essay set was updated
+both `BABCS_LONG_TESTS=1` and `BABCS_VERY_LONG_TESTS=1`. All 211 tests passed in
+43.751 seconds with zero skips. This establishes that the essay set was updated
 against a live green source tree; it does not replace the clean-environment,
 installed-wheel, exact-artifact, workflow, and human-review requirements of
 release qualification.
@@ -128,8 +128,8 @@ claim that BAB-CS duplicates all ngspice devices or algorithms
 Normal continuous integration runs on the supported Python version matrix,
 compiles source and tools, executes the regression suite, compares repeated
 example outputs byte-for-byte, performs a deterministic comparison smoke test,
-builds and installs a wheel, and runs an optional sparse qualification job
-[[33]](REFERENCES.md#ref-33). Actions are pinned to exact revisions so changes
+builds and installs a wheel, and runs an optional SciPy/KLU sparse qualification
+job [[33]](REFERENCES.md#ref-33). Actions are pinned to exact revisions so changes
 in third-party workflow code do not enter qualification unnoticed.
 
 The scheduled workflow extends this with long-horizon tests, the full numerical
@@ -147,8 +147,9 @@ agree [[20]](REFERENCES.md#ref-20). The wheel follows the standard Python binary
 distribution format [[10]](REFERENCES.md#ref-10).
 
 The release workflow records the complete source SHA, candidate or tag identity,
-Python, operating system, pip, SciPy, ngspice, workflow event, workflow ref, and
-workflow run. It compiles source, runs dependency-free and SciPy source suites,
+Python, operating system, pip, SciPy, SuiteSparse KLU, ngspice, workflow event,
+workflow ref, and workflow run. It compiles source, runs dependency-free and
+SciPy/KLU source suites,
 generates source comparisons, produces external evidence, builds the wheel
 twice, and compares the wheel bytes. It then installs the retained wheel into a
 fresh environment and repeats the required suites and comparisons

@@ -123,6 +123,7 @@ these immutable fields:
 | Expected wheel | `bab_cs-1.1.0-py3-none-any.whl` |
 | Python requirement | `>=3.11` |
 | Optional sparse dependency | `scipy>=1.11` |
+| Optional native sparse library | Compatible SuiteSparse KLU 2 shared library |
 | Release workflow | `Release Qualification` |
 | Qualification artifact | `bab-cs-release-qualification` |
 | Human approver | Named person or authenticated GitHub identity |
@@ -214,7 +215,7 @@ release commit has already been qualified.
 | `RQ-003` | Tag identity | `git rev-parse v1.1.0^{commit}` | Tag resolves exactly to approved release commit |
 | `RQ-004` | Source compilation | `compileall` log and exit code | All production, tool, and test Python sources compile |
 | `RQ-005` | Full source behavior | Long and very-long `unittest` log | Zero failures/errors and zero unexpected skips |
-| `RQ-006` | Optional sparse behavior | SciPy-installed focused and full logs | Sparse/model/integrator/candidate/nonlinear tests pass with recorded SciPy version |
+| `RQ-006` | Optional sparse behavior | SciPy/KLU-installed focused and full logs | Sparse/model/integrator/candidate/nonlinear tests pass with recorded SciPy and KLU versions |
 | `RQ-007` | Candidate coverage | `tests/test_candidates.py`, discovery log | Every documented candidate executes through the shared bounded controller |
 | `RQ-008` | Bound recurrence | Bound-model tests and numerical report | Reported recurrence is reproducible from emitted metrics |
 | `RQ-009` | Independent anchors | Long-horizon tests and comparison metrics | Anchors execute, record pre-reset evidence, and reset history as documented |
@@ -330,11 +331,12 @@ BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 PYTHONPATH=src \
 Record the process exit code. An interrupted run has unknown status and must be
 repeated from a confirmed clean process state.
 
-### B4. Run optional sparse qualification
+### B4. Run optional SciPy/KLU sparse qualification
 
 Use a clean virtual environment:
 
 ```bash
+sudo apt-get install --yes libsuitesparse-dev
 rm -rf /tmp/babcs-source-scipy
 python -m venv /tmp/babcs-source-scipy
 {
@@ -344,6 +346,9 @@ python -m venv /tmp/babcs-source-scipy
 /tmp/babcs-source-scipy/bin/python -c \
   'import scipy; print(scipy.__version__)' \
   | tee artifacts/release/SCIPY_VERSION
+PYTHONPATH=src /tmp/babcs-source-scipy/bin/python -c \
+  'from babcs._klu import klu_version; version = klu_version(); assert version is not None; print(".".join(map(str, version)))' \
+  | tee artifacts/release/KLU_VERSION
 BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 PYTHONPATH=src \
   /tmp/babcs-source-scipy/bin/python -m unittest discover -s tests -v \
   2>&1 | tee artifacts/release/source-scipy-tests.log
@@ -512,7 +517,7 @@ BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
   2>&1 | tee artifacts/release/installed-wheel-tests.log
 ```
 
-### F3. Installed sparse tests
+### F3. Installed SciPy/KLU sparse tests
 
 ```bash
 /tmp/babcs-release-wheel/bin/python -m pip install 'scipy>=1.11' \
@@ -520,6 +525,9 @@ BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
 /tmp/babcs-release-wheel/bin/python -c \
   'import scipy; print(scipy.__version__)' \
   | tee artifacts/release/INSTALLED_SCIPY_VERSION
+/tmp/babcs-release-wheel/bin/python -c \
+  'from babcs._klu import klu_version; version = klu_version(); assert version is not None; print(".".join(map(str, version)))' \
+  | tee artifacts/release/INSTALLED_KLU_VERSION
 BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
   /tmp/babcs-release-wheel/bin/python -m unittest discover -s tests -v \
   2>&1 | tee artifacts/release/installed-wheel-scipy-tests.log

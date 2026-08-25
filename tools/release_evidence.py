@@ -313,9 +313,11 @@ def evidence_role(name: str) -> str:
         "OPERATING_SYSTEM",
         "PIP_VERSION",
         "SCIPY_VERSION",
+        "KLU_VERSION",
         "NGSPICE_VERSION",
         "INSTALLED_PACKAGE_PATH",
         "INSTALLED_SCIPY_VERSION",
+        "INSTALLED_KLU_VERSION",
     }:
         return "environment"
     if name in {"WHEEL_SHA256", "WHEEL_CONTENTS"}:

@@ -65,11 +65,20 @@ topology, residual, contraction, and finiteness gates.
 
 - Adds optional SciPy SuperLU support through `linear_backend="auto"` and
   `linear_backend="scipy"`.
+- Adds an optional `linear_backend="klu"` adapter for compatible system
+  SuiteSparse KLU 2 libraries and narrowly adopts it in `auto` for qualified
+  large batched sensitivity systems.
 - Adds measured dense/sparse crossover rules instead of forcing sparse work on
   small systems.
 - Precompiles sparse CSC structures and topology-owned stamping metadata.
 - Reuses bounded per-thread sparse workspaces while retaining safe ordering
   fallback.
+- Reuses KLU symbolic analysis and numeric storage through a bounded 128-entry
+  per-thread LRU with exact-structure, stale-factor, eviction, and cross-thread
+  restoration.
+- Preserves the absolute singularity gate with unscaled KLU U-pivot checks,
+  owns every overwritten right-hand-side buffer, and falls back to SciPy when
+  automatic KLU execution fails.
 - Uses native batched differential-sensitivity solves and read-only reusable
   right-hand-side storage.
 - Adds demand-gated generated residual and full sparse assembly kernels for the
@@ -150,6 +159,12 @@ The contractively bounded Schur predictor additionally measured:
 - Approximately 35% to 73% direct sparse-update reduction over the exact
   coupled block across tested mixed dimensions.
 
+Qualified automatic KLU reuse additionally measured mean end-to-end reductions
+of 2.048%, 4.166%, 4.293%, and 3.140% on 32-channel sine, mixed, pulsed, and
+switched workloads. Minimum round reductions were 1.484%, 3.674%, 4.191%, and
+2.780%. State, metric, rejection, and deterministic work traces were exactly
+equal to commit `259a836` in every retained comparison.
+
 These numbers are local characterization for the named workloads and hardware.
 They are not a claim that BAB-CS is generally faster than `ngspice` or another
 production simulator.
@@ -173,6 +188,8 @@ change.
 - Requires Python 3.11 or newer.
 - The default installation has no runtime dependencies.
 - Sparse acceleration remains optional through `scipy>=1.11`.
+- KLU acceleration additionally requires NumPy and a compatible system
+  SuiteSparse KLU 2 shared library; it is not bundled into the wheel.
 - The default `dense` backend preserves the dependency-free deterministic path.
 - Existing JSON cases remain valid unless they relied on behavior now rejected
   by a correctness gate.
@@ -194,8 +211,10 @@ change.
   assumptions; they are not proof against the unknown physical trajectory.
 - Empirical anchor-error-to-bound ratios are characterization evidence, not a
   formal coverage proof.
-- The sparse backend still performs fresh SuperLU factorization where explicit
-  symbolic/numeric factor separation is unavailable.
+- Generic `auto` sparse solves still use fresh SuperLU factorization. Automatic
+  KLU symbolic/numeric reuse is intentionally limited to large batched native
+  sensitivity systems until broader solve classes have independent positive
+  evidence.
 - Periodic replay corrects the endpoint and rebuilt history; it does not rewrite
   already emitted intermediate samples.
 
@@ -204,7 +223,7 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 200 tests with long, very-long, and SciPy tiers enabled. This local run
+of all 211 tests with long, very-long, SciPy, and KLU tiers enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.
 
@@ -308,7 +327,7 @@ and preserve the final approval and evidence outside expiring Actions storage.
 - [ ] Version is `1.1.0` everywhere and no stale `1.0.0` build metadata remains.
 - [ ] Release commit is clean, pushed, and identified by full SHA.
 - [ ] Full long and very-long source qualification passes.
-- [ ] Optional SciPy qualification passes.
+- [ ] Optional SciPy/KLU qualification passes with both versions recorded.
 - [ ] Numerical comparison changes have been reviewed.
 - [ ] `ngspice` mappings and results have been reviewed.
 - [ ] Two independent wheel builds are byte-identical.

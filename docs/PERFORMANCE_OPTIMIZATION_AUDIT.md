@@ -681,6 +681,43 @@ pre-loop baseline measured cumulative reductions of 4.114% at 16 channels and
 Every state trace, reported metric, rejection count, and deterministic
 candidate-work count was exactly equal.
 
+### Bounded SuiteSparse KLU symbolic/numeric reuse
+
+The next profile identified repeated SuperLU symbolic and numeric factorization
+inside large batched differential-sensitivity solves. BAB-CS now has an optional
+`ctypes` adapter for a compatible system SuiteSparse KLU 2 library. KLU symbolic
+analysis and numeric storage live in a bounded 128-entry per-thread LRU. Exact
+structure identity avoids repeated tuple hashing in hot circuits, exact
+structural equality still permits reuse across separately constructed circuits,
+and weak factor references allow eviction without invalidating the public
+reusable-factorization contract. A stale or cross-thread factorization restores
+its immutable matrix values into an appropriate workspace before solving.
+
+The KLU workspace disables row scaling so its exposed U diagonal remains on the
+original matrix scale. Every factor and refactor must pass the existing absolute
+minimum-pivot gate, singular and nonfinite results fail closed, and automatic
+KLU failure retries with SciPy. Each multi-right-hand-side solve uses a distinct
+owned Fortran buffer. An earlier prototype accidentally allowed `ctypes` to
+overwrite a transposed view of the read-only cached right-hand sides; the retained
+implementation forces a copy and has a direct mutation regression test.
+
+Automatic adoption is deliberately narrow. Generic `auto` factorization keeps
+the existing dense/SciPy selection. KLU is selected automatically only for
+native sensitivity systems with at least 128 algebraic unknowns and 32 right-
+hand sides, where repeated structure and batching amortize the adapter cost.
+`linear_backend="klu"` remains available for explicit research use, while a
+missing NumPy installation or compatible shared library fails clearly.
+
+Three balanced rounds with four warmups and 15 paired runs per round compared
+the retained implementation against commit `259a836`. Mean end-to-end reductions
+were 2.048% for the 32-channel sine case, 4.166% for mixed capacitor/inductor
+channels, 4.293% for pulsed channels, and 3.140% for switched channels. Minimum
+round reductions were 1.484%, 3.674%, 4.191%, and 2.780%, respectively. Every
+state trace, reported metric, rejection count, and deterministic candidate-work
+count was exactly equal. Final factor-plus-batched-solve kernels were about 22%
+faster for the mixed case and 13% faster for the switched case on the local
+SuiteSparse KLU 2.3.6 installation.
+
 ### Current cumulative scaling
 
 A fresh cumulative comparison used five warmups and 15 paired runs in each of
@@ -708,9 +745,9 @@ rather than baseline equality.
 
 - Focused replay, Jacobian, nonlinear, comparison, accuracy, failure-gate, and
   long-horizon regression groups passed before the full run.
-- Full current-source qualification on August 25, 2026 with SciPy 1.18.0,
-  `BABCS_LONG_TESTS=1`, and `BABCS_VERY_LONG_TESTS=1`: 200 tests passed in
-  41.801 seconds, with zero skips.
+- Full current-source qualification on August 25, 2026 with SciPy 1.18.0 and
+  SuiteSparse KLU 2.3.6, `BABCS_LONG_TESTS=1`, and
+  `BABCS_VERY_LONG_TESTS=1`: 211 tests passed in 43.751 seconds, with zero skips.
 - Most recent pre-Schur qualified wheel: `bab_cs-1.0.0-py3-none-any.whl`.
 - Two independent wheel builds were byte-identical.
 - Candidate wheel SHA-256:
@@ -736,11 +773,10 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **Sparse symbolic reuse:** generated CSC stamping and hot-topology adoption
-   remove Python dense
-   assembly and conversion, but SuperLU still performs a fresh symbolic and
-   numeric factorization. A backend with explicit symbolic-pattern reuse is the
-   next large-network factorization opportunity.
+1. **Native sparse value ownership:** KLU now reuses symbolic and numeric
+   structure, but every factor still copies immutable Python tuple values into a
+   NumPy buffer. Circuit-owned numeric value arrays with mutation-safe public
+   snapshots are the next measured large-network opportunity.
 2. **Projection state residency:** the constant multi-RHS conversion is removed,
    but target state, accepted state, and accepted algebraic unknowns are still
    converted during sparse projection. Aggregate `numpy.asarray` cost is now
@@ -755,8 +791,10 @@ or faster than ngspice.
    Any substep reduction must be controlled by an independent local accuracy
    estimate, event boundary, maximum elapsed anchor time, and fail-closed retry;
    changing anchor frequency alone does not reduce total replay coverage.
-5. **Cache diagnostics:** deterministic work reports should expose cache hits,
-   misses, and evictions before cache policy becomes user-configurable.
+5. **Cache diagnostics and KLU expansion:** deterministic work reports should
+   expose KLU/SciPy cache hits, misses, evictions, refactors, and fallbacks before
+   cache policy becomes user-configurable or automatic KLU selection expands to
+   additional solve classes.
 6. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
    considered only after the internal recurrence, empirical anchor ratio, event
    boundaries, and maximum elapsed anchor time jointly enforce a fail-closed
@@ -765,8 +803,8 @@ or faster than ngspice.
 An exact-state probe rejected shared accepted-evaluation Jacobian caching: the
 stiffness evaluations do not use the same differential states as the preceding
 block linearizations. The next optimization phase should therefore compare
-native nonlinear device-value stamping with a backend that exposes symbolic
-sparse reuse. Evidence-gated anchor scheduling remains useful for controlling
+native sparse numerical-value ownership with further nonlinear device-value
+stamping. Evidence-gated anchor scheduling remains useful for controlling
 when evidence is refreshed, but it is not itself a throughput optimization
 unless paired with a qualified adaptive replay-step model.
 

@@ -111,7 +111,7 @@ jobs:
           retention-days: 30
 
   sparse:
-    name: Optional SciPy Sparse Backend
+    name: Optional SciPy and KLU Sparse Backends
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -123,6 +123,11 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.14"
+
+      - name: Install SuiteSparse KLU
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libsuitesparse-dev
 
       - name: Install sparse extra
         run: python -m pip install ".[sparse]"

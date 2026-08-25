@@ -6,9 +6,11 @@ from unittest.mock import patch
 
 from babcs import Capacitor, Circuit, CurrentSource, Diode, Inductor, Resistor, Switch, VoltageSource
 from babcs.linalg import (
+    LinearBackendUnavailableError,
     SingularMatrixError,
     SparseMatrix,
     factor_linear,
+    klu_sparse_available,
     matrix_inf_norm,
     scipy_sparse_available,
     solve_factored,
@@ -357,6 +359,19 @@ class CircuitModelTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "linear backend"):
             Circuit(linear_backend="unknown")
 
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_explicit_klu_backend_runs_large_nonlinear_circuit(self) -> None:
+        circuit = Circuit(_diode_channel_elements(16), linear_backend="klu")
+
+        evaluation = circuit.evaluate(2.5e-5, circuit.initial_dynamic_state())
+
+        self.assertLess(circuit.full_residual_norm(evaluation), 1.0e-10)
+
+    def test_explicit_klu_backend_fails_when_library_is_missing(self) -> None:
+        with patch("babcs._klu._klu_components", return_value=None):
+            with self.assertRaises(LinearBackendUnavailableError):
+                Circuit(linear_backend="klu")
+
     def test_rc_algebraic_projection_satisfies_kcl(self) -> None:
         circuit = Circuit(
             [
@@ -666,6 +681,47 @@ class CircuitModelTests(unittest.TestCase):
         assert factorization is not None
         self.assertEqual(factorization.backend, "scipy")
         self.assertLess(circuit.full_residual_norm(evaluation), 1.0e-12)
+
+    @unittest.skipUnless(
+        scipy_sparse_available() and klu_sparse_available(),
+        "optional sparse backends unavailable",
+    )
+    def test_auto_backend_uses_klu_for_large_native_sensitivity(self) -> None:
+        circuit = Circuit(_diode_channel_elements(32), linear_backend="auto")
+
+        evaluation = circuit.evaluate(2.5e-5, circuit.initial_dynamic_state())
+        native = circuit._native_differential_sensitivity(evaluation)
+        self.assertIsNotNone(native)
+        assert native is not None
+        self.assertEqual(native.factorization.backend, "klu")
+
+    @unittest.skipUnless(
+        scipy_sparse_available() and klu_sparse_available(),
+        "optional sparse backends unavailable",
+    )
+    def test_auto_native_sensitivity_falls_back_when_klu_fails(self) -> None:
+        circuit = Circuit(_diode_channel_elements(32), linear_backend="auto")
+        evaluation = circuit.evaluate(2.5e-5, circuit.initial_dynamic_state())
+        real_factor_linear = factor_linear
+        attempted_backends = []
+
+        def fail_klu(matrix, pivot_tolerance=1.0e-14, *, backend="dense"):
+            attempted_backends.append(backend)
+            if backend == "klu":
+                raise SingularMatrixError("forced KLU failure")
+            return real_factor_linear(
+                matrix,
+                pivot_tolerance,
+                backend=backend,
+            )
+
+        with patch("babcs.model.factor_linear", side_effect=fail_klu):
+            native = circuit._native_differential_sensitivity(evaluation)
+
+        self.assertIsNotNone(native)
+        assert native is not None
+        self.assertEqual(native.factorization.backend, "scipy")
+        self.assertEqual(attempted_backends, ["klu", "scipy"])
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_backend_decision_tracks_backend_changes(self) -> None:

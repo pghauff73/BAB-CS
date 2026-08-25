@@ -53,7 +53,7 @@ jobs:
       - name: Install external qualification dependency
         run: |
           sudo apt-get update
-          sudo apt-get install --yes ngspice
+          sudo apt-get install --yes libsuitesparse-dev ngspice
 
       - name: Record base environment
         env:
@@ -105,6 +105,9 @@ jobs:
           /tmp/babcs-source-scipy/bin/python -c \
             'import scipy; print(scipy.__version__)' \
             > artifacts/release/SCIPY_VERSION
+          PYTHONPATH=src /tmp/babcs-source-scipy/bin/python -c \
+            'from babcs._klu import klu_version; version = klu_version(); assert version is not None; print(".".join(map(str, version)))' \
+            > artifacts/release/KLU_VERSION
 
       - name: Run SciPy full source qualification
         env:
@@ -216,6 +219,9 @@ jobs:
           /tmp/babcs-release-wheel/bin/python -c \
             'import scipy; print(scipy.__version__)' \
             > artifacts/release/INSTALLED_SCIPY_VERSION
+          /tmp/babcs-release-wheel/bin/python -c \
+            'from babcs._klu import klu_version; version = klu_version(); assert version is not None; print(".".join(map(str, version)))' \
+            > artifacts/release/INSTALLED_KLU_VERSION
           BABCS_LONG_TESTS=1 BABCS_VERY_LONG_TESTS=1 \
             /tmp/babcs-release-wheel/bin/python -m unittest discover -s tests -v \
             2>&1 | tee artifacts/release/installed-wheel-scipy-tests.log
