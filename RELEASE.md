@@ -52,8 +52,9 @@ topology, residual, contraction, and finiteness gates.
 - Applies a contractive candidate/reference correction in active mode.
 - Promotes implicit reference authority when contraction, stiffness, residual,
   projection, energy, or recursive-bound gates fail.
-- Uses topology-aware replay refinement while preserving complete interval
-  coverage.
+- Uses independent derivative-defect evidence to reduce mixed C+L trapezoidal
+  replay refinement, with complete-interval restart and fixed-resolution
+  fallback.
 - Uses AB3 differential extrapolation only as a replay initial guess after two
   matching uniform substeps.
 - Uses quartic algebraic extrapolation only as a guarded initial guess on
@@ -81,6 +82,9 @@ topology, residual, contraction, and finiteness gates.
   hand-side buffer, and falls back to SciPy when automatic KLU execution fails.
 - Reuses stable KLU structural/value pointers and solves directly into independent
   row-major result arrays without an intermediate transpose-copy.
+- Lets the generated sparse kernel expose private raw numerical values to a
+  combined KLU factor-and-batched-solve operation while returning the reusable
+  factorization required by projection correction.
 - Uses native batched differential-sensitivity solves and read-only reusable
   right-hand-side storage, batched inductor voltage gathering, and mutation-aware
   reactive scale arrays.
@@ -232,7 +236,7 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 216 tests with long, very-long, SciPy, and KLU tiers enabled. This local run
+of all 219 tests with long, very-long, SciPy, and KLU tiers enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.
 

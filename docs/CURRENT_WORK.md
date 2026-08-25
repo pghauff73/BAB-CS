@@ -196,7 +196,7 @@ than to expose only a final waveform.
 
 ## Evidence and Release State
 
-The qualification surface now comprises 216 test methods across model,
+The qualification surface now comprises 219 test methods across model,
 linear-algebra, integrator, candidate, nonlinear, event, long-horizon,
 comparison, packaging, and release-evidence modules [[32]](REFERENCES.md#ref-32).
 Long and very-long tests are opt-in tiers, and optional sparse tests execute
@@ -258,11 +258,13 @@ not as a replacement for SPICE, a formal verifier, or a universal cure for
 long-time numerical error [[11]](REFERENCES.md#ref-11)
 [[15]](REFERENCES.md#ref-15).
 
-The next research phase follows directly from this current position. The
-highest-value paths are native ownership of sparse numerical values and residual
-data after KLU and hot-topology adoption, diagnostics for factorization and
-generated-kernel cache policy, independently error-controlled replay refinement,
-and evidence-gated anchor scheduling. Device expansion, state-dependent event
+The next research phase follows directly from this current position. Private
+raw sparse values now feed a combined KLU factor-and-solve handle, and mixed C+L
+trapezoidal replay now uses independent derivative-defect evidence with
+complete-window retry. The highest-value remaining paths are compiled nonlinear
+device assembly, diagnostics for factorization and generated-kernel cache
+policy, native residual ownership, and evidence-gated anchor scheduling with a
+maximum elapsed authority age. Device expansion, state-dependent event
 localization, broader DAE topology handling, and stronger bound-coverage
 arguments remain larger scientific programs rather than small optimizations
 [[17]](REFERENCES.md#ref-17).

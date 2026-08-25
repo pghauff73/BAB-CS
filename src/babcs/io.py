@@ -141,6 +141,8 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
         "replay_circuit_evaluations",
         "replay_algebraic_iterations",
         "replay_refinement_substeps",
+        "replay_refinement_retries",
+        "replay_embedded_error",
         "pre_reset_estimated_bound",
     ]
     columns = (
@@ -285,6 +287,13 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
         "maximum_replay_refinement_substeps": max(
             (metric.replay_refinement_substeps for metric in metrics),
             default=0,
+        ),
+        "replay_refinement_retries": sum(
+            metric.replay_refinement_retries for metric in metrics
+        ),
+        "maximum_replay_embedded_error": max(
+            (metric.replay_embedded_error for metric in metrics),
+            default=0.0,
         ),
         "rejection_reasons": dict(sorted(rejection_categories.items())),
         "history_resets": dict(sorted(reset_reasons.items())),

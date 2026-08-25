@@ -10,6 +10,7 @@ from .linalg import (
     norm_inf,
     solve_factored,
     solve_linear,
+    weighted_rms,
 )
 from .model import Circuit, CircuitEvaluation, CircuitSolveError
 
@@ -58,6 +59,7 @@ class ReferenceWindowResult:
     reference_iterations: int
     circuit_evaluations: int
     algebraic_iterations: int
+    maximum_embedded_error: float
 
 
 def implicit_step(
@@ -404,6 +406,8 @@ def integrate_reference_window_with_stats(
     *,
     method: str = "trapezoidal",
     settings: ImplicitSettings = ImplicitSettings(),
+    error_absolute_tolerance: float | None = None,
+    error_relative_tolerance: float | None = None,
 ) -> ReferenceWindowResult:
     if maximum_step <= 0.0:
         raise ValueError("reference maximum step must be positive")
@@ -411,6 +415,16 @@ def integrate_reference_window_with_stats(
         raise ValueError("reference target times must be strictly increasing")
     if target_times and target_times[0] <= initial.time:
         raise ValueError("reference target times must follow the initial state")
+    if (error_absolute_tolerance is None) != (error_relative_tolerance is None):
+        raise ValueError("reference error tolerances must be configured together")
+    if error_absolute_tolerance is not None and (
+        error_absolute_tolerance <= 0.0
+        or error_relative_tolerance is None
+        or error_relative_tolerance <= 0.0
+        or not math.isfinite(error_absolute_tolerance)
+        or not math.isfinite(error_relative_tolerance)
+    ):
+        raise ValueError("reference error tolerances must be positive and finite")
 
     current = initial
     previous_evaluation: CircuitEvaluation | None = None
@@ -427,6 +441,7 @@ def integrate_reference_window_with_stats(
     reference_iterations = 0
     circuit_evaluations = 0
     algebraic_iterations = 0
+    maximum_embedded_error = 0.0
     for target_time in target_times:
         while current.time < target_time:
             remaining = target_time - current.time
@@ -522,6 +537,22 @@ def integrate_reference_window_with_stats(
                 initial_algebraic_guess=initial_algebraic_guess,
                 settings=settings,
             )
+            if (
+                error_absolute_tolerance is not None
+                and previous_evaluation is not None
+                and result.method == "trapezoidal"
+            ):
+                embedded_error = _trapezoidal_embedded_error(
+                    previous_evaluation,
+                    current,
+                    result.evaluation,
+                    error_absolute_tolerance,
+                    error_relative_tolerance,
+                )
+                if math.isnan(embedded_error):
+                    maximum_embedded_error = embedded_error
+                elif embedded_error > maximum_embedded_error:
+                    maximum_embedded_error = embedded_error
             fourth_previous_evaluation = third_previous_evaluation
             third_previous_evaluation = older_evaluation
             older_evaluation = previous_evaluation
@@ -545,9 +576,44 @@ def integrate_reference_window_with_stats(
         reference_iterations=reference_iterations,
         circuit_evaluations=circuit_evaluations,
         algebraic_iterations=algebraic_iterations,
+        maximum_embedded_error=maximum_embedded_error,
     )
 
 
 def _matching_replay_step(left: float, right: float) -> bool:
     tolerance = 64.0 * max(abs(left), abs(right), 1.0) * 2.220446049250313e-16
     return abs(left - right) <= tolerance
+
+
+def _trapezoidal_embedded_error(
+    previous: CircuitEvaluation,
+    current: CircuitEvaluation,
+    following: CircuitEvaluation,
+    absolute_tolerance: float,
+    relative_tolerance: float,
+) -> float:
+    previous_step = current.time - previous.time
+    step = following.time - current.time
+    if previous_step <= 0.0 or step <= 0.0:
+        return math.inf
+    coefficient = step * step * step / (6.0 * (previous_step + step))
+    defect = [
+        coefficient
+        * (
+            (following_derivative - current_derivative) / step
+            - (current_derivative - previous_derivative) / previous_step
+        )
+        for previous_derivative, current_derivative, following_derivative in zip(
+            previous.derivative,
+            current.derivative,
+            following.derivative,
+            strict=True,
+        )
+    ]
+    return weighted_rms(
+        defect,
+        current.dynamic_state,
+        following.dynamic_state,
+        absolute_tolerance,
+        relative_tolerance,
+    )

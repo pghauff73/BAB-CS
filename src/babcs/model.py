@@ -12,6 +12,7 @@ from weakref import WeakMethod
 from .linalg import (
     _numpy_component,
     _scipy_sparse_components,
+    _factor_and_solve_klu_sparse_values_multiple_array,
     LinearBackendUnavailableError,
     LinearMatrix,
     ReusableLinearFactorization,
@@ -1458,7 +1459,7 @@ class Circuit:
 
     def _build_compiled_sparse_algebraic_kernel(self) -> Any:
         lines = [
-            "def kernel(self, time, dynamic_state, unknowns, inputs):",
+            "def kernel(self, time, dynamic_state, unknowns, inputs, raw_data=False):",
             f"    residual = [0.0] * {self.algebraic_size}",
             f"    sparse_data = [0.0] * {len(self._algebraic_sparse_row_indices)}",
             "    diode_currents = []",
@@ -1570,6 +1571,8 @@ class Circuit:
             [
                 "    self._last_assembled_unknowns = unknowns",
                 "    self._last_assembled_diode_currents = tuple(diode_currents)",
+                "    if raw_data:",
+                "        return residual, sparse_data",
                 "    return residual, self._algebraic_sparse_template.with_data(sparse_data)",
             ]
         )
@@ -2154,14 +2157,6 @@ class Circuit:
             if evaluation._input_owner is self
             else None
         )
-        _, algebraic_jacobian = self._algebraic_residual_and_jacobian(
-            evaluation.time,
-            evaluation.dynamic_state,
-            evaluation.algebraic.unknowns,
-            inputs,
-        )
-        if not isinstance(algebraic_jacobian, SparseMatrix):
-            return None
         numpy = _numpy_component()
         if numpy is None:
             return None
@@ -2188,18 +2183,62 @@ class Circuit:
         )
         if automatic_klu:
             factor_backend = "klu"
+        algebraic_jacobian: SparseMatrix | None = None
+        sparse_data: Sequence[float]
+        kernel = self._compiled_sparse_algebraic_kernel
+        if factor_backend == "klu" and kernel is not None:
+            if inputs is None:
+                inputs = self._sample_algebraic_inputs(
+                    evaluation.time,
+                    evaluation.dynamic_state,
+                )
+            _, sparse_data = kernel(
+                self,
+                evaluation.time,
+                evaluation.dynamic_state,
+                evaluation.algebraic.unknowns,
+                inputs,
+                True,
+            )
+        else:
+            _, assembled_jacobian = self._algebraic_residual_and_jacobian(
+                evaluation.time,
+                evaluation.dynamic_state,
+                evaluation.algebraic.unknowns,
+                inputs,
+            )
+            if not isinstance(assembled_jacobian, SparseMatrix):
+                return None
+            algebraic_jacobian = assembled_jacobian
+            sparse_data = algebraic_jacobian.data
         try:
-            factorization = factor_linear(
-                algebraic_jacobian,
-                backend=factor_backend,
-            )
-            sensitivities = solve_factored_multiple_array(
-                factorization,
-                native_right_hand_sides,
-            )
+            if factor_backend == "klu":
+                factorization, sensitivities = (
+                    _factor_and_solve_klu_sparse_values_multiple_array(
+                        self.algebraic_size,
+                        sparse_data,
+                        self._algebraic_sparse_row_indices,
+                        self._algebraic_sparse_column_pointers,
+                        native_right_hand_sides,
+                    )
+                )
+            else:
+                assert algebraic_jacobian is not None
+                factorization = factor_linear(
+                    algebraic_jacobian,
+                    backend=factor_backend,
+                )
+                sensitivities = solve_factored_multiple_array(
+                    factorization,
+                    native_right_hand_sides,
+                )
         except (LinearBackendUnavailableError, SingularMatrixError) as error:
             if automatic_klu:
                 try:
+                    if algebraic_jacobian is None:
+                        algebraic_jacobian = self._algebraic_sparse_template.with_data(
+                            sparse_data
+                        )
                     factorization = factor_linear(
                         algebraic_jacobian,
                         backend="scipy",

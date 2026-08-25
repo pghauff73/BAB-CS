@@ -65,12 +65,15 @@ Periodic independent replay remains mandatory and resets the accumulated bound.
 
 Every configured anchor interval, BAB-CS independently replays the interval
 from the previous trusted checkpoint using smaller implicit steps. The replay
-endpoint replaces the provisional endpoint and rebuilds the AB history. The
-default replay refinement is topology-aware: phase-sensitive circuits that
-contain both capacitors and inductors retain `anchor_substeps = 4`, while
-non-oscillatory built-in topologies use `minimum_anchor_substeps = 2`.
-Backward-Euler replay also retains the full configured refinement. Set
-`adaptive_anchor_refinement = false` to require `anchor_substeps` everywhere.
+endpoint replaces the provisional endpoint and rebuilds the AB history. Pure-C
+and pure-L built-in topologies retain the qualified
+`minimum_anchor_substeps = 2` policy without extra estimator work. Mixed C+L
+trapezoidal replay starts at that minimum and evaluates an independent ordered
+derivative defect against `anchor_embedded_error_cap`; failed evidence restarts
+the complete replay with a cubically predicted finer subdivision, capped by the
+original `anchor_substeps = 4` baseline. Backward-Euler and BDF2 replay retain
+the full configured refinement. Set `adaptive_anchor_refinement = false` to
+require `anchor_substeps` everywhere.
 
 Independent replay uses an AB3 extrapolation only as the initial guess after
 two matching uniform substeps. Variable or nonmatching substeps use the
@@ -261,6 +264,7 @@ checked together by `tests/test_build_backend.py`.
     "anchor_interval_steps": 16,
     "anchor_substeps": 4,
     "minimum_anchor_substeps": 2,
+    "anchor_embedded_error_cap": 1.25,
     "adaptive_anchor_refinement": true
   }
 }

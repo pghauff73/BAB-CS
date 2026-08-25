@@ -507,6 +507,48 @@ class LinearAlgebraTests(unittest.TestCase):
         self.assertTrue(numpy.array_equal(first, first_snapshot))
 
     @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_atomic_klu_sparse_multiple_solve_matches_factored_contract(self) -> None:
+        matrix = SparseMatrix(
+            3,
+            (4.0, -1.0, -1.0, 4.0, -1.0, -1.0, 4.0),
+            (0, 1, 0, 1, 2, 1, 2),
+            (0, 2, 5, 7),
+        )
+        right_hand_sides = ([1.0, 2.0, 3.0], [3.0, 2.0, 1.0])
+        factorization = factor_linear(matrix, backend="klu")
+        expected = solve_factored_multiple_array(
+            factorization,
+            right_hand_sides,
+        )
+
+        combined_factorization, actual = (
+            linalg_module._factor_and_solve_klu_sparse_values_multiple_array(
+                matrix.size,
+                list(matrix.data),
+                matrix.row_indices,
+                matrix.column_pointers,
+                right_hand_sides,
+            )
+        )
+
+        numpy = linalg_module._numpy_component()
+        assert numpy is not None
+        self.assertTrue(numpy.array_equal(actual, expected))
+        replayed = solve_factored_multiple_array(
+            combined_factorization,
+            right_hand_sides,
+        )
+        self.assertTrue(numpy.array_equal(replayed, expected))
+        with self.assertRaises(ValueError):
+            linalg_module._factor_and_solve_klu_sparse_values_multiple_array(
+                matrix.size,
+                matrix.data,
+                matrix.row_indices,
+                matrix.column_pointers,
+                ([1.0, 2.0],),
+            )
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
     def test_klu_workspace_restores_stale_factorizations(self) -> None:
         first_matrix = SparseMatrix(
             3,

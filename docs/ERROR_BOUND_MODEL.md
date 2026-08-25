@@ -65,6 +65,26 @@ eta_anchor = ||z_provisional - z_replay||_W.
 The replay state replaces the provisional state whether the anchor is routine
 or exceeds the safety cap. Exceeding the cap is recorded as a safety re-anchor.
 
+For mixed capacitor/inductor circuits using trapezoidal replay, BAB-CS can start
+at the configured minimum refinement and estimate the local replay error without
+another circuit solve. For consecutive replay derivatives `f_(k-1)`, `f_k`, and
+`f_(k+1)` separated by `h_0` and `h_1`, it estimates the trapezoidal quadrature
+defect as
+
+```text
+d_k = h_1^3 / (6 (h_0 + h_1))
+      * ((f_(k+1) - f_k) / h_1 - (f_k - f_(k-1)) / h_0).
+```
+
+`||d_k||_W` is scaled with the same state tolerances as the controller. If the
+maximum replay defect exceeds `anchor_embedded_error_cap`, the complete replay
+restarts from the trusted anchor with a finer subdivision predicted from the
+cubic local-error model. The subdivision is capped at `anchor_substeps`; that
+cap is the previous fixed-resolution authority, so estimator failure falls back
+to the prior design rather than accepting an unqualified coarser replay.
+Non-finite replay evidence still rejects the step. Known event boundaries reset
+the anchor history and are never crossed by adaptive replay.
+
 ## Passivity Defect
 
 For stored energy `H`, source power `P_s`, and dissipated power `P_d`, BAB-CS
@@ -87,4 +107,3 @@ damping remains visible.
   trajectory agreement guaranteed by this mechanism.
 - The finite-difference Jacobian norm is a conservative stiffness indicator,
   not a complete absolute-stability analysis.
-

@@ -762,6 +762,65 @@ microseconds for capacitor-only channels and from about 117.1 to 83.3
 microseconds for mixed channels in the final local profile; these microsecond
 figures remain sensitive to host noise and are not portable guarantees.
 
+### Fused private sparse assembly and KLU factor/solve
+
+The next boundary probe measured the complete generated-kernel-to-sensitivity
+path rather than the tuple copy in isolation. At 128 algebraic unknowns and 32
+right-hand sides, returning the generated scalar value list directly and
+performing factorization plus the first batched solve in one KLU workspace call
+reduced the microkernel from about 42.4 to 41.4 microseconds while still
+constructing the reusable factorization required by projection correction.
+Direct NumPy and `array('d')` stamping were rejected because scalar writes made
+the generated arithmetic slower.
+
+The retained implementation keeps the public `SparseMatrix` and stale-factor
+contracts unchanged. Only the exact built-in native-sensitivity path may request
+raw generated values. KLU copies those values into its owned numeric buffer,
+solves the batched sensitivity system, and returns both independent solutions
+and an immutable reusable factorization handle. Automatic KLU failure still
+reconstructs the sparse matrix and falls back to SciPy.
+
+Across 11 isolated rounds, native sensitivity improved by 3.433% on average for
+capacitor-only channels and 3.336% for mixed channels; minimum round reductions
+were 0.943% and 1.834%. In the balanced whole-run comparison, the isolated
+increment was near timing noise for smooth sine and mixed cases, while pulsed
+and switched cases measured 2.241% and 0.978% mean reductions with 1.652% and
+0.955% minimum reductions. Every state, metric, rejection, and deterministic
+work trace was exactly equal.
+
+### Independent evidence-controlled replay refinement
+
+Direct timing showed that periodic independent replay consumed about 27.1% of
+the 32-channel sine run, 42.6% of the mixed C+L run, 16.5% of the pulsed run,
+and 22.8% of the switched run at a 16-step anchor interval. Replay still covers
+the complete accepted interval; the opportunity was subdivision count, not
+anchor omission.
+
+Mixed C+L trapezoidal replay now starts at `minimum_anchor_substeps` and computes
+an ordered local quadrature defect from three independent replay derivatives.
+If the scaled defect exceeds `anchor_embedded_error_cap`, the complete replay
+restarts from the trusted anchor at a cubically predicted finer subdivision.
+The original `anchor_substeps` count remains the ceiling and therefore the
+fail-closed baseline. Nonfinite evidence rejects the step. Pure-C/L policies,
+Backward Euler, BDF2, and disabled adaptivity retain their previous execution
+without estimator overhead; exact event boundaries still reset history.
+
+For the 32-channel mixed workload, replay work fell from 322 to 162 steps at a
+16-step anchor profile and from 201 to 101 steps at a 50-step anchor. The
+corresponding median total times fell from about 87.33 to 72.89 milliseconds
+and from 71.53 to 62.24 milliseconds. A three-round balanced comparison against
+commit `4511c46` measured a 13.450% mean end-to-end reduction with a 12.850%
+minimum round reduction for the mixed workload. Pure sine, pulsed, and switched
+cases retained their previous work and remained within local timing noise.
+
+The adaptive mixed endpoint differed from the former four-substep authority by
+`1.776e-8` in maximum absolute state and `6.712e-10` in maximum reported metric
+for the balanced case. In a separate authority calibration, the adaptive
+endpoint was 0.863 weighted RMS from an eight-substep replay, versus 0.091 for
+the fixed four-substep replay; its maximum embedded replay evidence was 0.486
+against the default cap of 1.25. These are bounded calibration results, not a
+claim that two substeps are universally equivalent to eight.
+
 ### Current cumulative scaling
 
 A fresh cumulative comparison used five warmups and 15 paired runs in each of
@@ -791,14 +850,16 @@ rather than baseline equality.
   long-horizon regression groups passed before the full run.
 - Full current-source qualification on August 25, 2026 with SciPy 1.18.0 and
   SuiteSparse KLU 2.3.6, `BABCS_LONG_TESTS=1`, and
-  `BABCS_VERY_LONG_TESTS=1`: 216 tests passed in 42.674 seconds, with zero skips.
+  `BABCS_VERY_LONG_TESTS=1`: 219 tests passed in 56.474 seconds, with zero skips.
 - Two independent `bab_cs-1.1.0-py3-none-any.whl` builds were byte-identical.
 - Local candidate wheel SHA-256:
-  `a403def6dfd3b6b23b97b54d0a1055e4753facb94ad441823e1d8cbcb67c4531`.
-- Dependency-free installed-wheel qualification: 216 tests passed in 42.011
-  seconds with 50 expected optional-backend skips.
-- Installed-wheel SciPy 1.18.1 and SuiteSparse KLU 2.3.6 qualification: all 216
-  tests passed in 41.902 seconds with zero skips.
+  `7faa3a3fc1ae7aaf755a16e0b58f4b40b7176aa64e7376a29328938b274bc5f0`.
+- Clean dependency-free installed-wheel qualification: 219 tests passed in
+  53.467 seconds with 52 expected optional-backend skips; `pip check` reported
+  no broken requirements.
+- Clean installed-wheel NumPy 2.5.2, SciPy 1.18.0, and SuiteSparse KLU 2.3.6
+  qualification: all 219 tests passed in 52.945 seconds with zero skips;
+  `pip check` reported no broken requirements.
 - Source and installed-wheel comparison matrices each completed all 154
   results. Their JSON, CSV, and SVG outputs were byte-identical.
 - Source-tree SHA-256 recorded by both reports:
@@ -825,41 +886,37 @@ or faster than ngspice.
    arrays still verify live scalar tuples on every native sensitivity. Weak
    invalidation callbacks may remove that scan, but must not create ownership
    cycles or hide direct element mutation.
-3. **Native sparse value ownership:** copying tuple values into KLU measured only
-   about 3.43 microseconds in the target profile. Revisit ownership only as part
-   of a fused assembly-to-factor interface that removes more than this isolated
-   copy and retains immutable stale-factor restoration.
-4. **Projection state residency:** the constant multi-RHS conversion is removed,
+3. **Projection state residency:** the constant multi-RHS conversion is removed,
    but target state, accepted state, and accepted algebraic unknowns are still
    converted during sparse projection. Aggregate `numpy.asarray` cost is now
    0.014 of 0.893 internal profiled seconds, so any further residency change
    must remain lazy and demonstrate an end-to-end gain.
-5. **Native residual and norm ownership:** the large-vector norm fast path
+4. **Native residual and norm ownership:** the large-vector norm fast path
    reduced traversal cost without changing storage. Further work should fuse
    residual construction and norm evidence only when the residual vector remains
    available to Newton and `NaN` propagation stays deterministic.
-6. **Adaptive replay accuracy model:** AB3 initialization has largely removed
-   replay Newton corrections, but replay still covers every accepted interval.
-   Any substep reduction must be controlled by an independent local accuracy
-   estimate, event boundary, maximum elapsed anchor time, and fail-closed retry;
-   changing anchor frequency alone does not reduce total replay coverage.
-7. **Cache diagnostics and KLU expansion:** deterministic work reports should
+5. **Replay estimator generalization:** mixed C+L trapezoidal replay is now
+   evidence-controlled. Extend equivalent independent estimators to BDF2 or
+   Backward Euler only with method-specific order evidence, and consider
+   retaining a qualified refinement across anchors without crossing events.
+6. **Cache diagnostics and KLU expansion:** deterministic work reports should
    expose KLU/SciPy cache hits, misses, evictions, refactors, and fallbacks before
    cache policy becomes user-configurable or automatic KLU selection expands to
    additional solve classes.
-8. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
+7. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
    considered only after the internal recurrence, empirical anchor ratio, event
    boundaries, and maximum elapsed anchor time jointly enforce a fail-closed
    upper bound.
 
 An exact-state probe rejected shared accepted-evaluation Jacobian caching: the
 stiffness evaluations do not use the same differential states as the preceding
-block linearizations. Direct profiling also rejected sparse tuple ownership as
-the next priority. The next optimization phase should prototype batched
-nonlinear device-value stamping and reactive-value invalidation. Evidence-gated
-anchor scheduling remains useful for controlling
-when evidence is refreshed, but it is not itself a throughput optimization
-unless paired with a qualified adaptive replay-step model.
+block linearizations. Direct profiling also rejected standalone sparse tuple
+ownership; the retained fused path removes only private assembly boundaries and
+returns the required reusable handle. The next optimization phase should
+prototype a larger evidence-gated nonlinear device-value kernel and add sparse-
+cache observability. Evidence-gated anchor scheduling remains useful only with
+a hard elapsed-time limit and exact event boundaries; adaptive subdivision does
+not by itself justify older authority.
 
 A weak reactive-value invalidation prototype was also rejected. It reduced the
 isolated cached-scale check from about 0.97 to 0.11 microseconds for 32 capacitor

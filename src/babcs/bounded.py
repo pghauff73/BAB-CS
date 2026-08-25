@@ -35,6 +35,7 @@ class BABCSConfig:
     embedded_error_cap: float = 25.0
     deferred_reference_bound_cap: float = 1.0e2
     anchor_reference_cap: float = 20.0
+    anchor_embedded_error_cap: float = 1.25
     energy_absolute_tolerance: float = 1.0e-12
     energy_relative_tolerance: float = 1.0e-5
     energy_injection_cap: float = 2.0
@@ -66,6 +67,7 @@ class BABCSConfig:
             self.embedded_error_cap,
             self.deferred_reference_bound_cap,
             self.anchor_reference_cap,
+            self.anchor_embedded_error_cap,
             self.energy_absolute_tolerance,
             self.energy_relative_tolerance,
             self.energy_injection_cap,
@@ -203,6 +205,8 @@ class StepMetrics:
     candidate_algebraic_iterations: int = 0
     dynamic_reference_checkpoint: bool = False
     replay_refinement_substeps: int = 0
+    replay_refinement_retries: int = 0
+    replay_embedded_error: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -905,26 +909,72 @@ class BoundedAdamsBashforthIntegrator:
         target_times = sorted(set(target_times))
         window = current.time - anchor.time
         replay_refinement_substeps = self._anchor_refinement_substeps(circuit)
-        maximum_step = window / max(
-            history.steps_since_anchor * replay_refinement_substeps,
-            1,
+        adaptive_replay = (
+            self.config.adaptive_anchor_refinement
+            and self.config.reference_method.lower().replace("-", "_")
+            == "trapezoidal"
+            and bool(circuit.capacitors)
+            and bool(circuit.inductors)
+            and self.config.minimum_anchor_substeps < self.config.anchor_substeps
         )
-        maximum_step = max(maximum_step, self.config.minimum_step)
-
-        try:
-            replay = integrate_reference_window_with_stats(
-                circuit,
-                anchor,
-                target_times,
-                maximum_step,
-                method=self.config.reference_method,
-                settings=self.config.implicit_settings,
+        replay_refinement_retries = 0
+        replay_steps = 0
+        replay_reference_iterations = 0
+        replay_circuit_evaluations = 0
+        replay_algebraic_iterations = 0
+        while True:
+            maximum_step = window / max(
+                history.steps_since_anchor * replay_refinement_substeps,
+                1,
             )
-        except (CircuitSolveError, IntegrationError) as error:
-            raise StepRejected(
-                f"independent re-anchor failed: {error}",
-                max(result.state.accepted_step * 0.5, self.config.minimum_step),
-            ) from error
+            maximum_step = max(maximum_step, self.config.minimum_step)
+            try:
+                replay = integrate_reference_window_with_stats(
+                    circuit,
+                    anchor,
+                    target_times,
+                    maximum_step,
+                    method=self.config.reference_method,
+                    settings=self.config.implicit_settings,
+                    error_absolute_tolerance=(
+                        self.config.absolute_tolerance if adaptive_replay else None
+                    ),
+                    error_relative_tolerance=(
+                        self.config.relative_tolerance if adaptive_replay else None
+                    ),
+                )
+            except (CircuitSolveError, IntegrationError) as error:
+                raise StepRejected(
+                    f"independent re-anchor failed: {error}",
+                    max(result.state.accepted_step * 0.5, self.config.minimum_step),
+                ) from error
+            replay_steps += replay.steps
+            replay_reference_iterations += replay.reference_iterations
+            replay_circuit_evaluations += replay.circuit_evaluations
+            replay_algebraic_iterations += replay.algebraic_iterations
+            if not adaptive_replay:
+                break
+            embedded_error = replay.maximum_embedded_error
+            if not math.isfinite(embedded_error):
+                raise StepRejected(
+                    "non-finite independent replay accuracy metric",
+                    max(result.state.accepted_step * 0.5, self.config.minimum_step),
+                )
+            if embedded_error <= self.config.anchor_embedded_error_cap:
+                break
+            if replay_refinement_substeps >= self.config.anchor_substeps:
+                break
+            scale = (
+                embedded_error / self.config.anchor_embedded_error_cap
+            ) ** (1.0 / 3.0)
+            replay_refinement_substeps = min(
+                self.config.anchor_substeps,
+                max(
+                    replay_refinement_substeps + 1,
+                    math.ceil(replay_refinement_substeps * scale),
+                ),
+            )
+            replay_refinement_retries += 1
 
         reference_states = replay.evaluations
         anchored_current = reference_states[-1]
@@ -974,11 +1024,13 @@ class BoundedAdamsBashforthIntegrator:
             periodic_reanchor=True,
             safety_reanchor=safety_reanchor,
             anchor_reference_error=anchor_error,
-            replay_steps=replay.steps,
-            replay_reference_iterations=replay.reference_iterations,
-            replay_circuit_evaluations=replay.circuit_evaluations,
-            replay_algebraic_iterations=replay.algebraic_iterations,
+            replay_steps=replay_steps,
+            replay_reference_iterations=replay_reference_iterations,
+            replay_circuit_evaluations=replay_circuit_evaluations,
+            replay_algebraic_iterations=replay_algebraic_iterations,
             replay_refinement_substeps=replay_refinement_substeps,
+            replay_refinement_retries=replay_refinement_retries,
+            replay_embedded_error=replay.maximum_embedded_error,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -1013,11 +1065,10 @@ class BoundedAdamsBashforthIntegrator:
         return math.exp(-self.config.contraction_rate * step)
 
     def _anchor_refinement_substeps(self, circuit: Circuit) -> int:
+        del circuit
         if not self.config.adaptive_anchor_refinement:
             return self.config.anchor_substeps
-        if self.config.reference_method.lower().replace("-", "_") == "backward_euler":
-            return self.config.anchor_substeps
-        if circuit.capacitors and circuit.inductors:
+        if self.config.reference_method.lower().replace("-", "_") != "trapezoidal":
             return self.config.anchor_substeps
         return self.config.minimum_anchor_substeps
 

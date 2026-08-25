@@ -761,17 +761,23 @@ class CircuitModelTests(unittest.TestCase):
         real_factor_linear = factor_linear
         attempted_backends = []
 
-        def fail_klu(matrix, pivot_tolerance=1.0e-14, *, backend="dense"):
+        def fail_klu(*args, **kwargs):
+            del args, kwargs
+            attempted_backends.append("klu")
+            raise SingularMatrixError("forced KLU failure")
+
+        def track_factor(matrix, pivot_tolerance=1.0e-14, *, backend="dense"):
             attempted_backends.append(backend)
-            if backend == "klu":
-                raise SingularMatrixError("forced KLU failure")
             return real_factor_linear(
                 matrix,
                 pivot_tolerance,
                 backend=backend,
             )
 
-        with patch("babcs.model.factor_linear", side_effect=fail_klu):
+        with patch(
+            "babcs.model._factor_and_solve_klu_sparse_values_multiple_array",
+            side_effect=fail_klu,
+        ), patch("babcs.model.factor_linear", side_effect=track_factor):
             native = circuit._native_differential_sensitivity(evaluation)
 
         self.assertIsNotNone(native)
@@ -824,6 +830,48 @@ class CircuitModelTests(unittest.TestCase):
                 dense_evaluation.algebraic.unknowns,
             ),
         )
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_compiled_sparse_kernel_feeds_atomic_native_klu_sensitivity(self) -> None:
+        circuit = Circuit(_diode_channel_elements(32), linear_backend="klu")
+        state = circuit.initial_dynamic_state()
+        evaluation = circuit.evaluate(2.5e-5, state)
+        inputs = evaluation._algebraic_inputs
+        kernel = circuit._build_compiled_sparse_algebraic_kernel()
+        circuit._compiled_sparse_algebraic_kernel = kernel
+
+        residual, matrix = kernel(
+            circuit,
+            evaluation.time,
+            state,
+            evaluation.algebraic.unknowns,
+            inputs,
+        )
+        raw_residual, raw_data = kernel(
+            circuit,
+            evaluation.time,
+            state,
+            evaluation.algebraic.unknowns,
+            inputs,
+            True,
+        )
+        self.assertEqual(raw_residual, residual)
+        self.assertIsInstance(raw_data, list)
+        self.assertEqual(tuple(raw_data), matrix.data)
+
+        from babcs.model import (
+            _factor_and_solve_klu_sparse_values_multiple_array as model_atomic_solve,
+        )
+
+        with patch(
+            "babcs.model._factor_and_solve_klu_sparse_values_multiple_array",
+            wraps=model_atomic_solve,
+        ) as atomic_solve:
+            native = circuit._native_differential_sensitivity(evaluation)
+
+        self.assertIsNotNone(native)
+        self.assertEqual(atomic_solve.call_count, 1)
+        self.assertIsInstance(atomic_solve.call_args.args[1], list)
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_specialized_residual_kernel_matches_fallback_and_tracks_mutation(self) -> None:

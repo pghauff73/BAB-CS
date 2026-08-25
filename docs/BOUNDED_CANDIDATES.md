@@ -104,13 +104,16 @@ the propagation term resets to zero. Independent refined replay still runs at
 `anchor_interval_steps`, replaces the provisional endpoint, rebuilds multistep
 history, and resets the recursive bound.
 
-Replay refinement is topology-aware but not optional. Circuits containing both
-capacitors and inductors retain the full `anchor_substeps` value because phase
-error is the controlling long-horizon risk. Other built-in topologies may use
-`minimum_anchor_substeps`; the default changes four substeps to two. A
-backward-Euler reference always retains the full refinement because its lower
-order needs the smaller replay step. `adaptive_anchor_refinement = false`
-restores one fixed refinement count for every topology.
+Replay refinement is evidence-controlled but not optional. Pure-C and pure-L
+built-in topologies retain the qualified `minimum_anchor_substeps` policy. A
+mixed C+L trapezoidal replay starts at that minimum and estimates the local
+quadrature defect from three independent replay derivatives. Evidence above
+`anchor_embedded_error_cap` restarts the whole replay with a cubically predicted
+finer subdivision. Refinement never exceeds `anchor_substeps`; reaching that
+value restores the previous fixed-resolution authority even when the estimator
+remains conservative. Backward-Euler and BDF2 references retain the full
+refinement. `adaptive_anchor_refinement = false` restores one fixed refinement
+count for every topology.
 
 After two matching uniform replay substeps, an AB3 extrapolation supplies only
 the Newton initial guess. Variable or nonmatching substeps use the existing

@@ -16,6 +16,7 @@ class IntegratorBoundaryTests(unittest.TestCase):
             {"absolute_tolerance": 0.0},
             {"relative_tolerance": math.inf},
             {"embedded_error_cap": 0.0},
+            {"anchor_embedded_error_cap": 0.0},
             {"deferred_reference_bound_cap": math.inf},
             {"target_contraction": 0.0},
             {"target_contraction": 1.0},

@@ -13,6 +13,7 @@ from ._klu import (
     KluLinearFactorization,
     KluSingularError,
     KluUnavailableError,
+    factor_and_solve_sparse_multiple as _factor_and_solve_sparse_multiple_klu,
     factor_sparse as _factor_sparse_klu,
     klu_available,
     solve_factorized_multiple as _solve_factorized_multiple_klu,
@@ -791,6 +792,32 @@ def solve_factored_multiple_array(
     return factorization.solver.solve(
         numpy.asarray(right_hand_sides, dtype=float).transpose()
     ).transpose()
+
+
+def _factor_and_solve_klu_sparse_values_multiple_array(
+    size: int,
+    data: Sequence[float],
+    row_indices: tuple[int, ...],
+    column_pointers: tuple[int, ...],
+    right_hand_sides: Sequence[Sequence[float]],
+    pivot_tolerance: float = 1.0e-14,
+) -> tuple[KluLinearFactorization, Any]:
+    _validate_multiple_right_hand_sides(right_hand_sides, size)
+    try:
+        return _factor_and_solve_sparse_multiple_klu(
+            size,
+            data,
+            row_indices,
+            column_pointers,
+            pivot_tolerance,
+            right_hand_sides,
+        )
+    except KluUnavailableError as error:
+        raise LinearBackendUnavailableError(str(error)) from error
+    except KluSingularError as error:
+        raise SingularMatrixError(str(error)) from error
+    except KluFactorizationError as error:
+        raise SingularMatrixError("KLU matrix solve failed") from error
 
 
 def solve_linear_multiple(

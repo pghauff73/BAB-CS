@@ -8,8 +8,12 @@ from babcs import (
     BoundedAdamsBashforthIntegrator,
     Capacitor,
     Circuit,
+    Diode,
     Inductor,
+    Resistor,
+    Sine,
     Simulator,
+    VoltageSource,
 )
 from babcs.io import summary_data
 from tests.support.circuits import rc_charge_circuit
@@ -81,6 +85,9 @@ class BoundModelTests(unittest.TestCase):
             self.assertGreater(metrics.replay_steps, 0)
             self.assertGreater(metrics.replay_circuit_evaluations, 0)
             self.assertIn(point.history_reset_reason, {"periodic_reanchor", "safety_reanchor"})
+        summary = summary_data(result)
+        self.assertIn("replay_refinement_retries", summary)
+        self.assertIn("maximum_replay_embedded_error", summary)
 
     def test_summary_operation_counts_match_simple_static_case(self) -> None:
         from babcs import Circuit, Resistor, VoltageSource
@@ -135,37 +142,71 @@ class BoundModelTests(unittest.TestCase):
             )
         )
 
-    def test_anchor_refinement_is_adapted_to_circuit_topology(self) -> None:
+    def test_anchor_refinement_is_adapted_to_replay_error_evidence(self) -> None:
+        def mixed_circuit() -> Circuit:
+            return Circuit(
+                [
+                    VoltageSource("V1", "vin", "0", Sine(0.0, 1.0, 1_000.0)),
+                    Resistor("R1", "vin", "out", 1_000.0),
+                    Diode("D1", "out", "0"),
+                    Capacitor("C1", "out", "0", 1.0e-6),
+                    Inductor("L1", "out", "0", 1.0e-3),
+                ],
+                linear_backend="auto",
+            )
+
         cases = (
-            (rc_charge_circuit(), 2),
-            (Circuit([Capacitor("C1", "n", "0", 1.0e-6), Inductor("L1", "n", "0", 1.0e-3)]), 4),
+            (5.0, 2, 0, True),
+            (1.25, 3, 1, True),
+            (1.0e-12, 4, 1, False),
         )
-        for circuit, expected_substeps in cases:
-            with self.subTest(expected_substeps=expected_substeps):
+        for error_cap, expected_substeps, expected_retries, cap_satisfied in cases:
+            with self.subTest(error_cap=error_cap):
                 result = Simulator(
                     BoundedAdamsBashforthIntegrator(
                         BABCSConfig(
                             rollout_mode="active",
-                            predictor_reference_cap=100.0,
+                            predictor_reference_cap=1.0e9,
+                            embedded_error_cap=1.0e9,
                             anchor_reference_cap=100.0,
-                            anchor_interval_steps=2,
+                            energy_injection_cap=1.0e9,
+                            stiffness_limit=1.0e9,
+                            anchor_embedded_error_cap=error_cap,
+                            anchor_interval_steps=16,
                             anchor_substeps=4,
                             minimum_anchor_substeps=2,
                         )
                     )
-                ).run(circuit, 4.0e-5, 1.0e-5)
+                ).run(mixed_circuit(), 3.2e-5, 2.0e-6)
                 anchor_metrics = [
                     point.metrics
                     for point in result.points
                     if point.metrics and point.metrics.periodic_reanchor
                 ]
-                self.assertTrue(anchor_metrics)
-                self.assertTrue(
-                    all(
-                        metrics.replay_refinement_substeps == expected_substeps
-                        for metrics in anchor_metrics
-                    )
+                self.assertEqual(len(anchor_metrics), 1)
+                metrics = anchor_metrics[0]
+                self.assertEqual(
+                    metrics.replay_refinement_substeps,
+                    expected_substeps,
                 )
+                self.assertEqual(
+                    metrics.replay_refinement_retries,
+                    expected_retries,
+                )
+                if cap_satisfied:
+                    self.assertLessEqual(
+                        metrics.replay_embedded_error,
+                        error_cap,
+                    )
+                else:
+                    self.assertEqual(
+                        metrics.replay_refinement_substeps,
+                        4,
+                    )
+                    self.assertGreater(
+                        metrics.replay_embedded_error,
+                        error_cap,
+                    )
 
     def test_anchor_refinement_adaptation_can_be_disabled(self) -> None:
         result = Simulator(
@@ -189,6 +230,12 @@ class BoundModelTests(unittest.TestCase):
         self.assertTrue(anchor_metrics)
         self.assertTrue(
             all(metrics.replay_refinement_substeps == 4 for metrics in anchor_metrics)
+        )
+        self.assertTrue(
+            all(metrics.replay_refinement_retries == 0 for metrics in anchor_metrics)
+        )
+        self.assertTrue(
+            all(metrics.replay_embedded_error == 0.0 for metrics in anchor_metrics)
         )
 
 

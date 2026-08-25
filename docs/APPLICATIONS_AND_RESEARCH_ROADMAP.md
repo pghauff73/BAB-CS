@@ -178,8 +178,9 @@ requirement mapping [[34]](REFERENCES.md#ref-34).
 The second completed phase generalized the controller. Explicit Euler, Heun,
 RK23, backward Euler, trapezoidal, and BDF2 candidates were attached to the
 same authority architecture. Embedded fast paths, dynamic reference promotion,
-topology-aware replay refinement, and candidate-specific amplification models
-were added [[14]](REFERENCES.md#ref-14). This phase established that “bounded
+evidence-controlled adaptive replay refinement, and candidate-specific
+amplification models were added [[14]](REFERENCES.md#ref-14). This phase
+established that “bounded
 Adams–Bashforth” could become a bounded multi-method design.
 
 The third completed phase expanded evidence. Analytic support, raw AB2 research
@@ -214,12 +215,13 @@ The next performance phase should prioritize compiled nonlinear device assembly
 and cache observability. Direct profiling found the immutable tuple-to-NumPy KLU
 copy substantially smaller than Python U-pivot scanning, sparse norm construction,
 and nonlinear stamping; the first two are now vectorized and the native boundary
-reuses stable pointers and solves directly into its independent result buffer. A
+reuses stable pointers, accepts private generated scalar values, and returns a
+reusable factorization from the combined first solve. A
 broad NumPy diode batch is rejected at the current 32-channel crossover because
 it is slower there and changes floating-operation ordering at larger sizes. The
 next prototype should instead test a much larger evidence-gated nonlinear batch
-or a fused scalar assembly-to-factor path while preserving live parameter
-mutation, limiting, deterministic nonfinite behavior, and generic fallback.
+while preserving live parameter mutation, limiting, deterministic nonfinite
+behavior, and generic fallback.
 Cache hit, miss, eviction, refactor, and fallback metrics should be added before
 cache policy becomes configurable or automatic KLU adoption broadens.
 The implemented ULP-aware two-step evidence window, compiled built-in breakpoint
@@ -228,12 +230,13 @@ in switch-control sampling, and qualified KLU adapter provide the new baselines;
 the corrected three-step extension remains rejected
 [[17]](REFERENCES.md#ref-17).
 
-The next numerical phase should investigate independently controlled replay
-adaptivity. A credible design would estimate replay error, enforce maximum
-elapsed anchor time, preserve exact event boundaries, retry with finer steps on
-failure, and retain a hard cap on authority age. Evidence-gated anchor
-scheduling could then decide when refresh is needed, but only after replay
-accuracy itself has an independent fail-closed model.
+Mixed C+L trapezoidal replay now has independently controlled subdivision
+adaptivity: a three-derivative defect selects finer complete-window retries and
+falls back to the former fixed refinement ceiling. The next numerical phase
+should generalize method-specific replay evidence, preserve exact event
+boundaries, and add a hard maximum elapsed authority age. Evidence-gated anchor
+scheduling could then decide when refresh is needed without weakening the
+independent replay authority.
 
 The next modeling phase should add devices and events in a deliberately ordered
 way. State-dependent switch root finding is a higher priority than indiscriminate

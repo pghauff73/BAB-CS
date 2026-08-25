@@ -208,6 +208,25 @@ pointers, and direct independent result-buffer solves reduced the same four work
 classes by a further 4.1% to 6.8% against the exact first-KLU baseline, again with
 exact traces [[17]](REFERENCES.md#ref-17).
 
+A third boundary loop retained public immutable factorization behavior while
+removing unnecessary private assembly objects. The generated sparse kernel can
+return its raw scalar value list directly to one combined KLU factor-and-batched-
+solve operation, which also returns the reusable factorization required by the
+subsequent projection correction. Isolated native sensitivity improved by about
+3.3% in both capacitor-only and mixed profiles. Whole-run effects were smaller
+and workload-dependent, so the project records the kernel evidence separately
+from end-to-end timing [[17]](REFERENCES.md#ref-17).
+
+Independent replay was then measured as 17% to 43% of runtime in the profiled
+anchor configurations. Mixed C+L trapezoidal replay now starts at the minimum
+subdivision and evaluates a three-derivative quadrature defect. Failed evidence
+restarts from the trusted anchor at a cubically predicted finer subdivision;
+the original fixed `anchor_substeps` resolution remains the fail-closed ceiling.
+In the qualified 32-channel mixed workload, replay steps fell from 201 to 101
+at a 50-step anchor and balanced end-to-end timing improved by 13.45% on average
+with a 12.85% minimum round gain. The adaptive endpoint remained within 0.864
+weighted RMS of an eight-substep authority in the calibration run.
+
 The same audit records rejected optimizations. Shared accepted-evaluation
 Jacobian caching was rejected because later stiffness evaluations did not own
 the same differential state. An exact-index accounting prototype improved an
@@ -235,13 +254,13 @@ configurable cache policy or broader automatic KLU adoption. Each proposal must
 retain source/installed equivalence, nonlinear qualification, bound behavior,
 and exact fallback.
 
-Adaptive replay is a separate research problem from replay initialization.
-AB3 can make each substep cheaper, but replay still covers every accepted
-interval. Reducing the number of replay substeps would require an independent
-accuracy estimate, maximum elapsed anchor time, event awareness, and fail-
-closed retry. Merely increasing the anchor interval would weaken refresh
-frequency without proving that the omitted replay work was unnecessary
-[[17]](REFERENCES.md#ref-17).
+Replay subdivision is now independently evidence-controlled for mixed C+L
+trapezoidal anchors. Remaining replay research should generalize the estimator
+to other reference methods, preserve or coarsen learned refinement across
+anchors without crossing events, and combine any future anchor scheduling with
+a hard maximum elapsed authority age. Merely increasing the anchor interval
+would still weaken refresh frequency without proving that omitted replay work
+was unnecessary [[17]](REFERENCES.md#ref-17).
 
 The engineering result is not a single fast kernel. It is a chain of guarded
 specializations whose validity can be traced to topology, state, time,

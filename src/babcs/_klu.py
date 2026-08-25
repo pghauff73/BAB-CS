@@ -493,6 +493,35 @@ def factor_sparse(
     return factorization
 
 
+def factor_and_solve_sparse_multiple(
+    size: int,
+    data: Sequence[float],
+    row_indices: tuple[int, ...],
+    column_pointers: tuple[int, ...],
+    pivot_tolerance: float,
+    right_hand_sides: Sequence[Sequence[float]],
+) -> tuple[KluLinearFactorization, Any]:
+    token = object()
+    workspace = _klu_sparse_workspace(size, row_indices, column_pointers)
+    minimum_pivot = workspace.factor_with_tolerance(
+        data,
+        pivot_tolerance,
+        token,
+    )
+    solutions = workspace.solve(right_hand_sides)
+    factorization = KluLinearFactorization(
+        size,
+        tuple(data),
+        row_indices,
+        column_pointers,
+        minimum_pivot,
+        token,
+        weakref.ref(workspace),
+        threading.get_ident(),
+    )
+    return factorization, solutions
+
+
 def solve_factorized_multiple(
     factorization: KluLinearFactorization,
     right_hand_sides: Sequence[Sequence[float]],
