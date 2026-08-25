@@ -213,9 +213,10 @@ observability. A backend capable of reusing symbolic analysis could address a
 remaining large-network cost that numeric CSC reuse does not remove. Cache hit,
 miss, eviction, and fallback metrics should be added before cache policy becomes
 configurable. The implemented ULP-aware two-step evidence window, compiled
-built-in breakpoint schedules, and bounded sparse-kernel compile cache provide
-new baselines for that work; the corrected three-step extension remains
-rejected [[17]](REFERENCES.md#ref-17).
+built-in breakpoint schedules, bounded sparse-kernel source and hot-topology
+caches, and duplicate built-in switch-control sampling provide new baselines for
+that work; the corrected three-step extension remains rejected
+[[17]](REFERENCES.md#ref-17).
 
 The next numerical phase should investigate independently controlled replay
 adaptivity. A credible design would estimate replay error, enforce maximum

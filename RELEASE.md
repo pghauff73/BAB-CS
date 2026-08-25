@@ -76,6 +76,11 @@ topology, residual, contraction, and finiteness gates.
   exact built-in `Circuit` type.
 - Reuses demand-gated sparse assembly compilation across identical topologies
   through a bounded source cache while keeping numerical component values live.
+- Lets later exact-topology circuit instances adopt a previously demand-qualified
+  sparse assembly kernel on their first eligible call through a bounded LRU.
+- Shares duplicate immutable built-in control values for exact circuits with at
+  least 32 switches while preserving unique, custom, reassigned, and subclass
+  sampling semantics.
 - Retains mutable component values and sampled inputs at execution time rather
   than embedding them into generated source.
 
@@ -199,7 +204,7 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 196 tests with long, very-long, and SciPy tiers enabled. This local run
+of all 200 tests with long, very-long, and SciPy tiers enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.
 

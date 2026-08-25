@@ -173,7 +173,12 @@ reduced pulsed workloads by approximately 11.6% to 16.2% and switched workloads
 by 18.3% to 22.1%, with exact state, metric, rejection, and work traces. A
 bounded cache for the demand-gated generated sparse assembly kernel added a
 further 4.0% to 5.9% on repeated switched topologies while continuing to read
-all mutable numerical values from the live circuit
+all mutable numerical values from the live circuit. Later circuit instances can
+now adopt a previously demand-qualified exact-topology kernel immediately, and
+32-or-more-switch circuits can share duplicate immutable built-in control values
+while unique and custom controls stay on the original sampler. Together those
+two new changes reduced the repeated 16- and 32-channel switched workloads by
+4.1% and 6.0% against their exact pre-loop baseline
 [[17]](REFERENCES.md#ref-17).
 
 The same audit records rejected optimizations. Shared accepted-evaluation
@@ -195,12 +200,12 @@ measurement.
 
 The project’s current high-value performance frontier is therefore clear.
 Sparse symbolic-pattern reuse could remove repeated symbolic factorization that
-SuperLU’s exposed path still performs. Projection state residency may reduce
-remaining conversions if it stays lazy. Native residual ownership may enable
-further fusion if deterministic `NaN` behavior is preserved. Cache hit, miss,
-and eviction diagnostics should precede user-configurable cache policy. Each
-proposal must retain source/installed equivalence, nonlinear qualification,
-bound behavior, and exact fallback.
+SuperLU’s exposed path still performs. Native sparse residual and device-value
+ownership may remove more Python assembly and conversion work after the retained
+topology and switch-sampling gains. Cache hit, miss, and eviction diagnostics
+should precede user-configurable cache policy. Each proposal must retain
+source/installed equivalence, nonlinear qualification, bound behavior, and exact
+fallback.
 
 Adaptive replay is a separate research problem from replay initialization.
 AB3 can make each substep cheaper, but replay still covers every accepted

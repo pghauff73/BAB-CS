@@ -162,6 +162,37 @@ def _breakpoint_schedule_key(waveform: Waveform) -> tuple[object, ...] | None:
     return None
 
 
+def _waveform_value_key(waveform: Waveform) -> tuple[object, ...] | None:
+    if type(waveform) is Constant:
+        return (Constant, waveform.level.hex())
+    if type(waveform) is Sine:
+        return (
+            Sine,
+            waveform.offset.hex(),
+            waveform.amplitude.hex(),
+            waveform.frequency.hex(),
+            waveform.phase_radians.hex(),
+            waveform.delay.hex(),
+        )
+    if type(waveform) is PiecewiseLinear:
+        return (
+            PiecewiseLinear,
+            *((time.hex(), value.hex()) for time, value in waveform.points),
+        )
+    if type(waveform) is Pulse:
+        return (
+            Pulse,
+            waveform.low.hex(),
+            waveform.high.hex(),
+            waveform.delay.hex(),
+            waveform.rise.hex(),
+            waveform.width.hex(),
+            waveform.fall.hex(),
+            waveform.period.hex(),
+        )
+    return None
+
+
 def waveform_from_data(data: float | int | dict[str, object]) -> Waveform:
     if isinstance(data, (int, float)):
         return Constant(float(data))

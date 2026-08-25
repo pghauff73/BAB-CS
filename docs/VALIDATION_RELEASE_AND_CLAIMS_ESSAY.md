@@ -23,8 +23,8 @@ qualification still depends on the required tiers running successfully in the
 intended environment.
 
 A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 with
-both `BABCS_LONG_TESTS=1` and `BABCS_VERY_LONG_TESTS=1`. All 196 tests passed in
-47.228 seconds with zero skips. This establishes that the essay set was updated
+both `BABCS_LONG_TESTS=1` and `BABCS_VERY_LONG_TESTS=1`. All 200 tests passed in
+41.801 seconds with zero skips. This establishes that the essay set was updated
 against a live green source tree; it does not replace the clean-environment,
 installed-wheel, exact-artifact, workflow, and human-review requirements of
 release qualification.

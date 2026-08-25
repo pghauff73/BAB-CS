@@ -15,8 +15,12 @@ from babcs.linalg import (
     solve_linear,
 )
 from babcs.model import (
+    MAXIMUM_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES,
     CircuitSolveError,
+    _clear_compiled_sparse_algebraic_topologies,
     _compile_sparse_algebraic_kernel,
+    _lookup_compiled_sparse_algebraic_topology,
+    _store_compiled_sparse_algebraic_topology,
     _within_ulp_time_window,
 )
 from babcs.waveforms import Constant, Pulse, Sine
@@ -174,6 +178,92 @@ class CircuitModelTests(unittest.TestCase):
         )
         self.assertEqual(replacement.calls, 1)
         self.assertEqual(updated.algebraic.node_voltages["vin0"], 2.0)
+
+    def test_repeated_builtin_switch_controls_share_live_value_sampling(self) -> None:
+        controls = [Pulse(0.0, 1.0, 1.0e-5, 0.0, 1.0e-5, 0.0, 2.0e-5) for _ in range(32)]
+        circuit = Circuit(
+            Switch(
+                f"S{index}",
+                "n",
+                "0",
+                control,
+                threshold=0.5,
+                on_resistance=10.0 + index,
+                off_resistance=1.0e9,
+            )
+            for index, control in enumerate(controls)
+        )
+        calls = 0
+        original_value = Pulse.value
+
+        def counting_value(waveform: Pulse, time: float) -> float:
+            nonlocal calls
+            calls += 1
+            return original_value(waveform, time)
+
+        with patch.object(Pulse, "value", counting_value):
+            self.assertEqual(
+                circuit._sample_algebraic_inputs(1.5e-5, ()).switch_resistances,
+                tuple(10.0 + index for index in range(32)),
+            )
+            self.assertEqual(calls, 1)
+
+            circuit.switches[0].control = Pulse(
+                0.0,
+                0.0,
+                1.0e-5,
+                0.0,
+                1.0e-5,
+                0.0,
+                2.0e-5,
+            )
+            self.assertEqual(
+                circuit._sample_algebraic_inputs(1.5e-5, ()).switch_resistances,
+                (1.0e9, *(10.0 + index for index in range(1, 32))),
+            )
+            self.assertEqual(calls, 3)
+
+    def test_unique_and_custom_switch_controls_preserve_direct_sampling(self) -> None:
+        unique_controls = [
+            Pulse(0.0, 1.0 + 0.1 * index, 1.0e-5, 0.0, 1.0e-5, 0.0, 2.0e-5)
+            for index in range(32)
+        ]
+        unique_circuit = Circuit(
+            Switch(f"S{index}", "n", "0", control)
+            for index, control in enumerate(unique_controls)
+        )
+        pulse_calls = 0
+        original_value = Pulse.value
+
+        def counting_value(waveform: Pulse, time: float) -> float:
+            nonlocal pulse_calls
+            pulse_calls += 1
+            return original_value(waveform, time)
+
+        with patch.object(Pulse, "value", counting_value):
+            unique_circuit._sample_algebraic_inputs(1.5e-5, ())
+        self.assertEqual(pulse_calls, 32)
+
+        class CountingControl:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def value(self, time: float) -> float:
+                del time
+                self.calls += 1
+                return 1.0
+
+            def breakpoints(self, start: float, end: float) -> list[float]:
+                del start, end
+                return []
+
+        custom = CountingControl()
+        custom_circuit = Circuit(
+            Switch(f"S{index}", "n", "0", custom)
+            for index in range(32)
+        )
+        custom_circuit._sample_algebraic_inputs(0.0, ())
+        self.assertEqual(custom.calls, 32)
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_follow_on_work_reuses_owned_evaluation_inputs(self) -> None:
@@ -668,6 +758,7 @@ class CircuitModelTests(unittest.TestCase):
         class FallbackCircuit(Circuit):
             pass
 
+        _clear_compiled_sparse_algebraic_topologies()
         elements = _diode_channel_elements(16)
         elements.extend(
             [
@@ -711,6 +802,64 @@ class CircuitModelTests(unittest.TestCase):
             self.assertEqual(assembly(specialized), assembly(fallback))
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_hot_sparse_topology_reuses_kernel_without_repeating_demand_gate(self) -> None:
+        class FallbackCircuit(Circuit):
+            pass
+
+        _clear_compiled_sparse_algebraic_topologies()
+        first_elements = _diode_channel_elements(16)
+        first = Circuit(first_elements, linear_backend="auto")
+        first_fallback = FallbackCircuit(first_elements, linear_backend="auto")
+        second_elements = _diode_channel_elements(16)
+        second_elements[1].resistance = 2_000.0
+        second = Circuit(second_elements, linear_backend="auto")
+        second_fallback = FallbackCircuit(second_elements, linear_backend="auto")
+        state = first.initial_dynamic_state()
+        unknowns = first.evaluate(2.5e-5, state).algebraic.unknowns
+
+        def assembly(circuit):
+            inputs = circuit._sample_algebraic_inputs(2.5e-5, state)
+            residual, jacobian = circuit._assemble_sparse_algebraic(
+                2.5e-5,
+                state,
+                unknowns,
+                inputs,
+            )
+            return residual, jacobian.data
+
+        with patch("babcs.model.COMPILED_SPARSE_ALGEBRAIC_MINIMUM_CALLS", 2):
+            self.assertEqual(assembly(first), assembly(first_fallback))
+            self.assertEqual(assembly(first), assembly(first_fallback))
+            self.assertIsNotNone(first._compiled_sparse_algebraic_kernel)
+
+            self.assertEqual(assembly(second), assembly(second_fallback))
+            self.assertIs(
+                second._compiled_sparse_algebraic_kernel,
+                first._compiled_sparse_algebraic_kernel,
+            )
+            self.assertEqual(second._compiled_sparse_algebraic_calls, 0)
+
+            second.resistors[0].resistance = 1_500.0
+            second_fallback.resistors[0].resistance = 1_500.0
+            self.assertEqual(assembly(second), assembly(second_fallback))
+
+            distinct = Circuit(_diode_channel_elements(17), linear_backend="auto")
+            distinct_state = distinct.initial_dynamic_state()
+            distinct_unknowns = (0.0,) * distinct.algebraic_size
+            distinct_inputs = distinct._sample_algebraic_inputs(
+                2.5e-5,
+                distinct_state,
+            )
+            distinct._assemble_sparse_algebraic(
+                2.5e-5,
+                distinct_state,
+                distinct_unknowns,
+                distinct_inputs,
+            )
+            self.assertIsNone(distinct._compiled_sparse_algebraic_kernel)
+            self.assertEqual(distinct._compiled_sparse_algebraic_calls, 1)
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_kernel_compilation_is_shared_by_topology(self) -> None:
         _compile_sparse_algebraic_kernel.cache_clear()
         first = Circuit(_diode_channel_elements(16), linear_backend="auto")
@@ -727,6 +876,31 @@ class CircuitModelTests(unittest.TestCase):
             (cache_info.hits, cache_info.misses, cache_info.maxsize),
             (1, 1, 128),
         )
+
+    def test_compiled_sparse_topology_cache_is_bounded_lru(self) -> None:
+        _clear_compiled_sparse_algebraic_topologies()
+        kernels = [object() for _ in range(MAXIMUM_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES + 2)]
+        try:
+            for index, kernel in enumerate(kernels[:-1]):
+                _store_compiled_sparse_algebraic_topology((index,), kernel)
+
+            self.assertIsNone(_lookup_compiled_sparse_algebraic_topology((0,)))
+            self.assertIs(
+                _lookup_compiled_sparse_algebraic_topology((1,)),
+                kernels[1],
+            )
+
+            _store_compiled_sparse_algebraic_topology(
+                (len(kernels),),
+                kernels[-1],
+            )
+            self.assertIsNone(_lookup_compiled_sparse_algebraic_topology((2,)))
+            self.assertIs(
+                _lookup_compiled_sparse_algebraic_topology((1,)),
+                kernels[1],
+            )
+        finally:
+            _clear_compiled_sparse_algebraic_topologies()
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_implicit_block_matches_explicit_schur_update(self) -> None:

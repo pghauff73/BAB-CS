@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import math
+import threading
+from collections import OrderedDict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field, replace
 from functools import lru_cache
 from typing import Any
+from weakref import WeakMethod
 
 from .linalg import (
     _scipy_sparse_components,
@@ -27,13 +30,24 @@ from .linalg import (
     solve_linear_multiple,
     validate_linear_backend,
 )
-from .waveforms import Constant, Waveform, _breakpoint_schedule_key
+from .waveforms import (
+    Constant,
+    Waveform,
+    _breakpoint_schedule_key,
+    _waveform_value_key,
+)
 
 
 GROUND = "0"
 MAXIMUM_LINEAR_CACHE_ENTRIES = 128
 REUSABLE_ALGEBRAIC_INPUT_MINIMUM_SIZE = 64
 COMPILED_SPARSE_ALGEBRAIC_MINIMUM_CALLS = 256
+DEDUPLICATED_SWITCH_CONTROL_MINIMUM_COUNT = 32
+MAXIMUM_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES = 128
+_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES: OrderedDict[
+    tuple[object, ...], Any
+] = OrderedDict()
+_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES_LOCK = threading.Lock()
 
 
 class CircuitSolveError(RuntimeError):
@@ -64,6 +78,35 @@ def _compile_sparse_algebraic_kernel(source: str) -> Any:
     }
     exec(compile(source, "<babcs-sparse-algebraic>", "exec"), namespace)
     return namespace["kernel"]
+
+
+def _lookup_compiled_sparse_algebraic_topology(
+    topology: tuple[object, ...],
+) -> Any | None:
+    with _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES_LOCK:
+        kernel = _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES.pop(topology, None)
+        if kernel is not None:
+            _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES[topology] = kernel
+        return kernel
+
+
+def _store_compiled_sparse_algebraic_topology(
+    topology: tuple[object, ...],
+    kernel: Any,
+) -> None:
+    with _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES_LOCK:
+        _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES.pop(topology, None)
+        _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES[topology] = kernel
+        while (
+            len(_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES)
+            > MAXIMUM_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES
+        ):
+            _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES.popitem(last=False)
+
+
+def _clear_compiled_sparse_algebraic_topologies() -> None:
+    with _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES_LOCK:
+        _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES.clear()
 
 
 def normalize_node(node: str) -> str:
@@ -131,6 +174,15 @@ class Switch:
     threshold: float = 0.5
     on_resistance: float = 1.0e-3
     off_resistance: float = 1.0e9
+
+    def __setattr__(self, name: str, value: object) -> None:
+        object.__setattr__(self, name, value)
+        if name == "control":
+            callback = getattr(self, "_control_change_callback", None)
+            if callback is not None:
+                refresh = callback()
+                if refresh is not None:
+                    refresh()
 
 
 Element = Resistor | Capacitor | Inductor | CurrentSource | VoltageSource | Diode | Switch
@@ -202,6 +254,16 @@ class _AlgebraicInputs:
     current_source_values: tuple[float, ...]
     switch_resistances: tuple[float, ...]
     constraint_targets: tuple[float, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class _SwitchControlSamplingPlan:
+    waveforms: tuple[Waveform, ...]
+    value_indices: tuple[int, ...]
+    deduplicates: bool
+
+
+_DIRECT_SWITCH_CONTROL_SAMPLING_PLAN = _SwitchControlSamplingPlan((), (), False)
 
 
 @dataclass(frozen=True, slots=True)
@@ -344,7 +406,20 @@ class Circuit:
         self._sparse_algebraic_enabled: bool | None = None
         self._compiled_algebraic_residual_kernel: Any | None = None
         self._compiled_sparse_algebraic_kernel: Any | None = None
+        self._compiled_sparse_algebraic_topology: tuple[object, ...] | None = None
         self._compiled_sparse_algebraic_calls = 0
+        self._switch_control_sampling_plan = _DIRECT_SWITCH_CONTROL_SAMPLING_PLAN
+        if (
+            type(self) is Circuit
+            and len(self.switches) >= DEDUPLICATED_SWITCH_CONTROL_MINIMUM_COUNT
+        ):
+            for switch in self.switches:
+                object.__setattr__(
+                    switch,
+                    "_control_change_callback",
+                    WeakMethod(self._refresh_switch_control_sampling_plan),
+                )
+            self._refresh_switch_control_sampling_plan()
         self._last_nonlinear_algebraic_factorization: (
             ReusableLinearFactorization | None
         ) = None
@@ -476,6 +551,63 @@ class Circuit:
                 for switch in self.switches
             ),
             constraint_targets=self._constraint_targets(time, dynamic_state),
+        )
+
+    def _refresh_switch_control_sampling_plan(self) -> None:
+        plan = self._build_switch_control_sampling_plan()
+        self._switch_control_sampling_plan = plan
+        if plan.deduplicates:
+            self._sample_algebraic_inputs = (
+                self._sample_algebraic_inputs_deduplicated_switch_controls
+            )
+        else:
+            self.__dict__.pop("_sample_algebraic_inputs", None)
+
+    def _sample_algebraic_inputs_deduplicated_switch_controls(
+        self,
+        time: float,
+        dynamic_state: Sequence[float],
+    ) -> _AlgebraicInputs:
+        plan = self._switch_control_sampling_plan
+        switch_values = tuple(waveform.value(time) for waveform in plan.waveforms)
+        return _AlgebraicInputs(
+            current_source_values=tuple(
+                source.waveform.value(time) for source in self.current_sources
+            ),
+            switch_resistances=tuple(
+                switch.on_resistance
+                if switch_values[value_index] >= switch.threshold
+                else switch.off_resistance
+                for switch, value_index in zip(
+                    self.switches,
+                    plan.value_indices,
+                    strict=True,
+                )
+            ),
+            constraint_targets=self._constraint_targets(time, dynamic_state),
+        )
+
+    def _build_switch_control_sampling_plan(self) -> _SwitchControlSamplingPlan:
+        value_indices: list[int] = []
+        waveforms: list[Waveform] = []
+        builtin_indices: dict[tuple[object, ...], int] = {}
+        deduplicates = False
+        for switch in self.switches:
+            waveform = switch.control
+            value_key = _waveform_value_key(waveform)
+            value_index = None if value_key is None else builtin_indices.get(value_key)
+            if value_index is None:
+                value_index = len(waveforms)
+                waveforms.append(waveform)
+                if value_key is not None:
+                    builtin_indices[value_key] = value_index
+            else:
+                deduplicates = True
+            value_indices.append(value_index)
+        return _SwitchControlSamplingPlan(
+            tuple(waveforms),
+            tuple(value_indices),
+            deduplicates,
         )
 
     def _constraint_targets(
@@ -1409,6 +1541,23 @@ class Circuit:
         source = "\n".join(lines) + "\n"
         return _compile_sparse_algebraic_kernel(source)
 
+    def _sparse_algebraic_topology(self) -> tuple[object, ...]:
+        return (
+            self.algebraic_size,
+            self._algebraic_sparse_row_indices,
+            self._algebraic_sparse_column_pointers,
+            self._resistor_stamps,
+            self._switch_stamps,
+            self._diode_stamps,
+            self._current_source_stamps,
+            self._inductor_stamps,
+            tuple(
+                self.inductor_state_index[inductor.name]
+                for inductor in self.inductors
+            ),
+            self._constraint_stamps,
+        )
+
     def _assemble_sparse_algebraic(
         self,
         time: float,
@@ -1420,6 +1569,13 @@ class Circuit:
         if kernel is not None:
             return kernel(self, time, dynamic_state, unknowns, inputs)
         if type(self) is Circuit and self._uses_reusable_algebraic_inputs():
+            if self._compiled_sparse_algebraic_calls == 0:
+                topology = self._sparse_algebraic_topology()
+                self._compiled_sparse_algebraic_topology = topology
+                kernel = _lookup_compiled_sparse_algebraic_topology(topology)
+                if kernel is not None:
+                    self._compiled_sparse_algebraic_kernel = kernel
+                    return kernel(self, time, dynamic_state, unknowns, inputs)
             self._compiled_sparse_algebraic_calls += 1
             if (
                 self._compiled_sparse_algebraic_calls
@@ -1427,6 +1583,11 @@ class Circuit:
             ):
                 kernel = self._build_compiled_sparse_algebraic_kernel()
                 self._compiled_sparse_algebraic_kernel = kernel
+                topology = self._compiled_sparse_algebraic_topology
+                if topology is None:
+                    topology = self._sparse_algebraic_topology()
+                    self._compiled_sparse_algebraic_topology = topology
+                _store_compiled_sparse_algebraic_topology(topology, kernel)
                 return kernel(self, time, dynamic_state, unknowns, inputs)
         return self._assemble_sparse_algebraic_fallback(
             time,

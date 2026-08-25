@@ -632,6 +632,55 @@ deterministic work counts were exactly equal. Smooth, mixed, and short pulsed
 workloads do not invoke this cache; their measured timing variation is therefore
 treated as ambient benchmark noise rather than a causal code-path effect.
 
+### Hot-topology sparse-kernel adoption
+
+The source cache above removed repeated Python compilation, but each newly
+constructed circuit still repeated the 256-call fallback warmup before asking
+for the already compiled function. The retained design now records a compiled
+kernel under an exact structural key containing the CSC pattern, device stamps,
+constraint stamps, and inductor-state mapping. The registry is a lock-protected
+128-entry LRU. The first circuit for a topology still has to satisfy the original
+demand gate; later exact built-in `Circuit` instances with the same topology
+adopt the proven kernel on their first eligible sparse assembly.
+
+The kernel continues to read resistance, diode, switch, dynamic-state, and
+sampled-input values from the receiving circuit. Parameter mutation therefore
+remains live. Circuit subclasses, distinct structures, and cold topologies keep
+the original fallback and demand-gate behavior. Focused tests cover exact
+fallback equivalence, parameter mutation, distinct-topology misses, first-call
+hot adoption, and LRU eviction.
+
+Against the source-cache baseline, five balanced rounds of 25 paired runs
+measured mean reductions of 3.829% and 4.069% for repeated 16- and 32-channel
+switched topologies. Minimum round reductions were 3.636% and 3.602%. State and
+metric traces and deterministic work counts were exactly equal.
+
+### Duplicate built-in switch-control sampling
+
+The hot switch profile then showed repeated `Pulse.value` evaluation for 32
+numerically identical built-in control waveforms. For exact built-in circuits
+with at least 32 switches, construction now compares signed-zero-aware value
+keys for immutable built-in controls. Only a plan that actually finds duplicate
+values installs a specialized sampler. Unique built-ins, custom waveforms,
+smaller circuits, and subclasses execute the original sampling method unchanged.
+Custom providers remain observable once per switch. Direct control reassignment
+refreshes the plan through a weak callback, so no circuit-to-switch reference
+cycle is introduced and changed control topology remains visible to the chord
+guard.
+
+Against the hot-topology baseline, five balanced rounds of 25 paired runs on the
+32-channel switched workload measured a 1.683% mean reduction with a 1.433%
+minimum round reduction. A 32-channel unique-control matrix was neutral at
++0.266% mean with a -0.055% minimum round result. All state and metric traces
+were exactly equal. An earlier per-evaluation identity-checking plan was rejected
+because its invalidation and mapping overhead erased the waveform-call savings.
+
+Across both retained changes, the same five-round comparison against the exact
+pre-loop baseline measured cumulative reductions of 4.114% at 16 channels and
+5.985% at 32 channels, with minimum round reductions of 3.646% and 5.832%.
+Every state trace, reported metric, rejection count, and deterministic
+candidate-work count was exactly equal.
+
 ### Current cumulative scaling
 
 A fresh cumulative comparison used five warmups and 15 paired runs in each of
@@ -660,8 +709,8 @@ rather than baseline equality.
 - Focused replay, Jacobian, nonlinear, comparison, accuracy, failure-gate, and
   long-horizon regression groups passed before the full run.
 - Full current-source qualification on August 25, 2026 with SciPy 1.18.0,
-  `BABCS_LONG_TESTS=1`, and `BABCS_VERY_LONG_TESTS=1`: 196 tests passed in
-  47.228 seconds, with zero skips.
+  `BABCS_LONG_TESTS=1`, and `BABCS_VERY_LONG_TESTS=1`: 200 tests passed in
+  41.801 seconds, with zero skips.
 - Most recent pre-Schur qualified wheel: `bab_cs-1.0.0-py3-none-any.whl`.
 - Two independent wheel builds were byte-identical.
 - Candidate wheel SHA-256:
@@ -687,7 +736,8 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **Sparse symbolic reuse:** generated CSC stamping removes Python dense
+1. **Sparse symbolic reuse:** generated CSC stamping and hot-topology adoption
+   remove Python dense
    assembly and conversion, but SuperLU still performs a fresh symbolic and
    numeric factorization. A backend with explicit symbolic-pattern reuse is the
    next large-network factorization opportunity.

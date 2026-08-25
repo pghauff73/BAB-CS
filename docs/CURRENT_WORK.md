@@ -163,8 +163,10 @@ fallback checks rather than being allowed to alter authority.
 The current simulator also compiles pure built-in breakpoint schedules once per
 run, deduplicating identical timing while preserving custom waveform calls and
 subclass dispatch. The mathematical two-step Schur evidence window is now
-ULP-aware, and demand-gated sparse assembly compilation is shared across
-identical topologies without embedding mutable device values
+ULP-aware. Demand-gated sparse assembly kernels are shared by exact structural
+topology, later circuit instances can adopt a previously qualified hot kernel on
+their first eligible assembly, and 32-or-more-switch circuits can share exact
+immutable built-in control values without changing custom-provider observability
 [[17]](REFERENCES.md#ref-17).
 
 The CLI reads JSON circuit descriptions, permits rollout, candidate,
@@ -242,9 +244,9 @@ long-time numerical error [[11]](REFERENCES.md#ref-11)
 
 The next research phase follows directly from this current position. The
 highest-value paths are symbolic sparse-factorization reuse, better native
-ownership of sparse state and residual data, diagnostics for factorization and
-generated-kernel cache policy, independently error-controlled replay
-refinement, and evidence-gated anchor scheduling. Device expansion,
+ownership of sparse state and residual data after hot-topology adoption,
+diagnostics for factorization and generated-kernel cache policy, independently
+error-controlled replay refinement, and evidence-gated anchor scheduling. Device expansion,
 state-dependent event localization, broader DAE topology handling, and stronger
 bound-coverage arguments remain larger scientific programs rather than small
 optimizations [[17]](REFERENCES.md#ref-17).

@@ -87,7 +87,8 @@ The `v1.1.0` candidate is expected to qualify:
 - dense, automatic, and forced-SciPy linear backends;
 - sparse CSC stamping, workspace reuse, specialized kernels, guarded chord
   prediction, contractively bounded Schur prediction, ULP-aware two-step
-  sensitivity age, and bounded sparse-kernel compile reuse;
+  sensitivity age, bounded sparse-kernel compile reuse, bounded hot-topology
+  kernel adoption, and duplicate exact built-in switch-control sampling;
 - per-run built-in breakpoint schedule compilation with custom-waveform and
   subclass compatibility;
 - deterministic comparison and wheel construction;
