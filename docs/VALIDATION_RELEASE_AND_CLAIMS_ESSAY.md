@@ -24,7 +24,7 @@ intended environment.
 
 A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 and
 SuiteSparse KLU 2.3.6 with both `BABCS_LONG_TESTS=1` and
-`BABCS_VERY_LONG_TESTS=1`. All 219 tests passed in 56.474 seconds with zero
+`BABCS_VERY_LONG_TESTS=1`. All 219 tests passed in 54.997 seconds with zero
 skips. This establishes that the essay set was updated
 against a live green source tree; it does not replace the clean-environment,
 installed-wheel, exact-artifact, workflow, and human-review requirements of

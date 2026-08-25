@@ -86,6 +86,17 @@ def _compile_sparse_algebraic_kernel(source: str) -> Any:
     return namespace["kernel"]
 
 
+@lru_cache(maxsize=128)
+def _compile_sparse_algebraic_jacobian_kernel(source: str) -> Any:
+    namespace = {
+        "exp": math.exp,
+        "exp40": math.exp(40.0),
+        "exp_neg40": math.exp(-40.0),
+    }
+    exec(compile(source, "<babcs-sparse-algebraic-jacobian>", "exec"), namespace)
+    return namespace["kernel"]
+
+
 def _lookup_compiled_sparse_algebraic_topology(
     topology: tuple[object, ...],
 ) -> Any | None:
@@ -442,6 +453,7 @@ class Circuit:
         self._sparse_algebraic_enabled: bool | None = None
         self._compiled_algebraic_residual_kernel: Any | None = None
         self._compiled_sparse_algebraic_kernel: Any | None = None
+        self._compiled_sparse_algebraic_jacobian_kernel: Any | None = None
         self._compiled_sparse_algebraic_topology: tuple[object, ...] | None = None
         self._compiled_sparse_algebraic_calls = 0
         self._switch_control_sampling_plan = _DIRECT_SWITCH_CONTROL_SAMPLING_PLAN
@@ -1579,6 +1591,73 @@ class Circuit:
         source = "\n".join(lines) + "\n"
         return _compile_sparse_algebraic_kernel(source)
 
+    def _build_compiled_sparse_algebraic_jacobian_kernel(self) -> Any:
+        lines = [
+            "def kernel(self, unknowns, inputs):",
+            f"    sparse_data = [0.0] * {len(self._algebraic_sparse_row_indices)}",
+            "    resistors = self.resistors",
+            "    diodes = self.diodes",
+        ]
+
+        def voltage_expressions(stamp: _TerminalStamp) -> tuple[str, str]:
+            positive = (
+                "0.0"
+                if stamp.positive_index is None
+                else f"unknowns[{stamp.positive_index}]"
+            )
+            negative = (
+                "0.0"
+                if stamp.negative_index is None
+                else f"unknowns[{stamp.negative_index}]"
+            )
+            return positive, negative
+
+        def append_jacobian_stamp(stamp: _TerminalStamp, value: str) -> None:
+            for entry in stamp.jacobian_entries:
+                lines.append(
+                    f"    sparse_data[{entry.sparse_index}] += "
+                    f"{entry.multiplier!r} * {value}"
+                )
+
+        for index, stamp in enumerate(self._resistor_stamps):
+            lines.append(f"    conductance = 1.0 / resistors[{index}].resistance")
+            append_jacobian_stamp(stamp, "conductance")
+
+        for index, stamp in enumerate(self._switch_stamps):
+            lines.append(
+                f"    conductance = 1.0 / inputs.switch_resistances[{index}]"
+            )
+            append_jacobian_stamp(stamp, "conductance")
+
+        for index, stamp in enumerate(self._diode_stamps):
+            positive, negative = voltage_expressions(stamp)
+            lines.extend(
+                [
+                    f"    diode = diodes[{index}]",
+                    f"    exponent = ({positive} - {negative}) / diode.thermal_voltage",
+                    "    if exponent > 40.0:",
+                    "        derivative = exp40",
+                    "    elif exponent < -40.0:",
+                    "        derivative = exp_neg40",
+                    "    else:",
+                    "        derivative = exp(exponent)",
+                    "    conductance = (",
+                    "        diode.saturation_current * derivative / diode.thermal_voltage",
+                    "    )",
+                ]
+            )
+            append_jacobian_stamp(stamp, "conductance")
+
+        for constraint_stamp in self._constraint_stamps:
+            for entry in constraint_stamp.terminal.jacobian_entries:
+                lines.append(
+                    f"    sparse_data[{entry.sparse_index}] += {entry.multiplier!r}"
+                )
+
+        lines.append("    return sparse_data")
+        source = "\n".join(lines) + "\n"
+        return _compile_sparse_algebraic_jacobian_kernel(source)
+
     def _sparse_algebraic_topology(self) -> tuple[object, ...]:
         return (
             self.algebraic_size,
@@ -2186,19 +2265,31 @@ class Circuit:
         algebraic_jacobian: SparseMatrix | None = None
         sparse_data: Sequence[float]
         kernel = self._compiled_sparse_algebraic_kernel
-        if factor_backend == "klu" and kernel is not None:
+        compiled_jacobian_eligible = factor_backend == "klu" and (
+            kernel is not None
+            or (
+                self.algebraic_size
+                >= KLU_NATIVE_SENSITIVITY_MINIMUM_ALGEBRAIC_SIZE
+                and self.dynamic_size
+                >= KLU_NATIVE_SENSITIVITY_MINIMUM_RIGHT_HAND_SIDES
+            )
+        )
+        if compiled_jacobian_eligible:
             if inputs is None:
                 inputs = self._sample_algebraic_inputs(
                     evaluation.time,
                     evaluation.dynamic_state,
                 )
-            _, sparse_data = kernel(
+            jacobian_kernel = self._compiled_sparse_algebraic_jacobian_kernel
+            if jacobian_kernel is None:
+                jacobian_kernel = (
+                    self._build_compiled_sparse_algebraic_jacobian_kernel()
+                )
+                self._compiled_sparse_algebraic_jacobian_kernel = jacobian_kernel
+            sparse_data = jacobian_kernel(
                 self,
-                evaluation.time,
-                evaluation.dynamic_state,
                 evaluation.algebraic.unknowns,
                 inputs,
-                True,
             )
         else:
             _, assembled_jacobian = self._algebraic_residual_and_jacobian(
@@ -2284,7 +2375,7 @@ class Circuit:
             positive_columns = self._inductor_positive_sensitivity_columns
             positive_nodes = self._inductor_positive_sensitivity_nodes
             if len(positive_columns) == len(self.inductors):
-                voltage_sensitivities = sensitivities[:, positive_nodes].copy()
+                voltage_sensitivities = sensitivities[:, positive_nodes]
             else:
                 voltage_sensitivities = numpy.zeros(
                     (self.dynamic_size, len(self.inductors)),

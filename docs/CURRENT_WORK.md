@@ -175,6 +175,17 @@ arrays. Automatic use is limited to sensitivity matrices with at least 128
 algebraic unknowns and 32 right-hand sides. Against the first pushed KLU baseline,
 paired local runs reduced four 32-channel workloads by about 4.1% to 6.8% with
 exact state, metric, rejection, and work traces [[17]](REFERENCES.md#ref-17).
+At the same crossover, a separate generated Jacobian-only kernel now avoids
+constructing the residual and diode-current cache that native sensitivity does
+not consume. Against exact commit `351a8e0`, balanced local runs reduced the
+four 32-channel workloads by 0.9% to 8.0% and the 64-channel workloads by 3.7%
+to 6.9%, with exact state, metric, rejection, and deterministic work traces
+[[17]](REFERENCES.md#ref-17).
+Mixed native sensitivity also reuses the independent writable array already
+created by NumPy advanced indexing instead of copying it again. This smaller
+follow-up reduced the 32-channel mixed workload by 1.1% and the 64-channel
+mixed workload by 0.8% on average with exact traces
+[[17]](REFERENCES.md#ref-17).
 
 The current simulator also compiles pure built-in breakpoint schedules once per
 run, deduplicating identical timing while preserving custom waveform calls and
@@ -259,12 +270,12 @@ long-time numerical error [[11]](REFERENCES.md#ref-11)
 [[15]](REFERENCES.md#ref-15).
 
 The next research phase follows directly from this current position. Private
-raw sparse values now feed a combined KLU factor-and-solve handle, and mixed C+L
-trapezoidal replay now uses independent derivative-defect evidence with
-complete-window retry. The highest-value remaining paths are compiled nonlinear
-device assembly, diagnostics for factorization and generated-kernel cache
-policy, native residual ownership, and evidence-gated anchor scheduling with a
-maximum elapsed authority age. Device expansion, state-dependent event
-localization, broader DAE topology handling, and stronger bound-coverage
-arguments remain larger scientific programs rather than small optimizations
-[[17]](REFERENCES.md#ref-17).
+raw sparse values now feed a combined KLU factor-and-solve handle, native
+sensitivity has an independent Jacobian-only assembly kernel, and mixed C+L
+trapezoidal replay uses derivative-defect evidence with complete-window retry.
+The highest-value remaining paths are KLU right-hand-side and result residency,
+diagnostics for factorization and generated-kernel cache policy, native residual
+ownership, and evidence-gated anchor scheduling with a maximum elapsed authority
+age. Device expansion, state-dependent event localization, broader DAE topology
+handling, and stronger bound-coverage arguments remain larger scientific
+programs rather than small optimizations [[17]](REFERENCES.md#ref-17).

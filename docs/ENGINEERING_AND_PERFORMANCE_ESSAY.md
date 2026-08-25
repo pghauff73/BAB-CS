@@ -217,6 +217,22 @@ subsequent projection correction. Isolated native sensitivity improved by about
 and workload-dependent, so the project records the kernel evidence separately
 from end-to-end timing [[17]](REFERENCES.md#ref-17).
 
+A fourth KLU loop separated Jacobian authority from residual accounting. Native
+sensitivity needs only live algebraic derivatives, so an exact generated
+Jacobian-only kernel now omits residual allocation, current stamping, diode-
+current materialization, and accepted-cache replacement. The fast path is
+limited to the already qualified large KLU crossover. Balanced local runs
+against exact commit `351a8e0` reduced 32-channel workloads by approximately
+0.9% to 8.0% and 64-channel workloads by 3.7% to 6.9%, with exact state, metric,
+rejection, and deterministic work traces [[17]](REFERENCES.md#ref-17).
+
+The mixed inductor path then removed a redundant ownership boundary. Advanced
+indexing already creates an independent writable voltage-sensitivity gather, so
+copying that gather again added bandwidth without additional isolation. The
+one-line removal measured approximately 1.1% mean end-to-end improvement at 32
+channels and 0.8% at 64 channels with exact traces
+[[17]](REFERENCES.md#ref-17).
+
 Independent replay was then measured as 17% to 43% of runtime in the profiled
 anchor configurations. Mixed C+L trapezoidal replay now starts at the minimum
 subdivision and evaluates a three-derivative quadrature defect. Failed evidence
@@ -233,7 +249,14 @@ the same differential state. An exact-index accounting prototype improved an
 isolated kernel but regressed end-to-end workloads. A generated residual-plus-
 norm kernel produced negligible or negative whole-simulation gains. Preserving
 these failures is scientifically useful because it prevents repeated work and
-shows that local microbenchmarks do not automatically justify complexity.
+shows that local microbenchmarks do not automatically justify complexity. A
+later deferred dense-Jacobian design was rejected for the same reason: switched
+runs improved by about 0.6%, but sine regressed by 1.4% on average and mixed and
+pulsed cases each contained a negative round. A direct C-order NumPy clone for
+KLU right-hand sides was likewise rejected: the isolated copy became faster,
+but native solve gains stayed below 0.7%, contained negative rounds, and the
+switched end-to-end workload regressed by about 0.7% on average. The explicit
+owned allocation and assignment therefore remains the simpler qualified path.
 
 Deterministic work counters accompany timing. Candidate and reference solves,
 circuit evaluations, algebraic iterations, projections, differential Jacobian
@@ -245,14 +268,13 @@ measurement.
 ## Remaining Work
 
 The project’s current high-value performance frontier is therefore clear. The
-generated nonlinear sparse assembly kernel is now the largest Python-owned hot
-region in the qualified large-sensitivity profile. Large exact built-in diode
-families should be prototyped as a mutation-aware batch, while tuple-to-NumPy
-value ownership is deprioritized because its isolated cost was small. Cache hit,
-miss, eviction, refactor, and fallback diagnostics should precede user-
-configurable cache policy or broader automatic KLU adoption. Each proposal must
-retain source/installed equivalence, nonlinear qualification, bound behavior,
-and exact fallback.
+KLU solve and its owned right-hand-side/result buffers now dominate the
+qualified large-sensitivity profile. Reusable residency should be prototyped
+only if caller-owned read-only inputs, independent results, stale-factor replay,
+and cross-thread restoration remain exact. Cache hit, miss, eviction, refactor,
+and fallback diagnostics should precede user-configurable cache policy or
+broader automatic KLU adoption. Each proposal must retain source/installed
+equivalence, nonlinear qualification, bound behavior, and exact fallback.
 
 Replay subdivision is now independently evidence-controlled for mixed C+L
 trapezoidal anchors. Remaining replay research should generalize the estimator

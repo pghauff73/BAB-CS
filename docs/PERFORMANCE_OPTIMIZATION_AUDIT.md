@@ -788,6 +788,51 @@ and switched cases measured 2.241% and 0.978% mean reductions with 1.652% and
 0.955% minimum reductions. Every state, metric, rejection, and deterministic
 work trace was exactly equal.
 
+### Jacobian-only native sensitivity assembly
+
+The next profile showed that native sensitivity consumed only algebraic
+Jacobian values, but the private generated sparse kernel still allocated and
+stamped a complete residual, calculated diode currents, and replaced the
+accepted diode-current cache. A separate generated Jacobian-only kernel now
+stamps the same live resistor, switch, diode, and constraint derivatives without
+constructing unused residual evidence. Public residual-plus-Jacobian assembly,
+subclass dispatch, limiting rules, topology, and SciPy fallback remain
+unchanged. The smaller compiler activates eagerly only at the existing
+qualified KLU crossover of at least 128 algebraic unknowns and 32 right-hand
+sides; below that crossover the previous demand and fallback paths remain
+authoritative.
+
+Against exact commit `351a8e0`, 11 isolated paired rounds reduced 32-channel
+native sensitivity by 14.404% on average for capacitor-only channels and
+11.506% for mixed channels. Minimum round reductions were 13.225% and 10.787%.
+The generated Jacobian values were exactly equal before and after live resistor
+and diode parameter mutation, and the kernel does not alter residual or
+accepted-current caches.
+
+Three balanced 32-channel rounds measured mean whole-run reductions of 3.742%
+for sine, 4.182% for mixed C+L, 7.960% for pulsed, and 0.882% for switched
+workloads. Minimum round reductions were 1.165%, 2.885%, 6.608%, and 0.471%.
+Two balanced 64-channel rounds measured mean reductions of 3.723%, 4.286%,
+6.850%, and 6.171%, with minimum reductions of 2.685%, 4.163%, 6.823%, and
+5.480%. State, metric, rejection, and deterministic work traces were exactly
+equal in every retained comparison.
+
+### Independent mixed-sensitivity gather ownership
+
+The Jacobian-only profile exposed one remaining large Python-visible copy in
+mixed capacitor/inductor systems. NumPy advanced indexing already returns an
+independent writable sensitivity gather, but the inductor voltage path copied
+that gather a second time before subtracting negative-node columns. Removing
+the redundant copy preserves source-array isolation and all public result
+ownership while leaving capacitor-only paths unchanged.
+
+Against the exact Jacobian-only candidate, 11 isolated rounds reduced the
+32-channel mixed native-sensitivity call by 3.519% on average with a 2.564%
+minimum round reduction. Three balanced 32-channel mixed runs measured a 1.133%
+mean end-to-end reduction with a 0.539% minimum round reduction. Two balanced
+64-channel mixed runs measured a 0.832% mean reduction with a 0.076% minimum.
+State, metric, rejection, and deterministic work traces were exactly equal.
+
 ### Independent evidence-controlled replay refinement
 
 Direct timing showed that periodic independent replay consumed about 27.1% of
@@ -850,15 +895,15 @@ rather than baseline equality.
   long-horizon regression groups passed before the full run.
 - Full current-source qualification on August 25, 2026 with SciPy 1.18.0 and
   SuiteSparse KLU 2.3.6, `BABCS_LONG_TESTS=1`, and
-  `BABCS_VERY_LONG_TESTS=1`: 219 tests passed in 56.474 seconds, with zero skips.
+  `BABCS_VERY_LONG_TESTS=1`: 219 tests passed in 54.997 seconds, with zero skips.
 - Two independent `bab_cs-1.1.0-py3-none-any.whl` builds were byte-identical.
 - Local candidate wheel SHA-256:
-  `7faa3a3fc1ae7aaf755a16e0b58f4b40b7176aa64e7376a29328938b274bc5f0`.
+  `85e5af23ca51bf9e4d861af516d704cbf761b027c37d67501e95499fb412c43c`.
 - Clean dependency-free installed-wheel qualification: 219 tests passed in
-  53.467 seconds with 52 expected optional-backend skips; `pip check` reported
+  53.579 seconds with 52 expected optional-backend skips; `pip check` reported
   no broken requirements.
 - Clean installed-wheel NumPy 2.5.2, SciPy 1.18.0, and SuiteSparse KLU 2.3.6
-  qualification: all 219 tests passed in 52.945 seconds with zero skips;
+  qualification: all 219 tests passed in 55.154 seconds with zero skips;
   `pip check` reported no broken requirements.
 - Source and installed-wheel comparison matrices each completed all 154
   results. Their JSON, CSV, and SVG outputs were byte-identical.
@@ -877,11 +922,11 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **Compiled nonlinear device assembly:** after KLU boundary reduction, the
-   generated sparse diode/residual kernel is the largest Python-owned region in
-   both final profiles. The next prototype should batch large exact built-in
-   diode families while preserving live parameter mutation, limiting rules,
-   deterministic `NaN` behavior, subclass fallback, and exact sparse stamps.
+1. **Native KLU right-hand-side and result residency:** after Jacobian-only
+   assembly, the KLU solve and its mandatory owned input/output buffers dominate
+   the native sensitivity profile. Any reusable buffer prototype must preserve
+   read-only caller inputs, independent returned solutions, stale-factor replay,
+   cross-thread restoration, and deterministic nonfinite rejection.
 2. **Reactive-scale invalidation:** mutation-aware capacitance and inductance
    arrays still verify live scalar tuples on every native sensitivity. Weak
    invalidation callbacks may remove that scan, but must not create ownership
@@ -913,10 +958,10 @@ stiffness evaluations do not use the same differential states as the preceding
 block linearizations. Direct profiling also rejected standalone sparse tuple
 ownership; the retained fused path removes only private assembly boundaries and
 returns the required reusable handle. The next optimization phase should
-prototype a larger evidence-gated nonlinear device-value kernel and add sparse-
-cache observability. Evidence-gated anchor scheduling remains useful only with
-a hard elapsed-time limit and exact event boundaries; adaptive subdivision does
-not by itself justify older authority.
+prototype KLU buffer residency and add sparse-cache observability. Evidence-
+gated anchor scheduling remains useful only with a hard elapsed-time limit and
+exact event boundaries; adaptive subdivision does not by itself justify older
+authority.
 
 A weak reactive-value invalidation prototype was also rejected. It reduced the
 isolated cached-scale check from about 0.97 to 0.11 microseconds for 32 capacitor
@@ -950,6 +995,27 @@ with a worst round regression of 0.547%. State and metric traces were exactly
 equal. The extra generated code and paired private APIs therefore do not meet
 the retention threshold; evidence is preserved in
 `/tmp/babcs-residual-norm-gain.jsonl`.
+
+A deferred dense differential-Jacobian prototype was also rejected. It retained
+the gathered sensitivity blocks after computing the norm and materialized the
+dense matrix only when a later chord update reached it. Exact 32-channel traces
+were preserved, but sine regressed by 1.411% on average with a 3.378% worst
+round. Mixed and pulsed means improved by only 0.419% and 1.099%, and each had a
+negative round of 0.472% and 0.653%. Switched runs improved by 0.607% with a
+0.487% minimum, which did not justify a switch-only ownership mode and its
+additional cached-state semantics. Evidence is preserved under
+`/tmp/babcs-lazy-jacobian-benchmark/`.
+
+A direct NumPy KLU right-hand-side clone was rejected too. Replacing the
+explicit C-order allocation and assignment with `source.copy(order="C")`
+reduced the isolated clone by 28.56% at 32 by 128 values and 12.04% at 64 by
+256 values. That local saving did not survive the native solve: 32-channel
+capacitor-only and mixed sensitivity means improved by only 0.641% and 0.548%,
+with negative rounds of 0.753% and 2.005%. Exact end-to-end traces were also
+neutral or worse: sine and mixed means changed by only 0.020% and 0.076%, while
+the switched workload regressed by 0.684% on average and 1.965% in its worst
+round. The explicit owned buffer remains authoritative. Evidence is preserved
+under `/tmp/babcs-klu-copy-benchmark/`.
 
 A cached COLAMD pre-permutation prototype was also rejected. It recovered the
 first SuperLU factorization's column ordering, rebuilt the fixed CSC column

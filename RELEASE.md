@@ -178,6 +178,18 @@ classes against exact commit `f21b383`. Minimum round reductions were 3.768%,
 6.466%, 4.958%, and 5.668%. State, metric, rejection, and deterministic work
 traces were again exactly equal.
 
+Jacobian-only native sensitivity assembly measured another 3.742%, 4.182%,
+7.960%, and 0.882% mean reduction on 32-channel sine, mixed, pulsed, and
+switched workloads against exact commit `351a8e0`; minimum round reductions
+were 1.165%, 2.885%, 6.608%, and 0.471%. At 64 channels the corresponding mean
+reductions were 3.723%, 4.286%, 6.850%, and 6.171%. State, metric, rejection,
+and deterministic work traces were exactly equal in every comparison.
+
+Removing a second copy of NumPy's already independent mixed-inductor
+sensitivity gather measured a further 1.133% mean reduction at 32 channels and
+0.832% at 64 channels, again with exact state, metric, rejection, and work
+traces.
+
 These numbers are local characterization for the named workloads and hardware.
 They are not a claim that BAB-CS is generally faster than `ngspice` or another
 production simulator.
@@ -236,7 +248,8 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 219 tests with long, very-long, SciPy, and KLU tiers enabled. This local run
+of all 219 tests in 54.997 seconds with long, very-long, SciPy, and KLU tiers
+enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.
 

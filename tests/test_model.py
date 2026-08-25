@@ -20,6 +20,7 @@ from babcs.model import (
     MAXIMUM_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES,
     CircuitSolveError,
     _clear_compiled_sparse_algebraic_topologies,
+    _compile_sparse_algebraic_jacobian_kernel,
     _compile_sparse_algebraic_kernel,
     _lookup_compiled_sparse_algebraic_topology,
     _store_compiled_sparse_algebraic_topology,
@@ -859,17 +860,62 @@ class CircuitModelTests(unittest.TestCase):
         self.assertIsInstance(raw_data, list)
         self.assertEqual(tuple(raw_data), matrix.data)
 
+        jacobian_kernel = circuit._build_compiled_sparse_algebraic_jacobian_kernel()
+        assembled_unknowns = (123.0,)
+        assembled_diode_currents = (456.0,)
+        circuit._last_assembled_unknowns = assembled_unknowns
+        circuit._last_assembled_diode_currents = assembled_diode_currents
+        jacobian_data = jacobian_kernel(
+            circuit,
+            evaluation.algebraic.unknowns,
+            inputs,
+        )
+        self.assertEqual(tuple(jacobian_data), matrix.data)
+        self.assertIs(circuit._last_assembled_unknowns, assembled_unknowns)
+        self.assertIs(
+            circuit._last_assembled_diode_currents,
+            assembled_diode_currents,
+        )
+
+        circuit.resistors[0].resistance = 1_500.0
+        circuit.diodes[0].saturation_current = 2.0e-12
+        circuit.diodes[0].thermal_voltage = 0.03
+        mutated_residual, mutated_matrix = kernel(
+            circuit,
+            evaluation.time,
+            state,
+            evaluation.algebraic.unknowns,
+            inputs,
+        )
+        del mutated_residual
+        mutated_jacobian_data = jacobian_kernel(
+            circuit,
+            evaluation.algebraic.unknowns,
+            inputs,
+        )
+        self.assertEqual(tuple(mutated_jacobian_data), mutated_matrix.data)
+        circuit._compiled_sparse_algebraic_kernel = None
+        circuit._compiled_sparse_algebraic_jacobian_kernel = None
+
         from babcs.model import (
             _factor_and_solve_klu_sparse_values_multiple_array as model_atomic_solve,
         )
 
-        with patch(
-            "babcs.model._factor_and_solve_klu_sparse_values_multiple_array",
-            wraps=model_atomic_solve,
-        ) as atomic_solve:
+        with (
+            patch.object(
+                circuit,
+                "_build_compiled_sparse_algebraic_jacobian_kernel",
+                wraps=circuit._build_compiled_sparse_algebraic_jacobian_kernel,
+            ) as build_jacobian_kernel,
+            patch(
+                "babcs.model._factor_and_solve_klu_sparse_values_multiple_array",
+                wraps=model_atomic_solve,
+            ) as atomic_solve,
+        ):
             native = circuit._native_differential_sensitivity(evaluation)
 
         self.assertIsNotNone(native)
+        self.assertEqual(build_jacobian_kernel.call_count, 1)
         self.assertEqual(atomic_solve.call_count, 1)
         self.assertIsInstance(atomic_solve.call_args.args[1], list)
 
@@ -1022,6 +1068,7 @@ class CircuitModelTests(unittest.TestCase):
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_sparse_kernel_compilation_is_shared_by_topology(self) -> None:
         _compile_sparse_algebraic_kernel.cache_clear()
+        _compile_sparse_algebraic_jacobian_kernel.cache_clear()
         first = Circuit(_diode_channel_elements(16), linear_backend="auto")
         second_elements = _diode_channel_elements(16)
         second_elements[1].resistance = 2_000.0
@@ -1029,11 +1076,27 @@ class CircuitModelTests(unittest.TestCase):
 
         first_kernel = first._build_compiled_sparse_algebraic_kernel()
         second_kernel = second._build_compiled_sparse_algebraic_kernel()
+        first_jacobian_kernel = (
+            first._build_compiled_sparse_algebraic_jacobian_kernel()
+        )
+        second_jacobian_kernel = (
+            second._build_compiled_sparse_algebraic_jacobian_kernel()
+        )
 
         self.assertIs(first_kernel, second_kernel)
+        self.assertIs(first_jacobian_kernel, second_jacobian_kernel)
         cache_info = _compile_sparse_algebraic_kernel.cache_info()
         self.assertEqual(
             (cache_info.hits, cache_info.misses, cache_info.maxsize),
+            (1, 1, 128),
+        )
+        jacobian_cache_info = _compile_sparse_algebraic_jacobian_kernel.cache_info()
+        self.assertEqual(
+            (
+                jacobian_cache_info.hits,
+                jacobian_cache_info.misses,
+                jacobian_cache_info.maxsize,
+            ),
             (1, 1, 128),
         )
 
