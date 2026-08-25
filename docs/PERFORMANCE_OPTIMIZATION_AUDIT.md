@@ -718,6 +718,50 @@ count was exactly equal. Final factor-plus-batched-solve kernels were about 22%
 faster for the mixed case and 13% faster for the switched case on the local
 SuiteSparse KLU 2.3.6 installation.
 
+### KLU hot-path safety and boundary reduction
+
+The first follow-up hypothesis was native sparse numerical-value ownership. A
+direct 128-unknown, 32-right-hand-side profile rejected that priority ordering:
+list-to-tuple conversion cost about 0.28 microseconds and copying the immutable
+tuple into KLU's NumPy value buffer cost about 3.43 microseconds, while the
+Python U-pivot scan cost about 37 microseconds and sparse infinity-norm
+construction cost about 20 microseconds. The retained work therefore attacks
+the measured safety and boundary costs before changing public matrix ownership.
+
+The KLU workspace now calculates the absolute pivot threshold from its owned
+numeric values with a vectorized sparse row reduction, rejects nonfinite values
+before native factorization, and validates the unscaled U diagonal with a
+vectorized finite/minimum scan. This preserves the same absolute singularity
+contract. The workspace also retains stable `ctypes` pointers for its structural
+and numeric arrays and solves directly into the independent C-order `(nrhs, n)`
+result. That same memory is column-major `(n, nrhs)` to KLU, so no intermediate
+transpose-copy is needed and later solves cannot mutate earlier results. The
+direct layout reduced the isolated solve from about 7.93 to 6.89 microseconds for
+capacitor channels and from 13.10 to 10.93 microseconds for mixed channels, with
+bit-identical solutions. Against the exact pre-layout wheel, mean end-to-end
+reductions were 1.530%, 1.460%, 0.497%, and 1.012% for sine, mixed, pulsed, and
+switched workloads. The pulsed minimum round was -0.469%, so this isolated
+increment remains small relative to timing noise even though the cumulative
+comparison below is stable.
+
+Native sensitivity post-processing now gathers inductor voltage columns in
+batches instead of issuing one NumPy operation per inductor. Read-only
+capacitance and inductance arrays are reused while live element-value mutation
+still refreshes them. Native NumPy right-hand-side matrices are validated from
+their two-dimensional shape rather than by iterating over every row; generic
+Python sequences retain the original per-row validation.
+
+Against the exact pushed KLU baseline `f21b383`, three balanced rounds with four
+warmups and 15 paired runs per round measured mean reductions of 4.131% for
+32-channel sine, 6.814% for mixed capacitor/inductor channels, 6.020% for pulsed
+channels, and 6.282% for switched channels. Minimum round reductions were
+3.768%, 6.466%, 4.958%, and 5.668%, respectively. State traces, metrics,
+rejection counts, and deterministic candidate-work counts were exactly equal.
+The isolated native sensitivity kernel fell from about 91.7 to 56.8
+microseconds for capacitor-only channels and from about 117.1 to 83.3
+microseconds for mixed channels in the final local profile; these microsecond
+figures remain sensitive to host noise and are not portable guarantees.
+
 ### Current cumulative scaling
 
 A fresh cumulative comparison used five warmups and 15 paired runs in each of
@@ -747,15 +791,14 @@ rather than baseline equality.
   long-horizon regression groups passed before the full run.
 - Full current-source qualification on August 25, 2026 with SciPy 1.18.0 and
   SuiteSparse KLU 2.3.6, `BABCS_LONG_TESTS=1`, and
-  `BABCS_VERY_LONG_TESTS=1`: 211 tests passed in 43.751 seconds, with zero skips.
-- Most recent pre-Schur qualified wheel: `bab_cs-1.0.0-py3-none-any.whl`.
-- Two independent wheel builds were byte-identical.
-- Candidate wheel SHA-256:
-  `195345cabb6eb24b0e5f2735a4299da8711a7a6bc354af1f746c29190d610125`.
-- Clean installed-wheel suite: 169 tests passed in 13.000 seconds, with 31
-  opt-in long/very-long and optional-SciPy tests skipped as configured.
-- Installed-wheel SciPy qualification: 87 focused sparse, model, integrator,
-  candidate, nonlinear, and CLI tests passed with SciPy 1.18.0.
+  `BABCS_VERY_LONG_TESTS=1`: 216 tests passed in 42.674 seconds, with zero skips.
+- Two independent `bab_cs-1.1.0-py3-none-any.whl` builds were byte-identical.
+- Local candidate wheel SHA-256:
+  `a403def6dfd3b6b23b97b54d0a1055e4753facb94ad441823e1d8cbcb67c4531`.
+- Dependency-free installed-wheel qualification: 216 tests passed in 42.011
+  seconds with 50 expected optional-backend skips.
+- Installed-wheel SciPy 1.18.1 and SuiteSparse KLU 2.3.6 qualification: all 216
+  tests passed in 41.902 seconds with zero skips.
 - Source and installed-wheel comparison matrices each completed all 154
   results. Their JSON, CSV, and SVG outputs were byte-identical.
 - Source-tree SHA-256 recorded by both reports:
@@ -773,40 +816,67 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **Native sparse value ownership:** KLU now reuses symbolic and numeric
-   structure, but every factor still copies immutable Python tuple values into a
-   NumPy buffer. Circuit-owned numeric value arrays with mutation-safe public
-   snapshots are the next measured large-network opportunity.
-2. **Projection state residency:** the constant multi-RHS conversion is removed,
+1. **Compiled nonlinear device assembly:** after KLU boundary reduction, the
+   generated sparse diode/residual kernel is the largest Python-owned region in
+   both final profiles. The next prototype should batch large exact built-in
+   diode families while preserving live parameter mutation, limiting rules,
+   deterministic `NaN` behavior, subclass fallback, and exact sparse stamps.
+2. **Reactive-scale invalidation:** mutation-aware capacitance and inductance
+   arrays still verify live scalar tuples on every native sensitivity. Weak
+   invalidation callbacks may remove that scan, but must not create ownership
+   cycles or hide direct element mutation.
+3. **Native sparse value ownership:** copying tuple values into KLU measured only
+   about 3.43 microseconds in the target profile. Revisit ownership only as part
+   of a fused assembly-to-factor interface that removes more than this isolated
+   copy and retains immutable stale-factor restoration.
+4. **Projection state residency:** the constant multi-RHS conversion is removed,
    but target state, accepted state, and accepted algebraic unknowns are still
    converted during sparse projection. Aggregate `numpy.asarray` cost is now
    0.014 of 0.893 internal profiled seconds, so any further residency change
    must remain lazy and demonstrate an end-to-end gain.
-3. **Native residual and norm ownership:** the large-vector norm fast path
+5. **Native residual and norm ownership:** the large-vector norm fast path
    reduced traversal cost without changing storage. Further work should fuse
    residual construction and norm evidence only when the residual vector remains
    available to Newton and `NaN` propagation stays deterministic.
-4. **Adaptive replay accuracy model:** AB3 initialization has largely removed
+6. **Adaptive replay accuracy model:** AB3 initialization has largely removed
    replay Newton corrections, but replay still covers every accepted interval.
    Any substep reduction must be controlled by an independent local accuracy
    estimate, event boundary, maximum elapsed anchor time, and fail-closed retry;
    changing anchor frequency alone does not reduce total replay coverage.
-5. **Cache diagnostics and KLU expansion:** deterministic work reports should
+7. **Cache diagnostics and KLU expansion:** deterministic work reports should
    expose KLU/SciPy cache hits, misses, evictions, refactors, and fallbacks before
    cache policy becomes user-configurable or automatic KLU selection expands to
    additional solve classes.
-6. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
+8. **Evidence-gated anchor scheduling:** a dynamic anchor interval should be
    considered only after the internal recurrence, empirical anchor ratio, event
    boundaries, and maximum elapsed anchor time jointly enforce a fail-closed
    upper bound.
 
 An exact-state probe rejected shared accepted-evaluation Jacobian caching: the
 stiffness evaluations do not use the same differential states as the preceding
-block linearizations. The next optimization phase should therefore compare
-native sparse numerical-value ownership with further nonlinear device-value
-stamping. Evidence-gated anchor scheduling remains useful for controlling
+block linearizations. Direct profiling also rejected sparse tuple ownership as
+the next priority. The next optimization phase should prototype batched
+nonlinear device-value stamping and reactive-value invalidation. Evidence-gated
+anchor scheduling remains useful for controlling
 when evidence is refreshed, but it is not itself a throughput optimization
 unless paired with a qualified adaptive replay-step model.
+
+A weak reactive-value invalidation prototype was also rejected. It reduced the
+isolated cached-scale check from about 0.97 to 0.11 microseconds for 32 capacitor
+channels and from 1.57 to 0.11 microseconds for 32 mixed channels. End-to-end
+means improved by only 0.096% to 0.513%, while sine and pulse minimum rounds
+regressed by 0.095% and 0.070%. Exact state and metric traces were preserved, but
+the gain did not justify adding mutation callbacks to every capacitor and
+inductor. The simpler live tuple check remains authoritative.
+
+A NumPy diode-family batch was rejected at the current automatic crossover. For
+16 and 32 diodes, scalar arithmetic took about 2.14 and 4.05 microseconds while
+the vector form took about 7.62 and 7.74 microseconds. Vector stamping crossed
+over only around 64 devices and became materially faster at 128, but NumPy
+transcendental and division ordering introduced small nonzero conductance deltas.
+The generated scalar kernel therefore remains authoritative for current
+32-channel KLU adoption. Any future batch must use a larger evidence-gated
+crossover and prove that its numerical deltas do not alter accepted trajectories.
 
 An exact-index evaluation-accounting prototype was also rejected. It reduced
 the isolated accounting kernel by 15.6% to 18.9%, but end-to-end measurements

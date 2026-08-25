@@ -225,6 +225,46 @@ class LinearAlgebraTests(unittest.TestCase):
         )
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_native_sparse_rhs_array_shape_is_validated_without_row_iteration(self) -> None:
+        numpy = linalg_module._numpy_component()
+        assert numpy is not None
+
+        class NonIterableArray(numpy.ndarray):
+            def __iter__(self):
+                raise AssertionError("native RHS validation iterated over array rows")
+
+        matrix = SparseMatrix(
+            3,
+            (4.0, -1.0, -1.0, 4.0, -1.0, -1.0, 4.0),
+            (0, 1, 0, 1, 2, 1, 2),
+            (0, 2, 5, 7),
+        )
+        right_hand_sides = numpy.asarray(
+            ([1.0, 2.0, 3.0], [3.0, 2.0, 1.0]),
+            dtype=float,
+        ).view(NonIterableArray)
+
+        for backend in ("scipy", "klu"):
+            if backend == "klu" and not klu_sparse_available():
+                continue
+            with self.subTest(backend=backend):
+                actual = solve_factored_multiple_array(
+                    factor_linear(matrix, backend=backend),
+                    right_hand_sides,
+                )
+                self.assertEqual(actual.shape, (2, 3))
+                with self.assertRaises(ValueError):
+                    solve_factored_multiple_array(
+                        factor_linear(matrix, backend=backend),
+                        numpy.zeros((2, 2), dtype=float),
+                    )
+                with self.assertRaises(ValueError):
+                    solve_factored_multiple_array(
+                        factor_linear(matrix, backend=backend),
+                        numpy.zeros(3, dtype=float),
+                    )
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_scipy_backend_accepts_precompiled_csc_structure(self) -> None:
         sparse = SparseMatrix(
             3,
@@ -442,6 +482,31 @@ class LinearAlgebraTests(unittest.TestCase):
         self.assertTrue(components.array_equal(right_hand_sides, expected))
 
     @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_solve_returns_independent_result_buffers(self) -> None:
+        numpy = linalg_module._numpy_component()
+        assert numpy is not None
+        matrix = SparseMatrix(
+            3,
+            (4.0, -1.0, -1.0, 4.0, -1.0, -1.0, 4.0),
+            (0, 1, 0, 1, 2, 1, 2),
+            (0, 2, 5, 7),
+        )
+        factorization = factor_linear(matrix, backend="klu")
+
+        first = solve_factored_multiple_array(
+            factorization,
+            ([1.0, 2.0, 3.0], [3.0, 2.0, 1.0]),
+        )
+        first_snapshot = first.copy()
+        second = solve_factored_multiple_array(
+            factorization,
+            ([2.0, 4.0, 6.0], [6.0, 4.0, 2.0]),
+        )
+
+        self.assertFalse(numpy.shares_memory(first, second))
+        self.assertTrue(numpy.array_equal(first, first_snapshot))
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
     def test_klu_workspace_restores_stale_factorizations(self) -> None:
         first_matrix = SparseMatrix(
             3,
@@ -497,6 +562,29 @@ class LinearAlgebraTests(unittest.TestCase):
             )
         with self.assertRaises(SingularMatrixError):
             factor_linear([[1.0, 0.0], [0.0, 1.0e-15]], backend="klu")
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_backend_uses_sparse_infinity_norm_for_pivot_gate(self) -> None:
+        matrix = SparseMatrix(
+            3,
+            (3.0, -2.0, 4.0, 5.0),
+            (0, 1, 0, 2),
+            (0, 2, 3, 4),
+        )
+
+        factorization = factor_linear(matrix, pivot_tolerance=1.0e-6, backend="klu")
+
+        self.assertEqual(factorization.minimum_pivot, 7.0e-6)
+
+    @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
+    def test_klu_backend_rejects_nonfinite_sparse_values(self) -> None:
+        for invalid in (math.nan, math.inf, -math.inf):
+            with self.subTest(invalid=invalid):
+                with self.assertRaises(SingularMatrixError):
+                    factor_linear(
+                        SparseMatrix(2, (1.0, invalid), (0, 1), (0, 1, 2)),
+                        backend="klu",
+                    )
 
     @unittest.skipUnless(klu_sparse_available(), "optional KLU backend unavailable")
     def test_klu_workspace_cache_has_bounded_per_thread_capacity(self) -> None:

@@ -12,7 +12,7 @@ Packaging tests establish that installed code is the code that was examined
 [[15]](REFERENCES.md#ref-15) [[18]](REFERENCES.md#ref-18). No one layer is
 allowed to imply all the others.
 
-The current test tree contains 211 test methods across nineteen modules
+The current test tree contains 216 test methods across nineteen modules
 [[32]](REFERENCES.md#ref-32). Coverage includes circuit construction,
 projection, waveform breakpoints, dense and sparse linear algebra, implicit
 methods, all bounded candidates, error recurrence, rollout modes, events,
@@ -22,9 +22,10 @@ release-evidence verification. The count describes the current source surface;
 qualification still depends on the required tiers running successfully in the
 intended environment.
 
-A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 with
-both `BABCS_LONG_TESTS=1` and `BABCS_VERY_LONG_TESTS=1`. All 211 tests passed in
-43.751 seconds with zero skips. This establishes that the essay set was updated
+A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 and
+SuiteSparse KLU 2.3.6 with both `BABCS_LONG_TESTS=1` and
+`BABCS_VERY_LONG_TESTS=1`. All 216 tests passed in 42.674 seconds with zero
+skips. This establishes that the essay set was updated
 against a live green source tree; it does not replace the clean-environment,
 installed-wheel, exact-artifact, workflow, and human-review requirements of
 release qualification.

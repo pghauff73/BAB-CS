@@ -210,11 +210,18 @@ reviewed, two wheel builds must match, the installed wheel must reproduce source
 reports, and a human approver must name the exact hashes before tagging or
 publication [[19]](REFERENCES.md#ref-19) [[21]](REFERENCES.md#ref-21).
 
-The next performance phase should prioritize native sparse numerical-value
-ownership and cache observability. KLU now reuses symbolic and numeric structure,
-but circuit values still cross an immutable tuple-to-NumPy boundary before each
-factor. Cache hit, miss, eviction, refactor, and fallback metrics should be added
-before cache policy becomes configurable or automatic KLU adoption broadens.
+The next performance phase should prioritize compiled nonlinear device assembly
+and cache observability. Direct profiling found the immutable tuple-to-NumPy KLU
+copy substantially smaller than Python U-pivot scanning, sparse norm construction,
+and nonlinear stamping; the first two are now vectorized and the native boundary
+reuses stable pointers and solves directly into its independent result buffer. A
+broad NumPy diode batch is rejected at the current 32-channel crossover because
+it is slower there and changes floating-operation ordering at larger sizes. The
+next prototype should instead test a much larger evidence-gated nonlinear batch
+or a fused scalar assembly-to-factor path while preserving live parameter
+mutation, limiting, deterministic nonfinite behavior, and generic fallback.
+Cache hit, miss, eviction, refactor, and fallback metrics should be added before
+cache policy becomes configurable or automatic KLU adoption broadens.
 The implemented ULP-aware two-step evidence window, compiled built-in breakpoint
 schedules, bounded sparse-kernel source and hot-topology caches, duplicate built-
 in switch-control sampling, and qualified KLU adapter provide the new baselines;

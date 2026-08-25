@@ -493,14 +493,13 @@ def _factor_linear_klu(
     pivot_tolerance: float,
 ) -> KluLinearFactorization:
     sparse_matrix = _sparse_matrix(matrix)
-    minimum_pivot = pivot_tolerance * max(matrix_inf_norm(sparse_matrix), 1.0)
     try:
         return _factor_sparse_klu(
             sparse_matrix.size,
             sparse_matrix.data,
             sparse_matrix.row_indices,
             sparse_matrix.column_pointers,
-            minimum_pivot,
+            pivot_tolerance,
         )
     except KluUnavailableError as error:
         raise LinearBackendUnavailableError(str(error)) from error
@@ -745,13 +744,25 @@ def solve_factored_multiple(
     return [solve_factored(factorization, right_hand_side) for right_hand_side in right_hand_sides]
 
 
+def _validate_multiple_right_hand_sides(
+    right_hand_sides: Sequence[Sequence[float]],
+    size: int,
+) -> None:
+    shape = getattr(right_hand_sides, "shape", None)
+    if shape is not None:
+        if len(shape) != 2 or shape[1] != size:
+            raise ValueError("linear right-hand side has the wrong size")
+        return
+    if any(len(right_hand_side) != size for right_hand_side in right_hand_sides):
+        raise ValueError("linear right-hand side has the wrong size")
+
+
 def solve_factored_multiple_array(
     factorization: ReusableLinearFactorization,
     right_hand_sides: Sequence[Sequence[float]],
 ) -> Any | None:
     if isinstance(factorization, KluLinearFactorization):
-        if any(len(right_hand_side) != factorization.size for right_hand_side in right_hand_sides):
-            raise ValueError("linear right-hand side has the wrong size")
+        _validate_multiple_right_hand_sides(right_hand_sides, factorization.size)
         try:
             return _solve_factorized_multiple_klu(factorization, right_hand_sides)
         except KluUnavailableError as error:
@@ -762,8 +773,7 @@ def solve_factored_multiple_array(
             raise SingularMatrixError("KLU matrix solve failed") from error
     if not isinstance(factorization, ScipyLinearFactorization):
         return None
-    if any(len(right_hand_side) != factorization.size for right_hand_side in right_hand_sides):
-        raise ValueError("linear right-hand side has the wrong size")
+    _validate_multiple_right_hand_sides(right_hand_sides, factorization.size)
     if len(right_hand_sides) == 0:
         components = _scipy_sparse_components()
         if components is None:

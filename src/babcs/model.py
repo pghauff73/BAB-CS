@@ -382,7 +382,32 @@ class Circuit:
         self._capacitor_branch_indices = tuple(
             self.branch_index[capacitor.name] for capacitor in self.capacitors
         )
+        self._inductor_positive_sensitivity_columns = tuple(
+            column
+            for column, inductor in enumerate(self.inductors)
+            if inductor.positive != GROUND
+        )
+        self._inductor_positive_sensitivity_nodes = tuple(
+            self.node_index[inductor.positive]
+            for inductor in self.inductors
+            if inductor.positive != GROUND
+        )
+        self._inductor_negative_sensitivity_columns = tuple(
+            column
+            for column, inductor in enumerate(self.inductors)
+            if inductor.negative != GROUND
+        )
+        self._inductor_negative_sensitivity_nodes = tuple(
+            self.node_index[inductor.negative]
+            for inductor in self.inductors
+            if inductor.negative != GROUND
+        )
         self._native_differential_sensitivity_right_hand_sides: Any | None = None
+        self._native_differential_scale_values: (
+            tuple[tuple[float, ...], tuple[float, ...]] | None
+        ) = None
+        self._native_capacitances: Any | None = None
+        self._native_inductances: Any | None = None
         self._latest_native_differential_sensitivity_evaluation: (
             CircuitEvaluation | None
         ) = None
@@ -2096,6 +2121,21 @@ class Circuit:
             differential_jacobian_norm=native.differential_jacobian_norm,
         )
 
+    def _native_differential_scales(self, numpy: Any) -> tuple[Any, Any]:
+        scale_values = (
+            tuple(capacitor.capacitance for capacitor in self.capacitors),
+            tuple(inductor.inductance for inductor in self.inductors),
+        )
+        if self._native_differential_scale_values != scale_values:
+            capacitances = numpy.asarray(scale_values[0], dtype=float)
+            inductances = numpy.asarray(scale_values[1], dtype=float)
+            capacitances.setflags(write=False)
+            inductances.setflags(write=False)
+            self._native_differential_scale_values = scale_values
+            self._native_capacitances = capacitances
+            self._native_inductances = inductances
+        return self._native_capacitances, self._native_inductances
+
     def _native_differential_sensitivity(
         self,
         evaluation: CircuitEvaluation,
@@ -2183,14 +2223,10 @@ class Circuit:
             (self.dynamic_size, self.dynamic_size),
             dtype=float,
         )
+        capacitances, inductances = self._native_differential_scales(numpy)
         maximum = 0.0
         if self.capacitors:
             capacitor_sensitivities = sensitivities[:, self._capacitor_branch_indices]
-            capacitances = numpy.fromiter(
-                (capacitor.capacitance for capacitor in self.capacitors),
-                dtype=float,
-                count=len(self.capacitors),
-            )
             differential_jacobian[: len(self.capacitors), :] = (
                 capacitor_sensitivities.transpose() / capacitances[:, None]
             )
@@ -2198,39 +2234,46 @@ class Circuit:
                 numpy.abs(capacitor_sensitivities),
                 axis=0,
             )
-            for row_sum, capacitor in zip(row_sums, self.capacitors, strict=True):
-                scaled = float(row_sum) / capacitor.capacitance
-                if math.isnan(scaled):
-                    return scaled
-                if scaled > maximum:
-                    maximum = scaled
+            scaled_maximum = float(
+                numpy.max(row_sums / capacitances, initial=0.0)
+            )
+            if math.isnan(scaled_maximum):
+                return scaled_maximum
+            if scaled_maximum > maximum:
+                maximum = scaled_maximum
         if self.inductors:
-            voltage_sensitivities = numpy.zeros(
-                (self.dynamic_size, len(self.inductors)),
-                dtype=float,
-            )
-            for column, inductor in enumerate(self.inductors):
-                positive_index = self.node_index.get(inductor.positive)
-                negative_index = self.node_index.get(inductor.negative)
-                if positive_index is not None:
-                    voltage_sensitivities[:, column] += sensitivities[:, positive_index]
-                if negative_index is not None:
-                    voltage_sensitivities[:, column] -= sensitivities[:, negative_index]
+            positive_columns = self._inductor_positive_sensitivity_columns
+            positive_nodes = self._inductor_positive_sensitivity_nodes
+            if len(positive_columns) == len(self.inductors):
+                voltage_sensitivities = sensitivities[:, positive_nodes].copy()
+            else:
+                voltage_sensitivities = numpy.zeros(
+                    (self.dynamic_size, len(self.inductors)),
+                    dtype=float,
+                )
+                voltage_sensitivities[:, positive_columns] = sensitivities[
+                    :, positive_nodes
+                ]
+            negative_columns = self._inductor_negative_sensitivity_columns
+            if negative_columns:
+                negative_nodes = self._inductor_negative_sensitivity_nodes
+                if len(negative_columns) == len(self.inductors):
+                    voltage_sensitivities -= sensitivities[:, negative_nodes]
+                else:
+                    voltage_sensitivities[:, negative_columns] -= sensitivities[
+                        :, negative_nodes
+                    ]
             row_sums = numpy.sum(numpy.abs(voltage_sensitivities), axis=0)
-            inductances = numpy.fromiter(
-                (inductor.inductance for inductor in self.inductors),
-                dtype=float,
-                count=len(self.inductors),
-            )
             differential_jacobian[len(self.capacitors) :, :] = (
                 voltage_sensitivities.transpose() / inductances[:, None]
             )
-            for row_sum, inductor in zip(row_sums, self.inductors, strict=True):
-                scaled = float(row_sum) / inductor.inductance
-                if math.isnan(scaled):
-                    return scaled
-                if scaled > maximum:
-                    maximum = scaled
+            scaled_maximum = float(
+                numpy.max(row_sums / inductances, initial=0.0)
+            )
+            if math.isnan(scaled_maximum):
+                return scaled_maximum
+            if scaled_maximum > maximum:
+                maximum = scaled_maximum
 
         rounding = self.dynamic_size * 2.220446049250313e-16
         if maximum == 0.0 or not math.isfinite(maximum) or rounding >= 1.0:

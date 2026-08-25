@@ -201,6 +201,13 @@ with exact state, metric, rejection, and deterministic work traces. This is a
 backend- and host-specific result, not a portable guarantee
 [[17]](REFERENCES.md#ref-17).
 
+A second KLU hot-path loop followed the measured costs rather than the initial
+ownership hypothesis. Vectorized pivot and matrix-scale checks, batched reactive
+sensitivity processing, constant-time native RHS shape validation, stable native
+pointers, and direct independent result-buffer solves reduced the same four workload
+classes by a further 4.1% to 6.8% against the exact first-KLU baseline, again with
+exact traces [[17]](REFERENCES.md#ref-17).
+
 The same audit records rejected optimizations. Shared accepted-evaluation
 Jacobian caching was rejected because later stiffness evaluations did not own
 the same differential state. An exact-index accounting prototype improved an
@@ -218,14 +225,15 @@ measurement.
 
 ## Remaining Work
 
-The project’s current high-value performance frontier is therefore clear.
-Native sparse numerical-value ownership may remove repeated tuple-to-NumPy
-copies after KLU symbolic/numeric reuse, hot-topology adoption, and switch-
-sampling gains. Native sparse residual and device-value ownership may remove
-more Python assembly work. Cache hit, miss, eviction, refactor, and fallback
-diagnostics should precede user-configurable cache policy or broader automatic
-KLU adoption. Each proposal must retain source/installed equivalence, nonlinear
-qualification, bound behavior, and exact fallback.
+The project’s current high-value performance frontier is therefore clear. The
+generated nonlinear sparse assembly kernel is now the largest Python-owned hot
+region in the qualified large-sensitivity profile. Large exact built-in diode
+families should be prototyped as a mutation-aware batch, while tuple-to-NumPy
+value ownership is deprioritized because its isolated cost was small. Cache hit,
+miss, eviction, refactor, and fallback diagnostics should precede user-
+configurable cache policy or broader automatic KLU adoption. Each proposal must
+retain source/installed equivalence, nonlinear qualification, bound behavior,
+and exact fallback.
 
 Adaptive replay is a separate research problem from replay initialization.
 AB3 can make each substep cheaper, but replay still covers every accepted

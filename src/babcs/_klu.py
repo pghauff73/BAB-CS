@@ -219,6 +219,9 @@ class _KluSparseWorkspace:
             dtype=components.numpy.int32,
         )
         self.values = components.numpy.empty(len(row_indices), dtype=float)
+        self.row_indices_pointer = _int_pointer(self.row_indices)
+        self.column_pointers_pointer = _int_pointer(self.column_pointers)
+        self.values_pointer = _double_pointer(self.values)
         self.common = _KluCommon()
         if not components.library.klu_defaults(ctypes.byref(self.common)):
             raise KluFactorizationError("KLU defaults initialization failed")
@@ -226,8 +229,8 @@ class _KluSparseWorkspace:
         self.common.halt_if_singular = 1
         symbolic = components.library.klu_analyze(
             size,
-            _int_pointer(self.column_pointers),
-            _int_pointer(self.row_indices),
+            self.column_pointers_pointer,
+            self.row_indices_pointer,
             ctypes.byref(self.common),
         )
         if not symbolic:
@@ -253,17 +256,50 @@ class _KluSparseWorkspace:
         ).contents
         if header.n != self.size or not header.Udiag:
             raise KluFactorizationError("KLU numeric factorization has an invalid layout")
-        minimum_index = 0
-        minimum_magnitude = math.inf
-        for index in range(self.size):
-            magnitude = abs(float(header.Udiag[index]))
-            if not math.isfinite(magnitude):
-                raise KluSingularError(index)
-            if magnitude < minimum_magnitude:
-                minimum_index = index
-                minimum_magnitude = magnitude
+        pivots = self.components.numpy.ctypeslib.as_array(
+            header.Udiag,
+            shape=(self.size,),
+        )
+        magnitudes = self.components.numpy.abs(pivots)
+        finite = self.components.numpy.isfinite(magnitudes)
+        if not bool(finite.all()):
+            invalid = self.components.numpy.flatnonzero(~finite)
+            raise KluSingularError(int(invalid[0]))
+        minimum_index = int(magnitudes.argmin())
+        minimum_magnitude = float(magnitudes[minimum_index])
         if minimum_magnitude <= minimum_pivot:
             raise KluSingularError(minimum_index)
+
+    def _minimum_pivot(self, pivot_tolerance: float) -> float:
+        magnitudes = self.components.numpy.abs(self.values)
+        row_sums = self.components.numpy.bincount(
+            self.row_indices,
+            weights=magnitudes,
+            minlength=self.size,
+        )
+        scale = float(row_sums.max(initial=0.0))
+        if not math.isfinite(scale):
+            invalid = self.components.numpy.flatnonzero(
+                ~self.components.numpy.isfinite(magnitudes)
+            )
+            pivot_index = (
+                int(self.row_indices[int(invalid[0])])
+                if len(invalid) != 0
+                else 0
+            )
+            raise KluSingularError(pivot_index)
+        return pivot_tolerance * max(scale, 1.0)
+
+    def factor_with_tolerance(
+        self,
+        data: Sequence[float],
+        pivot_tolerance: float,
+        token: object,
+    ) -> float:
+        self.values[:] = data
+        minimum_pivot = self._minimum_pivot(pivot_tolerance)
+        self._factor_loaded_values(minimum_pivot, token)
+        return minimum_pivot
 
     def factor(
         self,
@@ -274,11 +310,18 @@ class _KluSparseWorkspace:
         if self.current_token is token:
             return
         self.values[:] = data
+        self._factor_loaded_values(minimum_pivot, token)
+
+    def _factor_loaded_values(
+        self,
+        minimum_pivot: float,
+        token: object,
+    ) -> None:
         if self.numeric.value:
             succeeded = self.components.library.klu_refactor(
-                _int_pointer(self.column_pointers),
-                _int_pointer(self.row_indices),
-                _double_pointer(self.values),
+                self.column_pointers_pointer,
+                self.row_indices_pointer,
+                self.values_pointer,
                 self.symbolic,
                 self.numeric,
                 ctypes.byref(self.common),
@@ -294,9 +337,9 @@ class _KluSparseWorkspace:
                 )
         else:
             numeric = self.components.library.klu_factor(
-                _int_pointer(self.column_pointers),
-                _int_pointer(self.row_indices),
-                _double_pointer(self.values),
+                self.column_pointers_pointer,
+                self.row_indices_pointer,
+                self.values_pointer,
                 self.symbolic,
                 ctypes.byref(self.common),
             )
@@ -319,24 +362,24 @@ class _KluSparseWorkspace:
         if right_hand_side_count == 0:
             return self.components.numpy.empty((0, self.size), dtype=float)
         source = self.components.numpy.asarray(right_hand_sides, dtype=float)
-        values = self.components.numpy.empty(
-            (self.size, right_hand_side_count),
+        solutions = self.components.numpy.empty(
+            (right_hand_side_count, self.size),
             dtype=float,
-            order="F",
+            order="C",
         )
-        values[:] = source.transpose()
+        solutions[:] = source
         if not self.components.library.klu_solve(
             self.symbolic,
             self.numeric,
             self.size,
             right_hand_side_count,
-            _double_pointer(values),
+            _double_pointer(solutions),
             ctypes.byref(self.common),
         ):
             raise KluFactorizationError(f"KLU solve failed with status {self.common.status}")
-        if not bool(self.components.numpy.all(self.components.numpy.isfinite(values))):
+        if not bool(self.components.numpy.all(self.components.numpy.isfinite(solutions))):
             raise KluSingularError(0)
-        return values.transpose().copy()
+        return solutions
 
     def close(self) -> None:
         if self.closed:
@@ -428,10 +471,15 @@ def factor_sparse(
     data: tuple[float, ...],
     row_indices: tuple[int, ...],
     column_pointers: tuple[int, ...],
-    minimum_pivot: float,
+    pivot_tolerance: float,
 ) -> KluLinearFactorization:
     token = object()
     workspace = _klu_sparse_workspace(size, row_indices, column_pointers)
+    minimum_pivot = workspace.factor_with_tolerance(
+        data,
+        pivot_tolerance,
+        token,
+    )
     factorization = KluLinearFactorization(
         size,
         data,
@@ -442,7 +490,6 @@ def factor_sparse(
         weakref.ref(workspace),
         threading.get_ident(),
     )
-    workspace.factor(data, minimum_pivot, token)
     return factorization
 
 

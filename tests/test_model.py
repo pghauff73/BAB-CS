@@ -530,6 +530,62 @@ class CircuitModelTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             first[0, 0] = 1.0
 
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_native_sensitivity_batches_inductors_and_tracks_reactive_values(self) -> None:
+        elements = _diode_channel_elements(16)
+        elements.extend(
+            Inductor(
+                f"L{index}",
+                "0" if index % 3 == 1 else f"out{index}",
+                f"out{index}" if index % 3 == 1 else (f"vin{index}" if index % 3 == 2 else "0"),
+                1.0e-3 + index * 1.0e-5,
+            )
+            for index in range(16)
+        )
+        circuit = Circuit(elements, linear_backend="auto")
+        evaluation = circuit.evaluate(2.5e-5, circuit.initial_dynamic_state())
+
+        first = circuit._native_differential_sensitivity(evaluation)
+        self.assertIsNotNone(first)
+        assert first is not None
+        first_capacitances = circuit._native_capacitances
+        first_inductances = circuit._native_inductances
+        self.assertFalse(first_capacitances.flags.writeable)
+        self.assertFalse(first_inductances.flags.writeable)
+
+        expected_voltages = first.numpy.zeros(
+            (circuit.dynamic_size, len(circuit.inductors)),
+            dtype=float,
+        )
+        for column, inductor in enumerate(circuit.inductors):
+            positive_index = circuit.node_index.get(inductor.positive)
+            negative_index = circuit.node_index.get(inductor.negative)
+            if positive_index is not None:
+                expected_voltages[:, column] += first.sensitivities[:, positive_index]
+            if negative_index is not None:
+                expected_voltages[:, column] -= first.sensitivities[:, negative_index]
+        expected_inductor_rows = expected_voltages.transpose() / first_inductances[:, None]
+        self.assertTrue(
+            first.numpy.array_equal(
+                first.differential_jacobian[len(circuit.capacitors) :, :],
+                expected_inductor_rows,
+            )
+        )
+
+        unchanged = circuit._native_differential_sensitivity(evaluation)
+        self.assertIsNotNone(unchanged)
+        self.assertIs(first_capacitances, circuit._native_capacitances)
+        self.assertIs(first_inductances, circuit._native_inductances)
+
+        circuit.capacitors[0].capacitance *= 2.0
+        circuit.inductors[0].inductance *= 3.0
+        changed = circuit._native_differential_sensitivity(evaluation)
+        self.assertIsNotNone(changed)
+        self.assertIsNot(first_capacitances, circuit._native_capacitances)
+        self.assertIsNot(first_inductances, circuit._native_inductances)
+        self.assertEqual(circuit._native_capacitances[0], 2.0e-6)
+        self.assertEqual(circuit._native_inductances[0], 3.0e-3)
+
     def test_linear_differential_jacobian_cache_tracks_switch_topology(self) -> None:
         circuit = Circuit(
             [

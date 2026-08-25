@@ -166,12 +166,15 @@ fallback checks rather than being allowed to alter authority.
 
 The KLU adapter retains symbolic and numeric state in a bounded 128-entry
 per-thread LRU, checks unscaled U pivots against the existing singularity
-threshold, owns every overwritten right-hand-side buffer, and can restore stale,
-evicted, or cross-thread factors from immutable matrix data. Automatic use is
-limited to sensitivity matrices with at least 128 algebraic unknowns and 32
-right-hand sides. Paired local runs reduced four 32-channel workloads by about
-2.0% to 4.3% with exact state, metric, rejection, and work traces
-[[17]](REFERENCES.md#ref-17).
+threshold with vectorized finite/minimum scans, owns every overwritten right-
+hand-side buffer, and can restore stale, evicted, or cross-thread factors from
+immutable matrix data. Stable native pointers and a direct independent result
+buffer reduce adapter overhead without exposing mutable results. Native sensitivity
+also batches inductor column gathering and reuses mutation-aware reactive scale
+arrays. Automatic use is limited to sensitivity matrices with at least 128
+algebraic unknowns and 32 right-hand sides. Against the first pushed KLU baseline,
+paired local runs reduced four 32-channel workloads by about 4.1% to 6.8% with
+exact state, metric, rejection, and work traces [[17]](REFERENCES.md#ref-17).
 
 The current simulator also compiles pure built-in breakpoint schedules once per
 run, deduplicating identical timing while preserving custom waveform calls and
@@ -193,7 +196,7 @@ than to expose only a final waveform.
 
 ## Evidence and Release State
 
-The qualification surface now comprises 211 test methods across model,
+The qualification surface now comprises 216 test methods across model,
 linear-algebra, integrator, candidate, nonlinear, event, long-horizon,
 comparison, packaging, and release-evidence modules [[32]](REFERENCES.md#ref-32).
 Long and very-long tests are opt-in tiers, and optional sparse tests execute

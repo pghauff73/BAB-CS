@@ -77,10 +77,13 @@ topology, residual, contraction, and finiteness gates.
   per-thread LRU with exact-structure, stale-factor, eviction, and cross-thread
   restoration.
 - Preserves the absolute singularity gate with unscaled KLU U-pivot checks,
-  owns every overwritten right-hand-side buffer, and falls back to SciPy when
-  automatic KLU execution fails.
+  vectorizes finite and minimum-pivot validation, owns every overwritten right-
+  hand-side buffer, and falls back to SciPy when automatic KLU execution fails.
+- Reuses stable KLU structural/value pointers and solves directly into independent
+  row-major result arrays without an intermediate transpose-copy.
 - Uses native batched differential-sensitivity solves and read-only reusable
-  right-hand-side storage.
+  right-hand-side storage, batched inductor voltage gathering, and mutation-aware
+  reactive scale arrays.
 - Adds demand-gated generated residual and full sparse assembly kernels for the
   exact built-in `Circuit` type.
 - Reuses demand-gated sparse assembly compilation across identical topologies
@@ -165,6 +168,12 @@ switched workloads. Minimum round reductions were 1.484%, 3.674%, 4.191%, and
 2.780%. State, metric, rejection, and deterministic work traces were exactly
 equal to commit `259a836` in every retained comparison.
 
+KLU hot-path follow-up work measured a further 4.131%, 6.814%, 6.020%, and
+6.282% mean reduction on the same sine, mixed, pulsed, and switched workload
+classes against exact commit `f21b383`. Minimum round reductions were 3.768%,
+6.466%, 4.958%, and 5.668%. State, metric, rejection, and deterministic work
+traces were again exactly equal.
+
 These numbers are local characterization for the named workloads and hardware.
 They are not a claim that BAB-CS is generally faster than `ngspice` or another
 production simulator.
@@ -223,7 +232,7 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 211 tests with long, very-long, SciPy, and KLU tiers enabled. This local run
+of all 216 tests with long, very-long, SciPy, and KLU tiers enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.
 
