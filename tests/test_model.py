@@ -20,6 +20,8 @@ from babcs.model import (
     MAXIMUM_COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES,
     CircuitSolveError,
     _clear_compiled_sparse_algebraic_topologies,
+    _compile_algebraic_residual_kernel,
+    _compile_implicit_block_sparse_topology,
     _compile_sparse_algebraic_jacobian_kernel,
     _compile_sparse_algebraic_kernel,
     _lookup_compiled_sparse_algebraic_topology,
@@ -969,6 +971,62 @@ class CircuitModelTests(unittest.TestCase):
             circuit.diodes[0].thermal_voltage = 0.03
             circuit.switches[0].on_resistance = 2.0e-3
         self.assertEqual(residual(specialized), residual(fallback))
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_compiled_residual_kernel_is_shared_by_topology(self) -> None:
+        _clear_compiled_sparse_algebraic_topologies()
+        first_elements = _diode_channel_elements(16)
+        second_elements = _diode_channel_elements(16)
+        second_elements[1].resistance = 2_000.0
+        second_elements[2].saturation_current = 2.0e-12
+
+        first = Circuit(first_elements, linear_backend="auto")
+        second = Circuit(second_elements, linear_backend="auto")
+
+        self.assertIsNotNone(first._compiled_algebraic_residual_kernel)
+        self.assertIs(
+            first._compiled_algebraic_residual_kernel,
+            second._compiled_algebraic_residual_kernel,
+        )
+        cache_info = _compile_algebraic_residual_kernel.cache_info()
+        self.assertEqual(
+            (cache_info.hits, cache_info.misses, cache_info.maxsize),
+            (1, 1, 128),
+        )
+
+    @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
+    def test_implicit_block_layout_shares_topology_not_reactive_values(self) -> None:
+        _clear_compiled_sparse_algebraic_topologies()
+        first_elements = _diode_channel_elements(16)
+        first_elements.append(Inductor("Lextra", "out0", "0", 1.0e-3))
+        second_elements = _diode_channel_elements(16)
+        second_elements[3].capacitance = 2.0e-6
+        second_elements.append(Inductor("Lextra", "out0", "0", 2.0e-3))
+
+        first = Circuit(first_elements, linear_backend="auto")
+        second = Circuit(second_elements, linear_backend="auto")
+
+        self.assertIs(
+            first._implicit_block_sparse_template,
+            second._implicit_block_sparse_template,
+        )
+        self.assertEqual(
+            tuple(stamp.sparse_index for stamp in first._implicit_block_derivative_stamps),
+            tuple(stamp.sparse_index for stamp in second._implicit_block_derivative_stamps),
+        )
+        self.assertNotEqual(
+            tuple(stamp.multiplier for stamp in first._implicit_block_derivative_stamps),
+            tuple(stamp.multiplier for stamp in second._implicit_block_derivative_stamps),
+        )
+        self.assertEqual(first._implicit_block_derivative_stamps[0].multiplier, 1.0e6)
+        self.assertEqual(second._implicit_block_derivative_stamps[0].multiplier, 5.0e5)
+        self.assertEqual(first._implicit_block_derivative_stamps[-1].multiplier, 1.0e3)
+        self.assertEqual(second._implicit_block_derivative_stamps[-1].multiplier, 5.0e2)
+        cache_info = _compile_implicit_block_sparse_topology.cache_info()
+        self.assertEqual(
+            (cache_info.hits, cache_info.misses, cache_info.maxsize),
+            (1, 1, 128),
+        )
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_specialized_sparse_kernel_is_demand_gated_and_tracks_mutation(self) -> None:

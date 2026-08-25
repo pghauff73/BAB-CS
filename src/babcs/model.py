@@ -78,6 +78,17 @@ def _within_ulp_time_window(
 
 
 @lru_cache(maxsize=128)
+def _compile_algebraic_residual_kernel(source: str) -> Any:
+    namespace = {
+        "exp": math.exp,
+        "exp40": math.exp(40.0),
+        "exp_neg40": math.exp(-40.0),
+    }
+    exec(compile(source, "<babcs-algebraic-residual>", "exec"), namespace)
+    return namespace["kernel"]
+
+
+@lru_cache(maxsize=128)
 def _compile_sparse_algebraic_kernel(source: str) -> Any:
     namespace = {
         "exp": math.exp,
@@ -126,6 +137,110 @@ def _store_compiled_sparse_algebraic_topology(
 def _clear_compiled_sparse_algebraic_topologies() -> None:
     with _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES_LOCK:
         _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES.clear()
+    _compile_algebraic_residual_kernel.cache_clear()
+    _compile_implicit_block_sparse_topology.cache_clear()
+
+
+def _compressed_sparse_column_pattern(
+    size: int,
+    positions: set[tuple[int, int]],
+) -> tuple[tuple[int, ...], tuple[int, ...], dict[tuple[int, int], int]]:
+    columns: list[list[int]] = [[] for _ in range(size)]
+    for row, column in positions:
+        columns[column].append(row)
+    row_indices: list[int] = []
+    column_pointers = [0]
+    position_index: dict[tuple[int, int], int] = {}
+    for column, column_rows in enumerate(columns):
+        for row in sorted(column_rows):
+            position_index[(row, column)] = len(row_indices)
+            row_indices.append(row)
+        column_pointers.append(len(row_indices))
+    return tuple(row_indices), tuple(column_pointers), position_index
+
+
+@lru_cache(maxsize=128)
+def _compile_implicit_block_sparse_topology(
+    algebraic_size: int,
+    algebraic_row_indices: tuple[int, ...],
+    algebraic_column_pointers: tuple[int, ...],
+    capacitor_branch_indices: tuple[int, ...],
+    inductor_positive_nodes: tuple[int | None, ...],
+    inductor_negative_nodes: tuple[int | None, ...],
+) -> tuple[SparseMatrix, tuple[int, ...], tuple[int, ...], tuple[int, ...]]:
+    inductor_count = len(inductor_positive_nodes)
+    if len(inductor_negative_nodes) != inductor_count:
+        raise ValueError("inductor topology arrays have different lengths")
+    dynamic_size = len(capacitor_branch_indices) + inductor_count
+    block_size = algebraic_size + dynamic_size
+    positions: set[tuple[int, int]] = set()
+    for column in range(algebraic_size):
+        for sparse_index in range(
+            algebraic_column_pointers[column],
+            algebraic_column_pointers[column + 1],
+        ):
+            positions.add((algebraic_row_indices[sparse_index], column))
+
+    derivative_entries: list[tuple[int, int]] = []
+    constant_entries: list[tuple[int, int, float]] = []
+    for state_index, branch_index in enumerate(capacitor_branch_indices):
+        row = algebraic_size + state_index
+        positions.add((row, branch_index))
+        derivative_entries.append((row, branch_index))
+        column = algebraic_size + state_index
+        positions.add((branch_index, column))
+        constant_entries.append((branch_index, column, -1.0))
+        positions.add((column, column))
+    for inductor_index, (positive_node, negative_node) in enumerate(
+        zip(inductor_positive_nodes, inductor_negative_nodes, strict=True)
+    ):
+        state_index = len(capacitor_branch_indices) + inductor_index
+        row = algebraic_size + state_index
+        column = algebraic_size + state_index
+        if positive_node is not None:
+            positions.add((row, positive_node))
+            derivative_entries.append((row, positive_node))
+            positions.add((positive_node, column))
+            constant_entries.append((positive_node, column, 1.0))
+        if negative_node is not None:
+            positions.add((row, negative_node))
+            derivative_entries.append((row, negative_node))
+            positions.add((negative_node, column))
+            constant_entries.append((negative_node, column, -1.0))
+        positions.add((column, column))
+
+    row_indices, column_pointers, position_index = (
+        _compressed_sparse_column_pattern(block_size, positions)
+    )
+    data = [0.0] * len(row_indices)
+    for row, column, value in constant_entries:
+        data[position_index[(row, column)]] = value
+    algebraic_positions = tuple(
+        position_index[(algebraic_row_indices[sparse_index], column)]
+        for column in range(algebraic_size)
+        for sparse_index in range(
+            algebraic_column_pointers[column],
+            algebraic_column_pointers[column + 1],
+        )
+    )
+    derivative_positions = tuple(
+        position_index[(row, column)] for row, column in derivative_entries
+    )
+    diagonal_positions = tuple(
+        position_index[(algebraic_size + state_index, algebraic_size + state_index)]
+        for state_index in range(dynamic_size)
+    )
+    return (
+        SparseMatrix(
+            block_size,
+            tuple(data),
+            row_indices,
+            column_pointers,
+        ),
+        algebraic_positions,
+        derivative_positions,
+        diagonal_positions,
+    )
 
 
 def normalize_node(node: str) -> str:
@@ -1468,14 +1583,8 @@ class Circuit:
                 "    return residual",
             ]
         )
-        namespace = {
-            "exp": math.exp,
-            "exp40": math.exp(40.0),
-            "exp_neg40": math.exp(-40.0),
-        }
         source = "\n".join(lines) + "\n"
-        exec(compile(source, "<babcs-algebraic-residual>", "exec"), namespace)
-        return namespace["kernel"]
+        return _compile_algebraic_residual_kernel(source)
 
     def _build_compiled_sparse_algebraic_kernel(self) -> Any:
         lines = [
@@ -1880,16 +1989,7 @@ class Circuit:
                 positions.add((node_index, branch_index))
                 positions.add((branch_index, node_index))
 
-        row_indices: list[int] = []
-        column_pointers = [0]
-        position_index: dict[tuple[int, int], int] = {}
-        for column in range(self.algebraic_size):
-            column_rows = sorted(row for row, candidate_column in positions if candidate_column == column)
-            for row in column_rows:
-                position_index[(row, column)] = len(row_indices)
-                row_indices.append(row)
-            column_pointers.append(len(row_indices))
-        return tuple(row_indices), tuple(column_pointers), position_index
+        return _compressed_sparse_column_pattern(self.algebraic_size, positions)
 
     def _make_terminal_stamp(self, element: Element) -> _TerminalStamp:
         return _TerminalStamp(
@@ -1983,91 +2083,39 @@ class Circuit:
         tuple[_ImplicitBlockStamp, ...],
         tuple[int, ...],
     ]:
-        algebraic_size = self.algebraic_size
-        block_size = algebraic_size + self.dynamic_size
-        positions: set[tuple[int, int]] = set()
-        for column in range(algebraic_size):
-            for sparse_index in range(
-                self._algebraic_sparse_column_pointers[column],
-                self._algebraic_sparse_column_pointers[column + 1],
-            ):
-                positions.add((self._algebraic_sparse_row_indices[sparse_index], column))
-
-        derivative_entries: list[tuple[int, int, float]] = []
-        for state_index, capacitor in enumerate(self.capacitors):
-            row = algebraic_size + state_index
-            column = self.branch_index[capacitor.name]
-            multiplier = 1.0 / capacitor.capacitance
-            positions.add((row, column))
-            derivative_entries.append((row, column, multiplier))
-        for inductor_index, inductor in enumerate(self.inductors):
-            row = algebraic_size + len(self.capacitors) + inductor_index
+        (
+            sparse_template,
+            algebraic_positions,
+            derivative_positions,
+            diagonal_positions,
+        ) = _compile_implicit_block_sparse_topology(
+            self.algebraic_size,
+            self._algebraic_sparse_row_indices,
+            self._algebraic_sparse_column_pointers,
+            self._capacitor_branch_indices,
+            tuple(self.node_index.get(inductor.positive) for inductor in self.inductors),
+            tuple(self.node_index.get(inductor.negative) for inductor in self.inductors),
+        )
+        derivative_multipliers = [
+            1.0 / capacitor.capacitance for capacitor in self.capacitors
+        ]
+        for inductor in self.inductors:
             if inductor.positive != GROUND:
-                column = self.node_index[inductor.positive]
-                multiplier = 1.0 / inductor.inductance
-                positions.add((row, column))
-                derivative_entries.append((row, column, multiplier))
+                derivative_multipliers.append(1.0 / inductor.inductance)
             if inductor.negative != GROUND:
-                column = self.node_index[inductor.negative]
-                multiplier = -1.0 / inductor.inductance
-                positions.add((row, column))
-                derivative_entries.append((row, column, multiplier))
-
-        for state_index, right_hand_side in enumerate(
-            self._differential_sensitivity_right_hand_sides
-        ):
-            column = algebraic_size + state_index
-            for row, value in enumerate(right_hand_side):
-                if value != 0.0:
-                    positions.add((row, column))
-            positions.add((column, column))
-
-        row_indices: list[int] = []
-        column_pointers = [0]
-        position_index: dict[tuple[int, int], int] = {}
-        for column in range(block_size):
-            column_rows = sorted(
-                row for row, candidate_column in positions if candidate_column == column
-            )
-            for row in column_rows:
-                position_index[(row, column)] = len(row_indices)
-                row_indices.append(row)
-            column_pointers.append(len(row_indices))
-
-        data = [0.0] * len(row_indices)
-        for state_index, right_hand_side in enumerate(
-            self._differential_sensitivity_right_hand_sides
-        ):
-            column = algebraic_size + state_index
-            for row, value in enumerate(right_hand_side):
-                if value != 0.0:
-                    data[position_index[(row, column)]] = -value
-
-        algebraic_positions: list[int] = []
-        for column in range(algebraic_size):
-            for sparse_index in range(
-                self._algebraic_sparse_column_pointers[column],
-                self._algebraic_sparse_column_pointers[column + 1],
-            ):
-                row = self._algebraic_sparse_row_indices[sparse_index]
-                algebraic_positions.append(position_index[(row, column)])
-
+                derivative_multipliers.append(-1.0 / inductor.inductance)
         return (
-            SparseMatrix(
-                block_size,
-                tuple(data),
-                tuple(row_indices),
-                tuple(column_pointers),
-            ),
-            tuple(algebraic_positions),
+            sparse_template,
+            algebraic_positions,
             tuple(
-                _ImplicitBlockStamp(position_index[(row, column)], multiplier)
-                for row, column, multiplier in derivative_entries
+                _ImplicitBlockStamp(sparse_index, multiplier)
+                for sparse_index, multiplier in zip(
+                    derivative_positions,
+                    derivative_multipliers,
+                    strict=True,
+                )
             ),
-            tuple(
-                position_index[(algebraic_size + state_index, algebraic_size + state_index)]
-                for state_index in range(self.dynamic_size)
-            ),
+            diagonal_positions,
         )
 
     def _uses_sparse_algebraic_jacobian(self) -> bool:
