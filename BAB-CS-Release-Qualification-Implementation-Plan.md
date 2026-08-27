@@ -1,4 +1,4 @@
-# BAB-CS Release Qualification Implementation Plan
+# Bounded-Authority-Based-Circuit-Simulation Release Qualification Implementation Plan
 
 ## Status
 

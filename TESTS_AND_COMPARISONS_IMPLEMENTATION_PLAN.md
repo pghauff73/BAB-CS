@@ -1,4 +1,4 @@
-# BAB-CS Tests and Comparisons Implementation Plan
+# Bounded-Authority-Based-Circuit-Simulation Tests and Comparisons Implementation Plan
 
 Plan date: August 24, 2026
 

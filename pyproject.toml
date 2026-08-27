@@ -1,8 +1,10 @@
 [project]
 name = "bab-cs"
 version = "1.1.0"
-description = "Error-bounded multi-method circuit simulation reference implementation"
+description = "Bounded-authority-based circuit simulation reference implementation"
 requires-python = ">=3.11"
+license = "MPL-2.0"
+license-files = ["LICENSE"]
 dependencies = []
 
 [project.optional-dependencies]

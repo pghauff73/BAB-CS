@@ -1,4 +1,4 @@
-"""BAB-CSv1: bounded Adams-Bashforth circuit simulation."""
+"""Bounded-Authority-Based-Circuit-Simulation (`babcs`)."""
 
 from .bounded import BABCSConfig, BoundedAdamsBashforthIntegrator, BoundedIntegrator
 from .candidates import CANDIDATE_METHODS
@@ -13,6 +13,19 @@ from .model import (
     Switch,
     VoltageSource,
 )
+from .rootfinding import (
+    DerivativeIntervalFunction,
+    RootFindingError,
+    RootIteration,
+    RootResult,
+    RootSettings,
+    bisection,
+    bounded_newton_raphson,
+    interval_newton,
+    newton_raphson,
+    ridders,
+    secant,
+)
 from .simulator import SimulationResult, Simulator
 from .waveforms import Constant, PiecewiseLinear, Pulse, Sine
 
@@ -26,14 +39,25 @@ __all__ = [
     "Constant",
     "CurrentSource",
     "Diode",
+    "DerivativeIntervalFunction",
     "Inductor",
     "PiecewiseLinear",
     "Pulse",
     "Resistor",
+    "RootFindingError",
+    "RootIteration",
+    "RootResult",
+    "RootSettings",
     "SimulationResult",
     "Simulator",
     "Sine",
     "Switch",
     "VoltageSource",
     "__version__",
+    "bisection",
+    "bounded_newton_raphson",
+    "interval_newton",
+    "newton_raphson",
+    "ridders",
+    "secant",
 ]

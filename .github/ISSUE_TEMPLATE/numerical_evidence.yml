@@ -1,0 +1,62 @@
+name: Numerical evidence report
+description: Report a reproducible accuracy, stability, bound, residual, energy, phase, or work discrepancy.
+title: "[Numerics] "
+body:
+  - type: input
+    id: identity
+    attributes:
+      label: Exact source or artifact identity
+      description: Full source SHA, release tag, wheel SHA-256, and manifest SHA-256 where available.
+    validations:
+      required: true
+  - type: dropdown
+    id: authority
+    attributes:
+      label: Comparison authority
+      options:
+        - Analytic solution
+        - Refined independent replay
+        - Installed-wheel/source byte comparison
+        - ngspice cross-implementation comparison
+        - Long-horizon phase or energy analysis
+        - Other explicitly described authority
+    validations:
+      required: true
+  - type: textarea
+    id: input
+    attributes:
+      label: Input and command
+      description: Attach or paste the complete input and exact command.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Metrics and observations
+      description: Separate state error, residuals, energy, phase, iterations, rejected work, and fallback counts.
+    validations:
+      required: true
+  - type: textarea
+    id: artifacts
+    attributes:
+      label: Evidence artifacts
+      description: Provide deterministic JSON, CSV, SVG, logs, hashes, or a minimal extract.
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: Proposed conclusion and boundary
+      description: State what the evidence proves and what it does not prove.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Evidence checks
+      options:
+        - label: I used an exact source or artifact identity.
+          required: true
+        - label: I did not infer release approval from a local green test.
+          required: true

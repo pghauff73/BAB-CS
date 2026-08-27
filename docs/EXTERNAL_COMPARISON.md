@@ -1,4 +1,4 @@
-# BAB-CS External Comparison
+# Bounded-Authority-Based-Circuit-Simulation External Comparison
 
 ## Scope
 

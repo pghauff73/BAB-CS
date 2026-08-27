@@ -1,4 +1,4 @@
-# BAB-CS Performance Optimization Audit
+# Bounded-Authority-Based-Circuit-Simulation Performance Optimization Audit
 
 ## Status
 
@@ -961,30 +961,70 @@ default trapezoidal reference configuration. Configurations that explicitly use
 `reference_method="bdf2"` should therefore expect corrected anchor trajectories
 rather than baseline equality.
 
+### Repeated-topology circuit construction
+
+Parameter sweeps, Monte Carlo studies, and comparison matrices repeatedly build
+the same structural circuit with different numerical values. Profiling exact
+commit `dd8145e` showed that these runs still rebuilt the algebraic CSC pattern,
+Jacobian stamps, constraint stamps, differential-sensitivity right-hand sides,
+implicit block layout, and generated residual source for every instance. The
+retained design now uses bounded 128-entry structural caches whose keys contain
+only ordered terminal indices, branch positions, and dynamic-state placement.
+Cached values are frozen sparse templates, immutable stamps, read-only tuple
+right-hand sides, and compiled functions. Resistance, capacitance, inductance,
+source, diode, switch, initial-state, and waveform values remain owned by and
+read live from each circuit.
+
+The CSC builder now buckets rows by column instead of repeatedly scanning the
+complete position set. The implicit coupled block reuses its immutable layout,
+but rebuilds each circuit's `1/C` and signed `1/L` multipliers independently.
+Generated residual code is cached by structural stamps before source generation,
+so a cache hit does not reconstruct or hash a large source string. Exact built-in
+elements use direct dataclass construction during normalized copying; subclasses
+retain the general `dataclasses.replace` path and therefore keep their runtime
+type and extension semantics.
+
+Five balanced construction rounds and three balanced build-plus-one-evaluation
+rounds compared the combined retained path with exact commit `dd8145e`:
+
+| Workload | Construction mean | Construction minimum | Build + evaluation mean | Build + evaluation minimum |
+| --- | ---: | ---: | ---: | ---: |
+| 16 capacitor/diode channels | 72.491% | 71.965% | 64.058% | 63.728% |
+| 32 capacitor/diode channels | 73.529% | 73.265% | 67.010% | 66.067% |
+| 64 capacitor/diode channels | 75.787% | 75.619% | 69.352% | 68.968% |
+| 64 mixed capacitor/inductor channels | 75.356% | 75.210% | 69.445% | 69.338% |
+| 128 capacitor/diode channels | 78.326% | 78.228% | 72.768% | 72.565% |
+
+The topology-cache portion alone reduced construction by 50.993% to 52.508%
+against the same baseline. The exact-built-in normalization kernel reduced its
+isolated copy loop by 65.719%. A final order-preserving pass fused exact-type
+classification, parameter validation, constraint collection, and first-seen node
+indexing while retaining independent subclass `isinstance` behavior and duplicate-
+name error precedence. A simulation-only comparison deliberately started timing
+after construction: all state, metric, rejection, and deterministic work traces
+were exactly equal, while mean timing varied from a 0.543% regression to a 0.509%
+gain. The retained claim is therefore constructor and ensemble latency, not faster
+simulation arithmetic.
+
 ## Local Validation
 
 - Focused replay, Jacobian, nonlinear, comparison, accuracy, failure-gate, and
   long-horizon regression groups passed before the full run.
 - Full current-source qualification on August 25, 2026 with SciPy 1.18.0 and
   SuiteSparse KLU 2.3.6, `BABCS_LONG_TESTS=1`, and
-  `BABCS_VERY_LONG_TESTS=1`: 225 tests passed in 55.254 seconds, with zero skips.
+  `BABCS_VERY_LONG_TESTS=1`: 229 tests passed in 56.596 seconds, with zero skips.
 - Two independent `bab_cs-1.1.0-py3-none-any.whl` builds were byte-identical.
 - Local candidate wheel SHA-256:
-  `42f3d49f8f59e73b3f44df9d8407d0d05494fc0f2c9299079ac23b946fdbd447`.
-- Clean dependency-free installed-wheel qualification: 225 tests passed in
-  56.326 seconds with 55 expected optional-backend skips; `pip check` reported
+  `761462fd7c451d33a111162e8a55a225920e0646ac72544a542db592ee3dde82`.
+- Clean dependency-free installed-wheel qualification: 229 tests passed in
+  53.080 seconds with 57 expected optional-backend skips; `pip check` reported
   no broken requirements.
-- Clean installed-wheel SciPy 1.18.1 and SuiteSparse KLU 2.3.6 qualification:
-  all 225 tests passed in 56.559 seconds with zero skips;
+- The same clean installed wheel with SciPy 1.18.1, NumPy 2.5.2, and SuiteSparse
+  KLU 2.3.6: all 229 tests passed in 53.433 seconds with zero skips;
   `pip check` reported no broken requirements.
-- Source and installed-wheel comparison matrices each completed all 154
-  results. Their JSON, CSV, and SVG outputs were byte-identical.
-- Source-tree SHA-256 recorded by both reports:
-  `669318d940a7eb3193054e5dc128c010e7ef5d6e57bd627cc9ff4df59392a72b`.
-- Numerical JSON, CSV, and SVG SHA-256 values were respectively
-  `25919dcf9b567840bf3b40d1d17c58c41890d4a4092a6794b07c6c1b3faf712c`,
-  `2d66de8be6a7facec86d0c71b296ff7bdb0c514d48544cd9a35156bb38d15b9d`,
-  and `4abd0aa8e9e5e9198e59db85d853cf6ac282ede9d8a1753506f6ffefd7252d46`.
+- Earlier source/installed comparison hashes were invalidated by the constructor
+  source and test changes. They remain historical evidence and must be regenerated
+  from the eventual exact release commit before qualification.
 - Fresh `ngspice-46` cross-implementation runs completed for `rc_step`,
   `rl_step`, `diode_clip`, and `switched_rc`.
 
@@ -994,33 +1034,40 @@ or faster than ngspice.
 
 ## Remaining High-Value Work
 
-1. **Native KLU right-hand-side and result residency:** after Jacobian-only
-   assembly, the KLU solve and its mandatory owned input/output buffers dominate
-   the native sensitivity profile. Any reusable buffer prototype must preserve
-   read-only caller inputs, independent returned solutions, stale-factor replay,
-   cross-thread restoration, and deterministic nonfinite rejection.
-2. **Native residual and norm ownership:** the large-vector norm fast path
-   reduced traversal cost without changing storage. Further work should fuse
-   residual construction and norm evidence only when the residual vector remains
-   available to Newton and `NaN` propagation stays deterministic.
-3. **Reactive-scale invalidation:** mutation-aware capacitance and inductance
-   arrays still verify live scalar tuples on every native sensitivity. Weak
-   invalidation callbacks may remove that scan, but must not create ownership
-   cycles or hide direct element mutation.
-4. **Projection state residency:** the constant multi-RHS conversion is removed,
-   but target state, accepted state, and accepted algebraic unknowns are still
-   converted during sparse projection. Aggregate `numpy.asarray` cost is now
-   0.014 of 0.893 internal profiled seconds, so any further residency change
-   must remain lazy and demonstrate an end-to-end gain.
-5. **Cache diagnostics and KLU expansion:** deterministic work reports should
-   expose KLU/SciPy cache hits, misses, evictions, refactors, and fallbacks before
-   cache policy becomes user-configurable or automatic KLU selection expands to
-   additional solve classes.
+1. **Normalize-and-classify fusion:** the retained classifier removed most
+   repeated `isinstance` work, reducing a 20-instance 128-channel profile from
+   0.061 to 0.042 seconds. Normalized copying and classification remain separate
+   passes. A future fusion may retain the first validation failure while still
+   giving duplicate-name errors their existing precedence, but must preserve
+   input-object isolation and subclass constructors.
+2. **Compact structural-key formation:** cache hits still create terminal-index
+   tuples and several small derived tuples per circuit. Any reduction must keep
+   first-seen node ordering, branch ordering, exact element-family separation,
+   and collision-free topology identity.
+3. **Cache diagnostics and policy evidence:** deterministic work reports should
+   expose structural, residual, implicit-layout, KLU, and SciPy cache hits,
+   misses, evictions, refactors, and fallbacks before cache policy becomes user-
+   configurable.
+4. **Backend-interface numeric refresh:** KLU symbolic reuse is already complete
+   in measured runs. Further solver work should target an interface that can
+   refresh numeric factors without unsafe caller-buffer borrowing or redundant
+   public-result copies.
+5. **Projection residency only after renewed profiling:** current projection
+   conversion cost is small relative to solves. Any retained change must remain
+   lazy, preserve independent results, and demonstrate an end-to-end gain.
 6. **Authority-refresh semantics before scheduling:** a future dynamic anchor
    policy must distinguish event-driven history reset from independently
    recomputed authority, honor exact event boundaries, and enforce a hard maximum
    elapsed authority age. The current probe found no safe performance gain, so
    this is a correctness prerequisite rather than the next optimization.
+
+Reusable KLU scratch/result residency is no longer an active target. Borrowing
+the result would violate independent ownership, while a safe scratch-plus-copy
+prototype regressed isolated solves by about 3.3% to 12.4%. NumPy weighted-RMS
+and 128-device diode batches were also rejected because their isolated vector
+gains did not survive balanced whole-run tests. Reactive-value invalidation,
+generated residual-plus-norm fusion, and broad projection ownership were already
+below their retention thresholds.
 An exact-state probe rejected shared accepted-evaluation Jacobian caching: the
 stiffness evaluations do not use the same differential states as the preceding
 block linearizations. Direct profiling also rejected standalone sparse tuple

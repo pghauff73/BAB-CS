@@ -1,4 +1,4 @@
-# Applications and Research Roadmap for BAB-CS
+# Applications and Research Roadmap for Bounded-Authority-Based-Circuit-Simulation
 
 ## Current Applications
 

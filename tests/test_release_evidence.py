@@ -39,6 +39,63 @@ class ReleaseEvidenceTests(unittest.TestCase):
             workflow_ref="refs/heads/main",
             workflow_sha=SOURCE_COMMIT,
         )
+        release_evidence.write_json(
+            evidence / "qualification-summary.json",
+            {
+                "schema_version": release_evidence.QUALIFICATION_SUMMARY_SCHEMA_VERSION,
+                "source": {"commit": SOURCE_COMMIT, "tracked_dirty": False},
+                "package": {
+                    "project_name": _project.PROJECT_NAME,
+                    "distribution": _project.DISTRIBUTION_NAME,
+                    "package": _project.PACKAGE_NAME,
+                    "version": _project.VERSION,
+                    "python_requirement": _project.REQUIRES_PYTHON,
+                    "license_expression": _project.LICENSE_EXPRESSION,
+                    "license_file": _project.LICENSE_FILE,
+                    "wheel": _project.wheel_filename(),
+                },
+                "qualification": {
+                    "candidate_tag": TAG,
+                    "created_utc": CREATED_UTC,
+                    "latest_public_release": "v1.0.0",
+                    "status": "candidate",
+                },
+                "tests": {"methods": 186, "modules": 17},
+                "bounded_candidates": {
+                    "count": 7,
+                    "methods": [
+                        "ab2",
+                        "backward_euler",
+                        "bdf2",
+                        "explicit_euler",
+                        "heun",
+                        "rk23",
+                        "trapezoidal",
+                    ],
+                },
+                "benchmarks": {
+                    "case_count": 1,
+                    "case_ids": ["rc_step"],
+                    "declared_method_count": 1,
+                    "declared_methods": ["active"],
+                    "case_method_assignments": 1,
+                    "matrix_result_count": 1,
+                },
+                "python": {
+                    "ci_versions": ["3.11", "3.12", "3.13", "3.14"],
+                    "qualification_version": (
+                        evidence / "PYTHON_VERSION"
+                    ).read_text().strip(),
+                },
+                "workflow": {
+                    "run_id": "123456",
+                    "run_url": "https://example.invalid/actions/runs/123456",
+                    "event": "workflow_dispatch",
+                    "ref": "refs/heads/main",
+                    "sha": SOURCE_COMMIT,
+                },
+            },
+        )
         release_evidence.write_text(
             evidence / "source-tests.log",
             "Ran 186 tests in 46.424s\n\nOK",
@@ -98,6 +155,95 @@ class ReleaseEvidenceTests(unittest.TestCase):
                 "artifacts differ",
             ):
                 release_evidence.compare_artifacts([(source, installed)])
+
+    def test_qualification_summary_counts_canonical_repository_surfaces(self) -> None:
+        tests = release_evidence.count_test_surface(Path("tests"))
+        benchmarks = release_evidence.benchmark_surface(Path("benchmarks/manifest.json"))
+        versions = release_evidence.ci_python_versions(Path(".github/workflows/ci.yml"))
+        self.assertGreaterEqual(tests["methods"], 243)
+        self.assertEqual(tests["modules"], 20)
+        self.assertEqual(benchmarks["case_count"], 8)
+        self.assertEqual(benchmarks["declared_method_count"], 15)
+        self.assertEqual(benchmarks["case_method_assignments"], 51)
+        self.assertEqual(versions, ["3.11", "3.12", "3.13", "3.14"])
+
+    def test_qualification_summary_is_deterministic_for_fixed_evidence(self) -> None:
+        source_commit = release_evidence.command_output(["git", "rev-parse", "HEAD"])
+        with tempfile.TemporaryDirectory() as temporary:
+            evidence = Path(temporary) / "evidence"
+            release_evidence.record_environment(
+                evidence,
+                source_commit=source_commit,
+                tag=f"candidate-{source_commit[:12]}",
+                created_utc=CREATED_UTC,
+                workflow_run_id="local",
+                workflow_run_url_value="unavailable",
+                workflow_event="local",
+                workflow_ref="refs/heads/main",
+                workflow_sha=source_commit,
+            )
+            first = release_evidence.build_qualification_summary(
+                Path.cwd(),
+                evidence,
+                benchmark_manifest=Path("benchmarks/manifest.json"),
+                ci_workflow=Path(".github/workflows/ci.yml"),
+                latest_public_release="v1.0.0",
+                allow_dirty=True,
+            )
+            second = release_evidence.build_qualification_summary(
+                Path.cwd(),
+                evidence,
+                benchmark_manifest=Path("benchmarks/manifest.json"),
+                ci_workflow=Path(".github/workflows/ci.yml"),
+                latest_public_release="v1.0.0",
+                allow_dirty=True,
+            )
+            self.assertEqual(first, second)
+            self.assertEqual(first["source"]["commit"], source_commit)
+            self.assertEqual(first["package"]["wheel"], _project.wheel_filename())
+            self.assertEqual(first["bounded_candidates"]["count"], 7)
+            self.assertEqual(
+                first["python"]["qualification_version"],
+                (evidence / "PYTHON_VERSION").read_text().strip(),
+            )
+
+    def test_qualification_summary_rejects_invalid_release_and_clean_claim(self) -> None:
+        source_commit = release_evidence.command_output(["git", "rev-parse", "HEAD"])
+        with tempfile.TemporaryDirectory() as temporary:
+            evidence = Path(temporary) / "evidence"
+            release_evidence.record_environment(
+                evidence,
+                source_commit=source_commit,
+                tag=f"candidate-{source_commit[:12]}",
+                created_utc=CREATED_UTC,
+                workflow_event="local",
+                workflow_ref="refs/heads/main",
+                workflow_sha=source_commit,
+            )
+            with self.assertRaisesRegex(
+                release_evidence.ReleaseEvidenceError,
+                "latest public release",
+            ):
+                release_evidence.build_qualification_summary(
+                    Path.cwd(),
+                    evidence,
+                    benchmark_manifest=Path("benchmarks/manifest.json"),
+                    ci_workflow=Path(".github/workflows/ci.yml"),
+                    latest_public_release="release-one",
+                    allow_dirty=True,
+                )
+            if release_evidence.tracked_source_is_dirty(Path.cwd()):
+                with self.assertRaisesRegex(
+                    release_evidence.ReleaseEvidenceError,
+                    "dirty tracked source tree",
+                ):
+                    release_evidence.build_qualification_summary(
+                        Path.cwd(),
+                        evidence,
+                        benchmark_manifest=Path("benchmarks/manifest.json"),
+                        ci_workflow=Path(".github/workflows/ci.yml"),
+                        latest_public_release="v1.0.0",
+                    )
 
     def test_comparison_inspection_requires_complete_matrix(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -244,6 +390,7 @@ class ReleaseEvidenceTests(unittest.TestCase):
         self.assertIn(_project.wheel_filename(), required)
         self.assertTrue(release_evidence.CORE_EVIDENCE_FILES.issubset(required))
         self.assertIn("comparison-inspection.json", required)
+        self.assertIn("qualification-summary.json", required)
         self.assertIn("source-timing.json", required)
         for name in required:
             release_evidence.evidence_role(name)
@@ -396,6 +543,12 @@ class ReleaseEvidenceTests(unittest.TestCase):
                 evidence / "WORKFLOW_REF",
                 f"refs/tags/v{_project.VERSION}",
             )
+            summary = release_evidence.read_json(evidence / "qualification-summary.json")
+            summary["qualification"]["candidate_tag"] = f"v{_project.VERSION}"
+            summary["qualification"]["status"] = "tag_candidate"
+            summary["workflow"]["event"] = "push"
+            summary["workflow"]["ref"] = f"refs/tags/v{_project.VERSION}"
+            release_evidence.write_json(evidence / "qualification-summary.json", summary)
             manifest = release_evidence.write_manifest(
                 evidence,
                 source_commit=SOURCE_COMMIT,

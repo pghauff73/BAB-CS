@@ -12,23 +12,44 @@ Packaging tests establish that installed code is the code that was examined
 [[15]](REFERENCES.md#ref-15) [[18]](REFERENCES.md#ref-18). No one layer is
 allowed to imply all the others.
 
-The current test tree contains 225 test methods across nineteen modules
-[[32]](REFERENCES.md#ref-32). Coverage includes circuit construction,
+The current test-method and module counts are generated into
+`qualification-summary.json` from Python syntax rather than maintained in this
+essay [[32]](REFERENCES.md#ref-32). Coverage includes circuit construction,
 projection, waveform breakpoints, dense and sparse linear algebra, implicit
 methods, all bounded candidates, error recurrence, rollout modes, events,
 failure gates, nonlinear devices, analytic accuracy, long-horizon behavior,
 comparison generation, external mapping, deterministic wheel construction, and
-release-evidence verification. The count describes the current source surface;
-qualification still depends on the required tiers running successfully in the
+release-evidence verification. The root-finding tests cover scalar bounded and
+interval Newton, bisection, secant, Ridders, adversarial Newton cycling,
+point- and interval-derivative fallback, outward-widened contraction, sign
+recovery, enclosure reporting, and deterministic root-finder comparison output.
+Qualification still depends on the required tiers running successfully in the
 intended environment.
+
+A default source-tree validation run on August 27, 2026 passed the complete
+discovered suite with two expected opt-in long-tier skips. This validates that
+source snapshot's default surface, including bounded root finding. It does not
+qualify the long, very-long, clean-wheel, optional-backend, or release-evidence
+tiers.
 
 A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 and
 SuiteSparse KLU 2.3.6 with both `BABCS_LONG_TESTS=1` and
-`BABCS_VERY_LONG_TESTS=1`. All 225 tests passed in 55.254 seconds with zero
-skips. This establishes that the essay set was updated
-against a live green source tree; it does not replace the clean-environment,
+`BABCS_VERY_LONG_TESTS=1`. All 229 tests passed in 56.596 seconds with zero
+skips. That fully tiered evidence predates the current root-finding and
+qualification-summary surface and must not be cited as qualification of it. It
+establishes that the earlier circuit
+surface was updated against a live green source tree; it does not replace the
+clean-environment,
 installed-wheel, exact-artifact, workflow, and human-review requirements of
 release qualification.
+
+Two candidate wheel builds were byte-identical with SHA-256
+`761462fd7c451d33a111162e8a55a225920e0646ac72544a542db592ee3dde82`.
+A clean dependency-free installation passed all 229 tests in 53.080 seconds with
+57 expected optional-backend skips. Installing SciPy 1.18.1 and NumPy 2.5.2 into
+the same environment exposed SuiteSparse KLU 2.3.6 and passed all 229 tests in
+53.433 seconds with zero skips. Both environments passed `pip check`. These are
+candidate checks, not exact-tag release evidence.
 
 Direct numerical tests begin with exact formulas and invariants. Variable-step
 AB2 coefficients are checked independently. Backward Euler, trapezoidal, and

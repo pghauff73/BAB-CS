@@ -138,6 +138,8 @@ def _clear_compiled_sparse_algebraic_topologies() -> None:
     with _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES_LOCK:
         _COMPILED_SPARSE_ALGEBRAIC_TOPOLOGIES.clear()
     _compile_algebraic_residual_kernel.cache_clear()
+    _compile_algebraic_residual_topology.cache_clear()
+    _compile_algebraic_topology.cache_clear()
     _compile_implicit_block_sparse_topology.cache_clear()
 
 
@@ -378,6 +380,22 @@ class _ConstraintStamp:
 
 
 @dataclass(frozen=True, slots=True)
+class _AlgebraicTopology:
+    sparse_template: SparseMatrix
+    resistor_stamps: tuple[_TerminalStamp, ...]
+    switch_stamps: tuple[_TerminalStamp, ...]
+    diode_stamps: tuple[_TerminalStamp, ...]
+    current_source_stamps: tuple[_TerminalStamp, ...]
+    inductor_stamps: tuple[_TerminalStamp, ...]
+    constraint_stamps: tuple[_ConstraintStamp, ...]
+    differential_sensitivity_right_hand_sides: tuple[tuple[float, ...], ...]
+    inductor_positive_sensitivity_columns: tuple[int, ...]
+    inductor_positive_sensitivity_nodes: tuple[int, ...]
+    inductor_negative_sensitivity_columns: tuple[int, ...]
+    inductor_negative_sensitivity_nodes: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class _ImplicitBlockStamp:
     sparse_index: int
     multiplier: float
@@ -416,6 +434,294 @@ class _NativeDifferentialSensitivity:
     numpy: Any
 
 
+@lru_cache(maxsize=128)
+def _compile_algebraic_topology(
+    algebraic_size: int,
+    resistor_terminals: tuple[tuple[int | None, int | None], ...],
+    switch_terminals: tuple[tuple[int | None, int | None], ...],
+    diode_terminals: tuple[tuple[int | None, int | None], ...],
+    current_source_terminals: tuple[tuple[int | None, int | None], ...],
+    inductor_terminals: tuple[tuple[int | None, int | None], ...],
+    constraint_terminals: tuple[tuple[int | None, int | None, int], ...],
+    capacitor_branch_indices: tuple[int, ...],
+) -> _AlgebraicTopology:
+    positions: set[tuple[int, int]] = set()
+
+    def add_conductance_pattern(
+        terminal: tuple[int | None, int | None],
+    ) -> None:
+        positive_index, negative_index = terminal
+        if positive_index is not None:
+            positions.add((positive_index, positive_index))
+            if negative_index is not None:
+                positions.add((positive_index, negative_index))
+        if negative_index is not None:
+            if positive_index is not None:
+                positions.add((negative_index, positive_index))
+            positions.add((negative_index, negative_index))
+
+    for terminal in resistor_terminals + switch_terminals + diode_terminals:
+        add_conductance_pattern(terminal)
+    for positive_index, negative_index, branch_index in constraint_terminals:
+        if positive_index is not None:
+            positions.add((positive_index, branch_index))
+            positions.add((branch_index, positive_index))
+        if negative_index is not None:
+            positions.add((negative_index, branch_index))
+            positions.add((branch_index, negative_index))
+
+    row_indices, column_pointers, position_index = (
+        _compressed_sparse_column_pattern(algebraic_size, positions)
+    )
+
+    def conductance_stamp(
+        terminal: tuple[int | None, int | None],
+    ) -> _TerminalStamp:
+        positive_index, negative_index = terminal
+        entries: list[_JacobianStamp] = []
+        if positive_index is not None:
+            entries.append(
+                _JacobianStamp(
+                    positive_index,
+                    positive_index,
+                    position_index[(positive_index, positive_index)],
+                    1.0,
+                )
+            )
+            if negative_index is not None:
+                entries.append(
+                    _JacobianStamp(
+                        positive_index,
+                        negative_index,
+                        position_index[(positive_index, negative_index)],
+                        -1.0,
+                    )
+                )
+        if negative_index is not None:
+            if positive_index is not None:
+                entries.append(
+                    _JacobianStamp(
+                        negative_index,
+                        positive_index,
+                        position_index[(negative_index, positive_index)],
+                        -1.0,
+                    )
+                )
+            entries.append(
+                _JacobianStamp(
+                    negative_index,
+                    negative_index,
+                    position_index[(negative_index, negative_index)],
+                    1.0,
+                )
+            )
+        return _TerminalStamp(positive_index, negative_index, tuple(entries))
+
+    def terminal_stamp(
+        terminal: tuple[int | None, int | None],
+    ) -> _TerminalStamp:
+        return _TerminalStamp(*terminal)
+
+    constraint_stamps: list[_ConstraintStamp] = []
+    for positive_index, negative_index, branch_index in constraint_terminals:
+        entries: list[_JacobianStamp] = []
+        if positive_index is not None:
+            entries.extend(
+                (
+                    _JacobianStamp(
+                        positive_index,
+                        branch_index,
+                        position_index[(positive_index, branch_index)],
+                        1.0,
+                    ),
+                    _JacobianStamp(
+                        branch_index,
+                        positive_index,
+                        position_index[(branch_index, positive_index)],
+                        1.0,
+                    ),
+                )
+            )
+        if negative_index is not None:
+            entries.extend(
+                (
+                    _JacobianStamp(
+                        negative_index,
+                        branch_index,
+                        position_index[(negative_index, branch_index)],
+                        -1.0,
+                    ),
+                    _JacobianStamp(
+                        branch_index,
+                        negative_index,
+                        position_index[(branch_index, negative_index)],
+                        -1.0,
+                    ),
+                )
+            )
+        constraint_stamps.append(
+            _ConstraintStamp(
+                _TerminalStamp(positive_index, negative_index, tuple(entries)),
+                branch_index,
+            )
+        )
+
+    right_hand_sides: list[tuple[float, ...]] = []
+    for branch_index in capacitor_branch_indices:
+        right_hand_side = [0.0] * algebraic_size
+        right_hand_side[branch_index] = 1.0
+        right_hand_sides.append(tuple(right_hand_side))
+    for positive_index, negative_index in inductor_terminals:
+        right_hand_side = [0.0] * algebraic_size
+        if positive_index is not None:
+            right_hand_side[positive_index] = -1.0
+        if negative_index is not None:
+            right_hand_side[negative_index] = 1.0
+        right_hand_sides.append(tuple(right_hand_side))
+
+    return _AlgebraicTopology(
+        SparseMatrix(
+            algebraic_size,
+            (0.0,) * len(row_indices),
+            row_indices,
+            column_pointers,
+        ),
+        tuple(map(conductance_stamp, resistor_terminals)),
+        tuple(map(conductance_stamp, switch_terminals)),
+        tuple(map(conductance_stamp, diode_terminals)),
+        tuple(map(terminal_stamp, current_source_terminals)),
+        tuple(map(terminal_stamp, inductor_terminals)),
+        tuple(constraint_stamps),
+        tuple(right_hand_sides),
+        tuple(
+            column
+            for column, (positive_index, _) in enumerate(inductor_terminals)
+            if positive_index is not None
+        ),
+        tuple(
+            positive_index
+            for positive_index, _ in inductor_terminals
+            if positive_index is not None
+        ),
+        tuple(
+            column
+            for column, (_, negative_index) in enumerate(inductor_terminals)
+            if negative_index is not None
+        ),
+        tuple(
+            negative_index
+            for _, negative_index in inductor_terminals
+            if negative_index is not None
+        ),
+    )
+
+
+@lru_cache(maxsize=128)
+def _compile_algebraic_residual_topology(
+    algebraic_size: int,
+    resistor_stamps: tuple[_TerminalStamp, ...],
+    switch_stamps: tuple[_TerminalStamp, ...],
+    diode_stamps: tuple[_TerminalStamp, ...],
+    current_source_stamps: tuple[_TerminalStamp, ...],
+    inductor_stamps: tuple[_TerminalStamp, ...],
+    inductor_state_indices: tuple[int, ...],
+    constraint_stamps: tuple[_ConstraintStamp, ...],
+) -> Any:
+    lines = [
+        "def kernel(self, time, dynamic_state, unknowns, inputs):",
+        f"    residual = [0.0] * {algebraic_size}",
+        "    diode_currents = []",
+        "    resistors = self.resistors",
+        "    diodes = self.diodes",
+    ]
+
+    def voltage_expressions(stamp: _TerminalStamp) -> tuple[str, str]:
+        positive = (
+            "0.0"
+            if stamp.positive_index is None
+            else f"unknowns[{stamp.positive_index}]"
+        )
+        negative = (
+            "0.0"
+            if stamp.negative_index is None
+            else f"unknowns[{stamp.negative_index}]"
+        )
+        return positive, negative
+
+    def append_current_stamp(stamp: _TerminalStamp, value: str) -> None:
+        if stamp.positive_index is not None:
+            lines.append(f"    residual[{stamp.positive_index}] += {value}")
+        if stamp.negative_index is not None:
+            lines.append(f"    residual[{stamp.negative_index}] -= {value}")
+
+    for index, stamp in enumerate(resistor_stamps):
+        positive, negative = voltage_expressions(stamp)
+        lines.extend(
+            [
+                f"    conductance = 1.0 / resistors[{index}].resistance",
+                f"    current = conductance * ({positive} - {negative})",
+            ]
+        )
+        append_current_stamp(stamp, "current")
+
+    for index, stamp in enumerate(switch_stamps):
+        positive, negative = voltage_expressions(stamp)
+        lines.extend(
+            [
+                f"    conductance = 1.0 / inputs.switch_resistances[{index}]",
+                f"    current = conductance * ({positive} - {negative})",
+            ]
+        )
+        append_current_stamp(stamp, "current")
+
+    for index, stamp in enumerate(diode_stamps):
+        positive, negative = voltage_expressions(stamp)
+        lines.extend(
+            [
+                f"    diode = diodes[{index}]",
+                f"    exponent = ({positive} - {negative}) / diode.thermal_voltage",
+                "    if exponent > 40.0:",
+                "        exponential = exp40 * (1.0 + exponent - 40.0)",
+                "    elif exponent < -40.0:",
+                "        exponential = exp_neg40",
+                "    else:",
+                "        exponential = exp(exponent)",
+                "    current = diode.saturation_current * (exponential - 1.0)",
+                "    diode_currents.append(current)",
+            ]
+        )
+        append_current_stamp(stamp, "current")
+
+    for index, stamp in enumerate(current_source_stamps):
+        append_current_stamp(stamp, f"inputs.current_source_values[{index}]")
+
+    for state_index, stamp in zip(
+        inductor_state_indices,
+        inductor_stamps,
+        strict=True,
+    ):
+        append_current_stamp(stamp, f"dynamic_state[{state_index}]")
+
+    for index, constraint_stamp in enumerate(constraint_stamps):
+        stamp = constraint_stamp.terminal
+        branch_index = constraint_stamp.branch_index
+        positive, negative = voltage_expressions(stamp)
+        append_current_stamp(stamp, f"unknowns[{branch_index}]")
+        lines.append(
+            f"    residual[{branch_index}] = {positive} - {negative} "
+            f"- inputs.constraint_targets[{index}]"
+        )
+
+    lines.extend(
+        [
+            "    self._last_assembled_unknowns = unknowns",
+            "    self._last_assembled_diode_currents = tuple(diode_currents)",
+            "    return residual",
+        ]
+    )
+    return _compile_algebraic_residual_kernel("\n".join(lines) + "\n")
+
+
 class Circuit:
     def __init__(
         self,
@@ -434,28 +740,8 @@ class Circuit:
                 "SuiteSparse KLU 2 library"
             )
         self.elements = [self._normalize_element(element) for element in elements]
-        self._validate()
-
-        self.capacitors = [element for element in self.elements if isinstance(element, Capacitor)]
-        self.inductors = [element for element in self.elements if isinstance(element, Inductor)]
-        self.voltage_sources = [element for element in self.elements if isinstance(element, VoltageSource)]
-        self.current_sources = [element for element in self.elements if isinstance(element, CurrentSource)]
-        self.resistors = [element for element in self.elements if isinstance(element, Resistor)]
-        self.diodes = [element for element in self.elements if isinstance(element, Diode)]
-        self.switches = [element for element in self.elements if isinstance(element, Switch)]
+        self._classify_validate_and_index_elements()
         self._dynamic_size = len(self.capacitors) + len(self.inductors)
-
-        node_names: list[str] = []
-        for element in self.elements:
-            for node in (element.positive, element.negative):
-                if node != GROUND and node not in node_names:
-                    node_names.append(node)
-        self.nodes = tuple(node_names)
-        self.node_index = {node: index for index, node in enumerate(self.nodes)}
-
-        self.constraint_branches = [
-            element for element in self.elements if isinstance(element, (VoltageSource, Capacitor))
-        ]
         self.branch_index = {
             element.name: len(self.nodes) + index for index, element in enumerate(self.constraint_branches)
         }
@@ -476,60 +762,56 @@ class Circuit:
             for target_index, branch in enumerate(self.constraint_branches)
             if isinstance(branch, Capacitor)
         )
-        (
-            self._algebraic_sparse_row_indices,
-            self._algebraic_sparse_column_pointers,
-            self._algebraic_sparse_position_index,
-        ) = self._build_algebraic_sparse_pattern()
-        self._algebraic_sparse_template = SparseMatrix(
-            self.algebraic_size,
-            (0.0,) * len(self._algebraic_sparse_row_indices),
-            self._algebraic_sparse_row_indices,
-            self._algebraic_sparse_column_pointers,
-        )
-        self._resistor_stamps = tuple(
-            self._make_conductance_stamp(element) for element in self.resistors
-        )
-        self._switch_stamps = tuple(
-            self._make_conductance_stamp(element) for element in self.switches
-        )
-        self._diode_stamps = tuple(
-            self._make_conductance_stamp(element) for element in self.diodes
-        )
-        self._current_source_stamps = tuple(
-            self._make_terminal_stamp(element) for element in self.current_sources
-        )
-        self._inductor_stamps = tuple(
-            self._make_terminal_stamp(element) for element in self.inductors
-        )
-        self._constraint_stamps = tuple(
-            self._make_constraint_stamp(element) for element in self.constraint_branches
-        )
-        self._differential_sensitivity_right_hand_sides = (
-            self._build_differential_sensitivity_right_hand_sides()
-        )
         self._capacitor_branch_indices = tuple(
             self.branch_index[capacitor.name] for capacitor in self.capacitors
         )
-        self._inductor_positive_sensitivity_columns = tuple(
-            column
-            for column, inductor in enumerate(self.inductors)
-            if inductor.positive != GROUND
+
+        def terminal_indices(element: Element) -> tuple[int | None, int | None]:
+            return (
+                self.node_index.get(element.positive),
+                self.node_index.get(element.negative),
+            )
+
+        algebraic_topology = _compile_algebraic_topology(
+            self.algebraic_size,
+            tuple(terminal_indices(element) for element in self.resistors),
+            tuple(terminal_indices(element) for element in self.switches),
+            tuple(terminal_indices(element) for element in self.diodes),
+            tuple(terminal_indices(element) for element in self.current_sources),
+            tuple(terminal_indices(element) for element in self.inductors),
+            tuple(
+                (*terminal_indices(element), self.branch_index[element.name])
+                for element in self.constraint_branches
+            ),
+            self._capacitor_branch_indices,
         )
-        self._inductor_positive_sensitivity_nodes = tuple(
-            self.node_index[inductor.positive]
-            for inductor in self.inductors
-            if inductor.positive != GROUND
+        self._algebraic_sparse_template = algebraic_topology.sparse_template
+        self._algebraic_sparse_row_indices = (
+            algebraic_topology.sparse_template.row_indices
         )
-        self._inductor_negative_sensitivity_columns = tuple(
-            column
-            for column, inductor in enumerate(self.inductors)
-            if inductor.negative != GROUND
+        self._algebraic_sparse_column_pointers = (
+            algebraic_topology.sparse_template.column_pointers
         )
-        self._inductor_negative_sensitivity_nodes = tuple(
-            self.node_index[inductor.negative]
-            for inductor in self.inductors
-            if inductor.negative != GROUND
+        self._resistor_stamps = algebraic_topology.resistor_stamps
+        self._switch_stamps = algebraic_topology.switch_stamps
+        self._diode_stamps = algebraic_topology.diode_stamps
+        self._current_source_stamps = algebraic_topology.current_source_stamps
+        self._inductor_stamps = algebraic_topology.inductor_stamps
+        self._constraint_stamps = algebraic_topology.constraint_stamps
+        self._differential_sensitivity_right_hand_sides = (
+            algebraic_topology.differential_sensitivity_right_hand_sides
+        )
+        self._inductor_positive_sensitivity_columns = (
+            algebraic_topology.inductor_positive_sensitivity_columns
+        )
+        self._inductor_positive_sensitivity_nodes = (
+            algebraic_topology.inductor_positive_sensitivity_nodes
+        )
+        self._inductor_negative_sensitivity_columns = (
+            algebraic_topology.inductor_negative_sensitivity_columns
+        )
+        self._inductor_negative_sensitivity_nodes = (
+            algebraic_topology.inductor_negative_sensitivity_nodes
         )
         self._native_differential_sensitivity_right_hand_sides: Any | None = None
         self._native_differential_scale_values: (
@@ -595,36 +877,112 @@ class Circuit:
 
     @staticmethod
     def _normalize_element(element: Element) -> Element:
+        positive = normalize_node(element.positive)
+        negative = normalize_node(element.negative)
+        element_type = type(element)
+        if element_type is Resistor:
+            return Resistor(element.name, positive, negative, element.resistance)
+        if element_type is Capacitor:
+            return Capacitor(
+                element.name,
+                positive,
+                negative,
+                element.capacitance,
+                element.initial_voltage,
+            )
+        if element_type is Inductor:
+            return Inductor(
+                element.name,
+                positive,
+                negative,
+                element.inductance,
+                element.initial_current,
+            )
+        if element_type is CurrentSource:
+            return CurrentSource(
+                element.name,
+                positive,
+                negative,
+                element.waveform,
+            )
+        if element_type is VoltageSource:
+            return VoltageSource(
+                element.name,
+                positive,
+                negative,
+                element.waveform,
+            )
+        if element_type is Diode:
+            return Diode(
+                element.name,
+                positive,
+                negative,
+                element.saturation_current,
+                element.thermal_voltage,
+            )
+        if element_type is Switch:
+            return Switch(
+                element.name,
+                positive,
+                negative,
+                element.control,
+                element.threshold,
+                element.on_resistance,
+                element.off_resistance,
+            )
         return replace(
             element,
-            positive=normalize_node(element.positive),
-            negative=normalize_node(element.negative),
+            positive=positive,
+            negative=negative,
         )
 
-    def _validate(self) -> None:
+    def _classify_validate_and_index_elements(self) -> None:
         names = [element.name for element in self.elements]
         if len(names) != len(set(names)):
             raise ValueError("element names must be unique")
+
+        self.capacitors: list[Capacitor] = []
+        self.inductors: list[Inductor] = []
+        self.voltage_sources: list[VoltageSource] = []
+        self.current_sources: list[CurrentSource] = []
+        self.resistors: list[Resistor] = []
+        self.diodes: list[Diode] = []
+        self.switches: list[Switch] = []
+        self.constraint_branches: list[VoltageSource | Capacitor] = []
+        node_names: list[str] = []
+        seen_nodes: set[str] = set()
+
         for element in self.elements:
             if not element.name:
                 raise ValueError("element names must not be empty")
             if element.positive == element.negative:
                 raise ValueError(f"{element.name}: element terminals must differ")
-            if isinstance(element, Resistor) and (
-                not math.isfinite(element.resistance) or element.resistance <= 0.0
-            ):
-                raise ValueError(f"{element.name}: resistance must be positive and finite")
-            if isinstance(element, Capacitor):
+            element_type = type(element)
+            if element_type is Resistor:
+                if not math.isfinite(element.resistance) or element.resistance <= 0.0:
+                    raise ValueError(
+                        f"{element.name}: resistance must be positive and finite"
+                    )
+                self.resistors.append(element)
+            elif element_type is Capacitor:
                 if not math.isfinite(element.capacitance) or element.capacitance <= 0.0:
                     raise ValueError(f"{element.name}: capacitance must be positive and finite")
                 if not math.isfinite(element.initial_voltage):
                     raise ValueError(f"{element.name}: initial voltage must be finite")
-            if isinstance(element, Inductor):
+                self.capacitors.append(element)
+                self.constraint_branches.append(element)
+            elif element_type is Inductor:
                 if not math.isfinite(element.inductance) or element.inductance <= 0.0:
                     raise ValueError(f"{element.name}: inductance must be positive and finite")
                 if not math.isfinite(element.initial_current):
                     raise ValueError(f"{element.name}: initial current must be finite")
-            if isinstance(element, Diode):
+                self.inductors.append(element)
+            elif element_type is VoltageSource:
+                self.voltage_sources.append(element)
+                self.constraint_branches.append(element)
+            elif element_type is CurrentSource:
+                self.current_sources.append(element)
+            elif element_type is Diode:
                 if (
                     not math.isfinite(element.saturation_current)
                     or not math.isfinite(element.thermal_voltage)
@@ -632,7 +990,8 @@ class Circuit:
                     or element.thermal_voltage <= 0.0
                 ):
                     raise ValueError(f"{element.name}: diode parameters must be positive and finite")
-            if isinstance(element, Switch):
+                self.diodes.append(element)
+            elif element_type is Switch:
                 if (
                     not math.isfinite(element.on_resistance)
                     or not math.isfinite(element.off_resistance)
@@ -642,6 +1001,77 @@ class Circuit:
                     raise ValueError(f"{element.name}: switch resistances must be positive and finite")
                 if not math.isfinite(element.threshold):
                     raise ValueError(f"{element.name}: switch threshold must be finite")
+                self.switches.append(element)
+            else:
+                if isinstance(element, Resistor):
+                    if (
+                        not math.isfinite(element.resistance)
+                        or element.resistance <= 0.0
+                    ):
+                        raise ValueError(
+                            f"{element.name}: resistance must be positive and finite"
+                        )
+                    self.resistors.append(element)
+                if isinstance(element, Capacitor):
+                    if (
+                        not math.isfinite(element.capacitance)
+                        or element.capacitance <= 0.0
+                    ):
+                        raise ValueError(
+                            f"{element.name}: capacitance must be positive and finite"
+                        )
+                    if not math.isfinite(element.initial_voltage):
+                        raise ValueError(f"{element.name}: initial voltage must be finite")
+                    self.capacitors.append(element)
+                if isinstance(element, Inductor):
+                    if (
+                        not math.isfinite(element.inductance)
+                        or element.inductance <= 0.0
+                    ):
+                        raise ValueError(
+                            f"{element.name}: inductance must be positive and finite"
+                        )
+                    if not math.isfinite(element.initial_current):
+                        raise ValueError(f"{element.name}: initial current must be finite")
+                    self.inductors.append(element)
+                if isinstance(element, VoltageSource):
+                    self.voltage_sources.append(element)
+                if isinstance(element, CurrentSource):
+                    self.current_sources.append(element)
+                if isinstance(element, Diode):
+                    if (
+                        not math.isfinite(element.saturation_current)
+                        or not math.isfinite(element.thermal_voltage)
+                        or element.saturation_current <= 0.0
+                        or element.thermal_voltage <= 0.0
+                    ):
+                        raise ValueError(
+                            f"{element.name}: diode parameters must be positive and finite"
+                        )
+                    self.diodes.append(element)
+                if isinstance(element, Switch):
+                    if (
+                        not math.isfinite(element.on_resistance)
+                        or not math.isfinite(element.off_resistance)
+                        or element.on_resistance <= 0.0
+                        or element.off_resistance <= 0.0
+                    ):
+                        raise ValueError(
+                            f"{element.name}: switch resistances must be positive and finite"
+                        )
+                    if not math.isfinite(element.threshold):
+                        raise ValueError(f"{element.name}: switch threshold must be finite")
+                    self.switches.append(element)
+                if isinstance(element, (VoltageSource, Capacitor)):
+                    self.constraint_branches.append(element)
+
+            for node in (element.positive, element.negative):
+                if node != GROUND and node not in seen_nodes:
+                    seen_nodes.add(node)
+                    node_names.append(node)
+
+        self.nodes = tuple(node_names)
+        self.node_index = {node: index for index, node in enumerate(self.nodes)}
 
     @property
     def dynamic_size(self) -> int:
@@ -1488,103 +1918,19 @@ class Circuit:
         return residual
 
     def _build_compiled_algebraic_residual_kernel(self) -> Any:
-        lines = [
-            "def kernel(self, time, dynamic_state, unknowns, inputs):",
-            f"    residual = [0.0] * {self.algebraic_size}",
-            "    diode_currents = []",
-            "    resistors = self.resistors",
-            "    diodes = self.diodes",
-        ]
-
-        def voltage_expressions(stamp: _TerminalStamp) -> tuple[str, str]:
-            positive = (
-                "0.0"
-                if stamp.positive_index is None
-                else f"unknowns[{stamp.positive_index}]"
-            )
-            negative = (
-                "0.0"
-                if stamp.negative_index is None
-                else f"unknowns[{stamp.negative_index}]"
-            )
-            return positive, negative
-
-        def append_current_stamp(stamp: _TerminalStamp, value: str) -> None:
-            if stamp.positive_index is not None:
-                lines.append(f"    residual[{stamp.positive_index}] += {value}")
-            if stamp.negative_index is not None:
-                lines.append(f"    residual[{stamp.negative_index}] -= {value}")
-
-        for index, stamp in enumerate(self._resistor_stamps):
-            positive, negative = voltage_expressions(stamp)
-            lines.extend(
-                [
-                    f"    conductance = 1.0 / resistors[{index}].resistance",
-                    f"    current = conductance * ({positive} - {negative})",
-                ]
-            )
-            append_current_stamp(stamp, "current")
-
-        for index, stamp in enumerate(self._switch_stamps):
-            positive, negative = voltage_expressions(stamp)
-            lines.extend(
-                [
-                    f"    conductance = 1.0 / inputs.switch_resistances[{index}]",
-                    f"    current = conductance * ({positive} - {negative})",
-                ]
-            )
-            append_current_stamp(stamp, "current")
-
-        for index, stamp in enumerate(self._diode_stamps):
-            positive, negative = voltage_expressions(stamp)
-            lines.extend(
-                [
-                    f"    diode = diodes[{index}]",
-                    f"    exponent = ({positive} - {negative}) / diode.thermal_voltage",
-                    "    if exponent > 40.0:",
-                    "        exponential = exp40 * (1.0 + exponent - 40.0)",
-                    "    elif exponent < -40.0:",
-                    "        exponential = exp_neg40",
-                    "    else:",
-                    "        exponential = exp(exponent)",
-                    "    current = diode.saturation_current * (exponential - 1.0)",
-                    "    diode_currents.append(current)",
-                ]
-            )
-            append_current_stamp(stamp, "current")
-
-        for index, stamp in enumerate(self._current_source_stamps):
-            append_current_stamp(stamp, f"inputs.current_source_values[{index}]")
-
-        for inductor, stamp in zip(
-            self.inductors,
+        return _compile_algebraic_residual_topology(
+            self.algebraic_size,
+            self._resistor_stamps,
+            self._switch_stamps,
+            self._diode_stamps,
+            self._current_source_stamps,
             self._inductor_stamps,
-            strict=True,
-        ):
-            append_current_stamp(
-                stamp,
-                f"dynamic_state[{self.inductor_state_index[inductor.name]}]",
-            )
-
-        for index, constraint_stamp in enumerate(self._constraint_stamps):
-            stamp = constraint_stamp.terminal
-            branch_index = constraint_stamp.branch_index
-            positive, negative = voltage_expressions(stamp)
-            append_current_stamp(stamp, f"unknowns[{branch_index}]")
-            lines.append(
-                f"    residual[{branch_index}] = {positive} - {negative} "
-                f"- inputs.constraint_targets[{index}]"
-            )
-
-        lines.extend(
-            [
-                "    self._last_assembled_unknowns = unknowns",
-                "    self._last_assembled_diode_currents = tuple(diode_currents)",
-                "    return residual",
-            ]
+            tuple(
+                self.inductor_state_index[inductor.name]
+                for inductor in self.inductors
+            ),
+            self._constraint_stamps,
         )
-        source = "\n".join(lines) + "\n"
-        return _compile_algebraic_residual_kernel(source)
 
     def _build_compiled_sparse_algebraic_kernel(self) -> Any:
         lines = [
@@ -1958,122 +2304,6 @@ class Circuit:
         self._last_assembled_unknowns = unknowns
         self._last_assembled_diode_currents = tuple(diode_currents)
         return residual, self._algebraic_sparse_template.with_data(sparse_data)
-
-    def _build_algebraic_sparse_pattern(
-        self,
-    ) -> tuple[tuple[int, ...], tuple[int, ...], dict[tuple[int, int], int]]:
-        positions: set[tuple[int, int]] = set()
-
-        def add_conductance_pattern(positive: str, negative: str) -> None:
-            positive_index = self.node_index.get(positive)
-            negative_index = self.node_index.get(negative)
-            if positive_index is not None:
-                positions.add((positive_index, positive_index))
-                if negative_index is not None:
-                    positions.add((positive_index, negative_index))
-            if negative_index is not None:
-                if positive_index is not None:
-                    positions.add((negative_index, positive_index))
-                positions.add((negative_index, negative_index))
-
-        for element in (*self.resistors, *self.switches, *self.diodes):
-            add_conductance_pattern(element.positive, element.negative)
-        for branch in self.constraint_branches:
-            branch_index = self.branch_index[branch.name]
-            if branch.positive != GROUND:
-                node_index = self.node_index[branch.positive]
-                positions.add((node_index, branch_index))
-                positions.add((branch_index, node_index))
-            if branch.negative != GROUND:
-                node_index = self.node_index[branch.negative]
-                positions.add((node_index, branch_index))
-                positions.add((branch_index, node_index))
-
-        return _compressed_sparse_column_pattern(self.algebraic_size, positions)
-
-    def _make_terminal_stamp(self, element: Element) -> _TerminalStamp:
-        return _TerminalStamp(
-            self.node_index.get(element.positive),
-            self.node_index.get(element.negative),
-        )
-
-    def _make_conductance_stamp(self, element: Element) -> _TerminalStamp:
-        terminal = self._make_terminal_stamp(element)
-        positions: list[tuple[int, int, float]] = []
-        if terminal.positive_index is not None:
-            positions.append((terminal.positive_index, terminal.positive_index, 1.0))
-            if terminal.negative_index is not None:
-                positions.append((terminal.positive_index, terminal.negative_index, -1.0))
-        if terminal.negative_index is not None:
-            if terminal.positive_index is not None:
-                positions.append((terminal.negative_index, terminal.positive_index, -1.0))
-            positions.append((terminal.negative_index, terminal.negative_index, 1.0))
-        return _TerminalStamp(
-            terminal.positive_index,
-            terminal.negative_index,
-            tuple(
-                _JacobianStamp(
-                    row,
-                    column,
-                    self._algebraic_sparse_position_index[(row, column)],
-                    multiplier,
-                )
-                for row, column, multiplier in positions
-            ),
-        )
-
-    def _make_constraint_stamp(self, element: Element) -> _ConstraintStamp:
-        terminal = self._make_terminal_stamp(element)
-        branch_index = self.branch_index[element.name]
-        positions: list[tuple[int, int, float]] = []
-        if terminal.positive_index is not None:
-            positions.extend(
-                [
-                    (terminal.positive_index, branch_index, 1.0),
-                    (branch_index, terminal.positive_index, 1.0),
-                ]
-            )
-        if terminal.negative_index is not None:
-            positions.extend(
-                [
-                    (terminal.negative_index, branch_index, -1.0),
-                    (branch_index, terminal.negative_index, -1.0),
-                ]
-            )
-        return _ConstraintStamp(
-            _TerminalStamp(
-                terminal.positive_index,
-                terminal.negative_index,
-                tuple(
-                    _JacobianStamp(
-                        row,
-                        column,
-                        self._algebraic_sparse_position_index[(row, column)],
-                        multiplier,
-                    )
-                    for row, column, multiplier in positions
-                ),
-            ),
-            branch_index,
-        )
-
-    def _build_differential_sensitivity_right_hand_sides(
-        self,
-    ) -> tuple[tuple[float, ...], ...]:
-        right_hand_sides: list[tuple[float, ...]] = []
-        for state_index in range(self.dynamic_size):
-            right_hand_side = [0.0] * self.algebraic_size
-            if state_index < len(self.capacitors):
-                capacitor = self.capacitors[state_index]
-                right_hand_side[self.branch_index[capacitor.name]] = 1.0
-            else:
-                inductor = self.inductors[state_index - len(self.capacitors)]
-                if inductor.positive != GROUND:
-                    right_hand_side[self.node_index[inductor.positive]] = -1.0
-                if inductor.negative != GROUND:
-                    right_hand_side[self.node_index[inductor.negative]] = 1.0
-            right_hand_sides.append(tuple(right_hand_side))
-        return tuple(right_hand_sides)
 
     def _build_implicit_block_sparse_structure(
         self,

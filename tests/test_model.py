@@ -21,6 +21,8 @@ from babcs.model import (
     CircuitSolveError,
     _clear_compiled_sparse_algebraic_topologies,
     _compile_algebraic_residual_kernel,
+    _compile_algebraic_residual_topology,
+    _compile_algebraic_topology,
     _compile_implicit_block_sparse_topology,
     _compile_sparse_algebraic_jacobian_kernel,
     _compile_sparse_algebraic_kernel,
@@ -988,10 +990,43 @@ class CircuitModelTests(unittest.TestCase):
             first._compiled_algebraic_residual_kernel,
             second._compiled_algebraic_residual_kernel,
         )
+        self.assertIs(
+            first._algebraic_sparse_template,
+            second._algebraic_sparse_template,
+        )
+        self.assertIs(first._resistor_stamps, second._resistor_stamps)
+        self.assertIs(first._diode_stamps, second._diode_stamps)
+        self.assertIs(
+            first._differential_sensitivity_right_hand_sides,
+            second._differential_sensitivity_right_hand_sides,
+        )
+        self.assertIsNot(first.resistors[0], second.resistors[0])
+        self.assertNotEqual(
+            first.resistors[0].resistance,
+            second.resistors[0].resistance,
+        )
+        topology_cache_info = _compile_algebraic_topology.cache_info()
+        self.assertEqual(
+            (
+                topology_cache_info.hits,
+                topology_cache_info.misses,
+                topology_cache_info.maxsize,
+            ),
+            (1, 1, 128),
+        )
+        residual_topology_cache_info = _compile_algebraic_residual_topology.cache_info()
+        self.assertEqual(
+            (
+                residual_topology_cache_info.hits,
+                residual_topology_cache_info.misses,
+                residual_topology_cache_info.maxsize,
+            ),
+            (1, 1, 128),
+        )
         cache_info = _compile_algebraic_residual_kernel.cache_info()
         self.assertEqual(
             (cache_info.hits, cache_info.misses, cache_info.maxsize),
-            (1, 1, 128),
+            (0, 1, 128),
         )
 
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
@@ -1589,6 +1624,57 @@ class CircuitModelTests(unittest.TestCase):
         circuit = Circuit([Capacitor("C1", "n", "0", 1.0e-6)])
         with self.assertRaises(CircuitSolveError):
             circuit.evaluate(0.0, (math.nan,))
+
+    def test_builtin_element_copy_is_fast_and_subclasses_keep_fallback(self) -> None:
+        class CustomResistor(Resistor):
+            pass
+
+        resistor = Resistor("R1", " input ", "GROUND", 1_000.0)
+        custom = CustomResistor("R2", "input", " GND ", 2_000.0)
+        circuit = Circuit([resistor, custom])
+
+        self.assertIs(type(circuit.elements[0]), Resistor)
+        self.assertIs(type(circuit.elements[1]), CustomResistor)
+        self.assertIsNot(circuit.elements[0], resistor)
+        self.assertIsNot(circuit.elements[1], custom)
+        self.assertEqual(circuit.elements[0].positive, "input")
+        self.assertEqual(circuit.elements[0].negative, "0")
+        self.assertEqual(circuit.elements[1].negative, "0")
+        resistor.resistance = 3_000.0
+        custom.resistance = 4_000.0
+        self.assertEqual(circuit.resistors[0].resistance, 1_000.0)
+        self.assertEqual(circuit.resistors[1].resistance, 2_000.0)
+
+    def test_classification_keeps_order_and_duplicate_error_precedence(self) -> None:
+        circuit = Circuit(
+            [
+                VoltageSource("V1", "b", "a", Constant(1.0)),
+                Capacitor("C1", "a", "c", 1.0e-6),
+                Resistor("R1", "c", "0", 1_000.0),
+                CurrentSource("I1", "b", "0", Constant(0.0)),
+                Inductor("L1", "c", "0", 1.0e-3),
+                Diode("D1", "a", "0"),
+                Switch("S1", "b", "0", Constant(0.0)),
+            ]
+        )
+
+        self.assertEqual(circuit.nodes, ("b", "a", "c"))
+        self.assertEqual(
+            tuple(element.name for element in circuit.constraint_branches),
+            ("V1", "C1"),
+        )
+        self.assertEqual(tuple(element.name for element in circuit.capacitors), ("C1",))
+        self.assertEqual(tuple(element.name for element in circuit.inductors), ("L1",))
+        self.assertEqual(tuple(element.name for element in circuit.resistors), ("R1",))
+        self.assertEqual(tuple(element.name for element in circuit.diodes), ("D1",))
+        self.assertEqual(tuple(element.name for element in circuit.switches), ("S1",))
+        with self.assertRaisesRegex(ValueError, "element names must be unique"):
+            Circuit(
+                [
+                    Resistor("", "n", "0", -1.0),
+                    Resistor("", "m", "0", -1.0),
+                ]
+            )
 
     def test_controlled_switch_changes_conductance(self) -> None:
         circuit = Circuit(

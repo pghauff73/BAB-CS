@@ -1,4 +1,4 @@
-# BAB-CSv1 Completion Audit
+# Bounded-Authority-Based-Circuit-Simulation v1 Completion Audit
 
 Audit date: August 24, 2026
 

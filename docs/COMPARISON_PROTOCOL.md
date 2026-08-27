@@ -1,4 +1,4 @@
-# BAB-CS Comparison Protocol
+# Bounded-Authority-Based-Circuit-Simulation Comparison Protocol
 
 ## Purpose
 

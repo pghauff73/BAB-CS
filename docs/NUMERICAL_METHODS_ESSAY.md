@@ -1,4 +1,4 @@
-# Numerical Methods and Error Bounding in BAB-CS
+# Numerical Methods and Error Bounding in Bounded-Authority-Based-Circuit-Simulation
 
 ## Constrained Circuit State
 

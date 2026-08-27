@@ -1,4 +1,4 @@
-# BAB-CS Release Draft
+# Bounded-Authority-Based-Circuit-Simulation Release Draft
 
 ## Status
 
@@ -21,12 +21,12 @@ tag, or publish the release.
 
 ## Release Summary
 
-This candidate expands BAB-CS from a bounded AB2 circuit-simulation prototype
-into a reusable bounded multi-method reference implementation. Explicit and
-implicit candidate methods share algebraic projection, independent reference
-authority, contractive correction, recursive bound tracking, periodic refined
-replay, event-boundary history resets, passivity and residual monitoring, and
-fail-closed fallback.
+This candidate expands Bounded-Authority-Based-Circuit-Simulation from a bounded
+AB2 circuit-simulation prototype into a reusable bounded multi-method reference
+implementation. Explicit and implicit candidate methods share algebraic
+projection, independent reference authority, contractive correction, recursive
+bound tracking, periodic refined replay, event-boundary history resets,
+passivity and residual monitoring, and fail-closed fallback.
 
 The release also adds an optional high-performance sparse path for larger
 built-in circuits. The sparse path retains the dependency-free dense backend,
@@ -97,6 +97,16 @@ topology, residual, contraction, and finiteness gates.
   through a bounded source cache while keeping numerical component values live.
 - Lets later exact-topology circuit instances adopt a previously demand-qualified
   sparse assembly kernel on their first eligible call through a bounded LRU.
+- Reuses immutable algebraic CSC templates, device and constraint stamps,
+  sensitivity right-hand sides, implicit block layouts, and generated residual
+  functions across repeated exact topologies through bounded structural caches.
+- Rebuilds capacitance and inductance multipliers per circuit so cached layout
+  never freezes reactive values.
+- Uses a direct normalized copy path for exact built-in elements while preserving
+  the general dataclass path for subclasses.
+- Classifies elements, validates parameters, collects constraint branches, and
+  indexes first-seen nodes in one exact-order pass while preserving duplicate-
+  name error precedence and independent subclass classification.
 - Shares duplicate immutable built-in control values for exact circuits with at
   least 32 switches while preserving unique, custom, reassigned, and subclass
   sampling semantics.
@@ -210,6 +220,14 @@ round improved by at least 8.853%. Replay steps fell from 390 to 263. Smooth,
 source-pulsed, and mixed C+L BDF2 circuits retain fixed replay because their
 broader prototypes did not pass the timing gate.
 
+Repeated-topology construction against exact commit `dd8145e` measured 72.491%
+to 78.326% mean reductions across 16-, 32-, 64-, and 128-channel capacitor/diode
+families plus a 64-channel mixed family. Minimum construction reductions were
+71.965% to 78.228%. Building and taking one evaluation improved by 64.058% to
+72.768%, with every minimum round above 63.728%. Simulation-only traces and
+deterministic work were exactly equal; these figures characterize parameter-
+sweep and ensemble setup latency rather than per-step solver speed.
+
 These numbers are local characterization for the named workloads and hardware.
 They are not a claim that BAB-CS is generally faster than `ngspice` or another
 production simulator.
@@ -268,10 +286,30 @@ change.
 The ULP-aware sensitivity-age policy is now implemented as the same
 mathematical two-step window with a scale-aware representational tolerance. It
 has direct regression coverage and passed the August 25, 2026 source-tree run
-of all 225 tests in 55.254 seconds with long, very-long, SciPy, and KLU tiers
+of all 229 tests in 56.596 seconds with long, very-long, SciPy, and KLU tiers
 enabled. This local run
 does not replace exact-commit wheel, comparison, workflow, or human-approval
 requirements.
+
+Two deterministic candidate wheel builds were byte-identical with SHA-256
+`761462fd7c451d33a111162e8a55a225920e0646ac72544a542db592ee3dde82`.
+The dependency-free installed wheel passed all 229 tests in 53.080 seconds with
+57 expected optional-backend skips. The same wheel with SciPy 1.18.1, NumPy
+2.5.2, and SuiteSparse KLU 2.3.6 passed all 229 tests in 53.433 seconds with zero
+skips. Both environments passed `pip check`; these remain candidate artifacts
+until an exact source commit is selected and approved.
+
+The current working tree postdates those artifacts and includes additional
+root-finding, release-evidence, governance, and documentation work. The
+authoritative current surface count is generated as
+`qualification-summary.json` from Python syntax, candidate ownership, benchmark
+manifests, CI configuration, package identity, and workflow provenance rather
+than copied into this release draft. The latest local default run passed the
+complete discovered suite with the expected opt-in long-tier skips, and the
+root comparison plus installed-wheel smoke also passed. The prior wheel hashes
+and 229-test all-tier runs do not qualify this new layer; new exact-source,
+full-tier, clean-wheel, workflow, and human-review evidence is required before
+it can be included in a release claim.
 
 ## Release Qualification Procedure
 
@@ -339,7 +377,7 @@ approximate filename is insufficient.
 ### 6. Create and push the approved tag
 
 ```bash
-git tag -a v1.1.0 <FULL_SOURCE_SHA> -m "BAB-CS v1.1.0"
+git tag -a v1.1.0 <FULL_SOURCE_SHA> -m "Bounded-Authority-Based-Circuit-Simulation v1.1.0"
 git push origin v1.1.0
 ```
 
@@ -386,10 +424,11 @@ and preserve the final approval and evidence outside expiring Actions storage.
 
 ## Suggested GitHub Release Notes
 
-### BAB-CS v1.1.0
+### Bounded-Authority-Based-Circuit-Simulation v1.1.0
 
-BAB-CS v1.1.0 expands the bounded Adams-Bashforth circuit-simulation reference
-into a bounded multi-method framework. The release adds explicit Euler, Heun,
+Bounded-Authority-Based-Circuit-Simulation v1.1.0 expands the bounded
+circuit-simulation reference into a bounded multi-method framework. The release
+adds explicit Euler, Heun,
 RK23, AB2, backward Euler, trapezoidal, and BDF2 candidate configurations under
 shared projection, correction, reference, replay, residual, energy, and
 fail-closed fallback controls.

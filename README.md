@@ -1,12 +1,14 @@
-# BAB-CSv1
+# Bounded-Authority-Based-Circuit-Simulation
 
-[![CI](https://github.com/pghauff73/BAB-CS/actions/workflows/ci.yml/badge.svg)](https://github.com/pghauff73/BAB-CS/actions/workflows/ci.yml)
+[![CI](https://github.com/pghauff73/Bounded-Authority-Based-Circuit-Simulation/actions/workflows/ci.yml/badge.svg)](https://github.com/pghauff73/Bounded-Authority-Based-Circuit-Simulation/actions/workflows/ci.yml)
 
-BAB-CSv1 is a dependency-free-by-default Python reference implementation of
-**Bounded Adams-Bashforth Circuit Simulation** with a reusable error-bounding
-controller. SciPy is an optional acceleration dependency for larger sparse
-linear systems, and a compatible system SuiteSparse KLU 2 library can add
-bounded symbolic/numeric reuse.
+Bounded-Authority-Based-Circuit-Simulation (`BAB-CS`) is a
+dependency-free-by-default Python reference implementation of supervisory
+transient circuit integration with reusable error-bounding and independently
+refreshed numerical authority. The compatible Python distribution, import, and
+command names remain `bab-cs`, `babcs`, and `babcs`. SciPy is an optional
+acceleration dependency for larger sparse linear systems, and a compatible
+system SuiteSparse KLU 2 library can add bounded symbolic/numeric reuse.
 The controller can wrap explicit Euler, Heun, Bogacki-Shampine RK23,
 variable-step AB2, backward Euler, trapezoidal, or BDF2 candidates. It combines
 semiexplicit modified nodal analysis, algebraic projection, an independent
@@ -14,8 +16,12 @@ implicit reference, contractive correction, embedded estimators where
 available, runtime error gates, periodic replay anchors, passivity monitoring,
 event-boundary history resets, and fail-closed implicit fallback.
 
-BAB-CSv1 is intended for algorithm development and deterministic small-circuit
-validation. It is not a replacement for a production sparse SPICE simulator.
+Bounded-Authority-Based-Circuit-Simulation is intended for algorithm development
+and deterministic small-circuit validation. It is not a replacement for a
+production sparse SPICE simulator.
+
+The project is licensed under the Mozilla Public License 2.0. See `LICENSE` and
+`docs/LICENCE_DECISION.md` for the canonical text and decision record.
 
 ## Implemented Circuit Model
 
@@ -210,6 +216,36 @@ high-value scaling work.
 See `docs/BOUNDED_CANDIDATES.md` for candidate formulas, amplification models,
 fast-path rules, selection guidance, and measured linear/nonlinear tradeoffs.
 
+For a concise system map and a copy-paste deterministic experiment, see
+`docs/ARCHITECTURE.md` and `docs/MINIMAL_REPRODUCIBLE_RESEARCH.md`.
+
+## Bounded Newton Research
+
+The package exposes scalar `bounded_newton_raphson` and `interval_newton`
+research methods. Ordinary bounded Newton makes point-derivative proposals
+subordinate to a sign-changing bracket and an independent midpoint authority
+step. Interval Newton accepts a user-supplied derivative enclosure only when
+its outward-widened contraction retains at most half the prior width; invalid,
+zero-containing, or weak derivative intervals fall back to sign-recovered
+bisection. Both methods therefore retain the same explicit half-width authority
+bound under their stated oracle assumptions. Pure Newton-Raphson, secant,
+bisection, and Ridders implementations share the diagnostic result model.
+
+Generate a deterministic root-finder comparison:
+
+```bash
+PYTHONPATH=src python tools/compare_rootfinders.py \
+  --output /tmp/babcs-rootfinders.json \
+  --csv-output /tmp/babcs-rootfinders.csv
+```
+
+See `docs/BOUNDED_NEWTON.md` for the invariant proofs, derivative-enclosure
+contract, ranked research directions, comparison results, literature, and the
+explicit distinction between a numerical scalar enclosure and a
+machine-checked interval proof. The existing vector circuit Newton solver
+remains a damped, residual-gated method; these scalar results do not silently
+promote it to interval authority.
+
 Build a wheel:
 
 ```bash
@@ -220,6 +256,16 @@ Package identity is owned by `src/babcs/_project.py`. The build backend,
 runtime `babcs.__version__`, `pyproject.toml`, wheel filename, wheel METADATA,
 optional sparse dependency, compatibility tag, and console entry point are
 checked together by `tests/test_build_backend.py`.
+
+## Project Policies
+
+- Citation metadata: `CITATION.cff`
+- Changes and releases: `CHANGELOG.md`
+- Contribution requirements: `CONTRIBUTING.md`
+- Vulnerability reporting: `SECURITY.md`
+- Licence decision record: `docs/LICENCE_DECISION.md`
+- Generated qualification facts: `docs/QUALIFICATION_SUMMARY.md`
+- Repository-audit implementation: `REPOSITORY_AUDIT_IMPLEMENTATION_PLAN.md`
 
 ## JSON Case Format
 

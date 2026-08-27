@@ -4,6 +4,7 @@ import argparse
 import json
 from dataclasses import replace
 
+from ._project import PROJECT_NAME
 from .bounded import BoundedIntegrator
 from .candidates import CANDIDATE_METHODS
 from .io import load_case, summary_data, write_csv, write_summary
@@ -13,7 +14,10 @@ from .simulator import Simulator
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="babcs", description="BAB-CSv1 circuit simulator")
+    parser = argparse.ArgumentParser(
+        prog="babcs",
+        description=f"{PROJECT_NAME} circuit simulator",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
     simulate = subparsers.add_parser("simulate", help="simulate a JSON circuit case")
     simulate.add_argument("input", help="input JSON circuit")

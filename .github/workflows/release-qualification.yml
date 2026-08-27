@@ -71,6 +71,24 @@ jobs:
             --workflow-ref "${GITHUB_REF}" \
             --workflow-sha "${BABCS_SOURCE_COMMIT}"
 
+      - name: Record qualification surface summary
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PYTHONPATH: src
+        shell: bash
+        run: |
+          set -euo pipefail
+          latest_public_release="$(
+            gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name'
+          )"
+          python tools/release_evidence.py write-qualification-summary \
+            --repository-root . \
+            --evidence-dir artifacts/release \
+            --benchmark-manifest benchmarks/manifest.json \
+            --ci-workflow .github/workflows/ci.yml \
+            --latest-public-release "${latest_public_release}" \
+            --output artifacts/release/qualification-summary.json
+
       - name: Compile qualification sources
         shell: bash
         run: |

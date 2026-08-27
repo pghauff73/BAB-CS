@@ -1,4 +1,4 @@
-# BAB-CSv1 Error-Bound Model
+# Bounded-Authority-Based-Circuit-Simulation v1 Error-Bound Model
 
 ## Predictor
 

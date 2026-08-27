@@ -1,4 +1,4 @@
-# BAB-CSv1 Normative Specification
+# Bounded-Authority-Based-Circuit-Simulation v1 Normative Specification
 
 ## Requirements
 
@@ -111,4 +111,3 @@ The semiexplicit formulation supports circuits for which capacitor voltages and
 inductor currents determine a unique algebraic operating state. Capacitor loops,
 inductor cutsets, conflicting ideal voltage constraints, floating nodes, and
 other singular or higher-index structures may be rejected.
-

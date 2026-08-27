@@ -1,4 +1,4 @@
-# BAB-CS Current Work: Project Position and Integrated Design
+# Bounded-Authority-Based-Circuit-Simulation Current Work
 
 ## Present Position
 
@@ -212,6 +212,20 @@ their first eligible assembly, and 32-or-more-switch circuits can share exact
 immutable built-in control values without changing custom-provider observability
 [[17]](REFERENCES.md#ref-17).
 
+Repeated circuit families now share immutable construction products through
+bounded structural caches. Exact matching topologies reuse algebraic CSC
+templates, device and constraint stamps, sensitivity right-hand sides, implicit
+block layouts, and generated residual functions. Numerical device values,
+reactive multipliers, waveforms, and initial conditions remain private to each
+circuit. Exact built-in elements use direct normalized copies, while subclasses
+retain the general dataclass fallback. Classification, parameter validation,
+constraint collection, and first-seen node indexing now share one exact-order
+pass. Against exact commit `dd8145e`, balanced construction improved by 72.5% to
+78.3% and construction plus one evaluation by 64.1% to 72.8% across the tested
+16- to 128-channel families. Simulation-only
+state, metric, rejection, and deterministic work traces remained exactly equal
+[[17]](REFERENCES.md#ref-17).
+
 The CLI reads JSON circuit descriptions, permits rollout, candidate,
 reference, backend, contraction, interval, and bound-cap overrides, and writes
 deterministic JSON summaries and CSV step histories [[11]](REFERENCES.md#ref-11).
@@ -223,9 +237,13 @@ than to expose only a final waveform.
 
 ## Evidence and Release State
 
-The qualification surface now comprises 225 test methods across model,
-linear-algebra, integrator, candidate, nonlinear, event, long-horizon,
-comparison, packaging, and release-evidence modules [[32]](REFERENCES.md#ref-32).
+The current working-tree test and module counts are generated into
+`qualification-summary.json` from canonical source owners rather than copied
+into this document [[32]](REFERENCES.md#ref-32). The default August 27, 2026
+source run passed the complete discovered suite with two expected opt-in
+long-tier skips. The most recent fully tiered and installed-wheel evidence
+covers the earlier 229-test surface, so it does not qualify the new
+root-finding, qualification-summary, or governance layer.
 Long and very-long tests are opt-in tiers, and optional sparse tests execute
 when SciPy or KLU is available. The suite includes direct formula checks, analytic
 convergence, refined-replay comparisons, failure injection, topology rejection,

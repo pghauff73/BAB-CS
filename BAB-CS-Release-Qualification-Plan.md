@@ -1,4 +1,4 @@
-# BAB-CS Release Qualification Plan
+# Bounded-Authority-Based-Circuit-Simulation Release Qualification Plan
 
 ## 1. Document Status
 

@@ -1,4 +1,4 @@
-# BAB-CS Release Qualification Implementation Audit
+# Bounded-Authority-Based-Circuit-Simulation Release Qualification Implementation Audit
 
 Audit date: August 24, 2026
 

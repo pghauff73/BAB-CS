@@ -1,0 +1,41 @@
+name: Research proposal
+description: Propose an algorithm, bound, benchmark, backend, or evidence improvement.
+title: "[Research] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and expected gain
+      description: Identify the current limitation and the measurable improvement sought.
+    validations:
+      required: true
+  - type: textarea
+    id: authority
+    attributes:
+      label: Mathematical or experimental authority
+      description: Cite the theorem, paper, reference implementation, or benchmark authority.
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: Proposed design
+      description: Explain candidate behavior, authority, failure gates, fallback, and rollback.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation plan
+      description: List deterministic tests, comparisons, adversarial cases, and claim boundaries.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Proposal checks
+      options:
+        - label: The proposal preserves fail-closed authority or explicitly replaces it with stronger evidence.
+          required: true
+        - label: The proposal does not treat model output or benchmark speed as final approval.
+          required: true
