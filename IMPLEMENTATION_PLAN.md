@@ -1,4 +1,4 @@
-# BAB-CSv1 Implementation Plan
+# Bounded-Authority-Based-Circuit-Simulation v1 Implementation Plan
 
 ## Objective
 
@@ -50,4 +50,3 @@ An unreferenced periodically corrected production mode is not part of v1.
 - Passive LC energy remains bounded while phase is handled by re-anchoring.
 - Singular algebraic systems fail closed.
 - Source execution, wheel build, tests, and example simulations pass.
-

@@ -1,0 +1,55 @@
+name: Defect report
+description: Report a reproducible implementation, CLI, packaging, or workflow defect.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include security-sensitive details here. Use the private security-reporting link in the issue chooser for vulnerabilities.
+  - type: input
+    id: identity
+    attributes:
+      label: Exact software identity
+      description: Release tag and wheel hash, or full 40-character source commit.
+      placeholder: v1.0.0 / SHA-256, or 40-character commit
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Python, operating system, SciPy, KLU, ngspice, and installation method where relevant.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the complete command, input file, and deterministic steps.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: Include errors, logs, output fields, and whether fallback occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: State the documented contract or invariant you expected.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I removed secrets, credentials, private data, and exploit details.
+          required: true
+        - label: I searched existing issues for the same behavior.
+          required: true

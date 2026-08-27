@@ -25,11 +25,13 @@ def _project() -> ModuleType:
 def _metadata() -> bytes:
     project = _project()
     return (
-        "Metadata-Version: 2.1\n"
+        "Metadata-Version: 2.4\n"
         f"Name: {project.DISTRIBUTION_NAME}\n"
         f"Version: {project.VERSION}\n"
         f"Summary: {project.SUMMARY}\n"
         f"Requires-Python: {project.REQUIRES_PYTHON}\n"
+        f"License-Expression: {project.LICENSE_EXPRESSION}\n"
+        f"License-File: {project.LICENSE_FILE}\n"
         "Provides-Extra: sparse\n"
         f'Requires-Dist: {project.SPARSE_REQUIREMENT}; extra == "sparse"\n'
         "\n"
@@ -77,6 +79,11 @@ def build_wheel(wheel_directory: str, config_settings=None, metadata_directory=N
             archive,
             f"{dist_info}/entry_points.txt",
             f"[console_scripts]\n{project.CONSOLE_SCRIPT}\n".encode(),
+        )
+        add_bytes(
+            archive,
+            f"{dist_info}/licenses/{project.LICENSE_FILE}",
+            (root / project.LICENSE_FILE).read_bytes(),
         )
         buffer = io.StringIO()
         writer = csv.writer(buffer, lineterminator="\n")

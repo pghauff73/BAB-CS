@@ -1,4 +1,4 @@
-# BAB-CS References
+# Bounded-Authority-Based-Circuit-Simulation References
 
 This bibliography separates external foundations from repository evidence. The
 external sources explain the established numerical-analysis, sparse-linear-
@@ -138,3 +138,63 @@ BAB-CS actually implements and what it is permitted to claim.
 
 <a id="ref-35"></a>
 35. [Optional SuiteSparse KLU adapter](../src/babcs/_klu.py).
+
+## Root-Finding Foundations
+
+<a id="ref-36"></a>
+36. L. V. Kantorovich, “On Newton's Method,” *Trudy Matematicheskogo
+    Instituta imeni V. A. Steklova*, vol. 28, pp. 104–144, 1949.
+    [Steklov Institute record](https://www.mathnet.ru/eng/tm/v28/p104).
+
+<a id="ref-37"></a>
+37. R. P. Brent, “An Algorithm with Guaranteed Convergence for Finding a Zero
+    of a Function,” *The Computer Journal*, vol. 14, no. 4, pp. 422–425,
+    1971. DOI:
+    [10.1093/comjnl/14.4.422](https://doi.org/10.1093/comjnl/14.4.422).
+
+<a id="ref-38"></a>
+38. J. C. P. Bus and T. J. Dekker, “Two Efficient Algorithms with Guaranteed
+    Convergence for Finding a Zero of a Function,” *ACM Transactions on
+    Mathematical Software*, vol. 1, no. 4, pp. 330–345, 1975. DOI:
+    [10.1145/355656.355659](https://doi.org/10.1145/355656.355659).
+
+<a id="ref-39"></a>
+39. C. J. F. Ridders, “A New Algorithm for Computing a Single Root of a Real
+    Continuous Function,” *IEEE Transactions on Circuits and Systems*,
+    vol. 26, no. 11, pp. 979–980, 1979. DOI:
+    [10.1109/TCS.1979.1084580](https://doi.org/10.1109/TCS.1979.1084580).
+
+<a id="ref-40"></a>
+40. G. E. Alefeld, F. A. Potra, and Y. Shi, “Algorithm 748: Enclosing Zeros of
+    Continuous Functions,” *ACM Transactions on Mathematical Software*,
+    vol. 21, no. 3, pp. 327–344, 1995. DOI:
+    [10.1145/210089.210111](https://doi.org/10.1145/210089.210111).
+
+<a id="ref-41"></a>
+41. S. C. Eisenstat and H. F. Walker, “Globally Convergent Inexact Newton
+    Methods,” *SIAM Journal on Optimization*, vol. 4, no. 2, pp. 393–422,
+    1994. DOI:
+    [10.1137/0804022](https://doi.org/10.1137/0804022).
+
+<a id="ref-42"></a>
+42. R. E. Moore, “A Test for Existence of Solutions to Nonlinear Systems,”
+    *SIAM Journal on Numerical Analysis*, vol. 14, no. 4, pp. 611–615, 1977.
+    DOI: [10.1137/0714040](https://doi.org/10.1137/0714040).
+
+<a id="ref-43"></a>
+43. R. Krawczyk, “Newton-Algorithmen zur Bestimmung von Nullstellen mit
+    Fehlerschranken,” *Computing*, vol. 4, pp. 187–201, 1969. DOI:
+    [10.1007/BF02234767](https://doi.org/10.1007/BF02234767).
+
+<a id="ref-44"></a>
+44. I. F. D. Oliveira and R. H. C. Takahashi, “An Enhancement of the
+    Bisection Method Average Performance Preserving Minmax Optimality,”
+    *ACM Transactions on Mathematical Software*, vol. 47, no. 1, article 5,
+    pp. 1–24, 2021. DOI:
+    [10.1145/3423597](https://doi.org/10.1145/3423597).
+
+<a id="ref-45"></a>
+45. E. R. Hansen and R. I. Greenberg, “An Interval Newton Method,”
+    *Applied Mathematics and Computation*, vol. 12, nos. 2–3, pp. 89–98,
+    1983. DOI:
+    [10.1016/0096-3003(83)90001-2](https://doi.org/10.1016/0096-3003(83)90001-2).

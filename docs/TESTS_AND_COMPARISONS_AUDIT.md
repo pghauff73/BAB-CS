@@ -1,4 +1,4 @@
-# BAB-CS Tests and Comparisons Qualification Audit
+# Bounded-Authority-Based-Circuit-Simulation Tests and Comparisons Qualification Audit
 
 Audit date: August 24, 2026
 

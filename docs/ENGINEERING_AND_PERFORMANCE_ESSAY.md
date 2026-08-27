@@ -1,4 +1,4 @@
-# Circuit Engineering and Performance Work in BAB-CS
+# Circuit Engineering and Performance Work in Bounded-Authority-Based-Circuit-Simulation
 
 ## Architectural Ownership
 
@@ -271,6 +271,19 @@ reductions were 9.127%, 8.853%, 10.923%, and 10.388%. Replay steps fell from
 390 to 263. Maximum distance from an eight-substep authority remained below
 0.384 weighted RMS in every scaling case.
 
+Repeated-topology construction is now treated as an ensemble workload rather
+than as unavoidable setup. A bounded structural cache shares frozen algebraic
+CSC templates, device and constraint stamps, sensitivity right-hand sides,
+implicit coupled-block layouts, and generated residual functions between exact
+matching topologies. Reactive multipliers and every mutable device or waveform
+value remain per-circuit. Exact built-in elements also use a direct normalized
+copy path, while subclasses retain general dataclass replacement. Against exact
+commit `dd8145e`, balanced repeated construction improved by 72.5% to 78.3%
+across 16 to 128 capacitor/diode channels and a 64-channel mixed case. Building
+and taking one evaluation improved by 64.1% to 72.8%. Simulation-only traces and
+deterministic work were exactly equal, so this is an ensemble-latency result and
+not a claim of faster per-step arithmetic.
+
 The same audit records rejected optimizations. Shared accepted-evaluation
 Jacobian caching was rejected because later stiffness evaluations did not own
 the same differential state. An exact-index accounting prototype improved an
@@ -307,10 +320,18 @@ measurement.
 
 ## Remaining Work
 
-The project’s current high-value performance frontier is therefore clear.
-Direct instrumentation found one initial KLU workspace miss followed by
+The project’s current high-value performance frontier is therefore clear. Exact-
+type classification, parameter validation, constraint collection, and first-seen
+node indexing now share one order-preserving pass. The remaining constructor
+profile is led by normalized copying and by the still separate classification
+pass. A future fusion must retain duplicate-name error precedence, input-object
+isolation, subclass constructors, exact error messages, and first-seen ordering.
+Compact structural-key formation and cache diagnostics follow that target.
+
+Direct solver instrumentation found one initial KLU workspace miss followed by
 identity hits, zero evictions, and one numeric refactor per new sensitivity in
-the qualified workloads. Broader cache policy would not remove measured work.
+the qualified workloads. Broader cache policy would not remove measured work,
+and safe reusable KLU scratch-plus-copy prototypes regressed isolated solves.
 Cross-anchor subdivision retention and general Backward Euler adaptation have
 failed their retention gates, while switched BDF2 replay now has method-
 specific startup, order, authority, and timing evidence. Dynamic anchor
@@ -319,12 +340,9 @@ increasing the interval did not reduce total replay steps because fewer anchors
 reintegrated proportionally longer windows. In switched runs, intervals above
 the event spacing appeared 31--34% faster only because event history resets
 prevented periodic independent replay altogether. That apparent gain removes
-authority rather than making it cheaper. Reusable KLU buffer residency is now
-the next measured opportunity, but only if
-caller-owned read-only inputs, independent results, stale-factor replay, and
-cross-thread restoration remain exact. Each proposal must retain
-source/installed equivalence, nonlinear qualification, bound behavior, and
-exact fallback.
+authority rather than making it cheaper. Each proposal must retain source and
+installed equivalence, nonlinear qualification, bound behavior, independent
+result ownership, and exact fallback.
 
 Replay subdivision is now independently evidence-controlled for mixed C+L
 trapezoidal anchors and qualified piecewise-switched BDF2 anchors. Remaining

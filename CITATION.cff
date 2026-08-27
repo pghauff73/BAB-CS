@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: >-
+  If you use Bounded-Authority-Based-Circuit-Simulation in research, please cite
+  the software using this metadata and identify the exact release tag or source
+  commit used.
+title: Bounded-Authority-Based-Circuit-Simulation
+abstract: >-
+  A deterministic, fail-closed, error-bounded supervisory architecture for
+  transient circuit integration with multiple candidate methods and
+  independently refreshed numerical authority.
+type: software
+authors:
+  - family-names: Hauff
+    given-names: Pamela
+    alias: pghauff73
+version: 1.1.0
+license: MPL-2.0
+repository-code: https://github.com/pghauff73/Bounded-Authority-Based-Circuit-Simulation
+url: https://github.com/pghauff73/Bounded-Authority-Based-Circuit-Simulation
+keywords:
+  - circuit simulation
+  - numerical integration
+  - error bounds
+  - transient analysis
+  - modified nodal analysis
+  - reproducible research

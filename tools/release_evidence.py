@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -15,6 +16,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from babcs import _project
+from babcs.candidates import CANDIDATE_METHODS
 
 
 CONTROL_FILES = {
@@ -56,6 +58,10 @@ WORKFLOW_FIELDS = {
     "ref": "WORKFLOW_REF",
     "sha": "WORKFLOW_SHA",
 }
+QUALIFICATION_SUMMARY_SCHEMA_VERSION = 1
+PUBLIC_RELEASE_TAG_PATTERN = re.compile(
+    r"v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?"
+)
 
 
 class ReleaseEvidenceError(RuntimeError):
@@ -86,6 +92,43 @@ def command_output(command: list[str], *, fallback: str = "unavailable") -> str:
     except (OSError, subprocess.CalledProcessError):
         return fallback
     return (completed.stdout or completed.stderr).strip() or fallback
+
+
+def validate_public_release_tag(value: str) -> None:
+    if value != "unavailable" and PUBLIC_RELEASE_TAG_PATTERN.fullmatch(value) is None:
+        raise ReleaseEvidenceError("latest public release is not a version tag")
+
+
+def discover_latest_public_release(repository: str) -> str:
+    if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository) is None:
+        raise ReleaseEvidenceError("GitHub repository must use OWNER/NAME syntax")
+    try:
+        completed = subprocess.run(
+            [
+                "gh",
+                "api",
+                f"repos/{repository}/releases/latest",
+                "--jq",
+                ".tag_name",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as error:
+        raise ReleaseEvidenceError("gh is unavailable for release discovery") from error
+    if completed.returncode == 0:
+        value = completed.stdout.strip()
+        validate_public_release_tag(value)
+        return value
+    error_text = "\n".join(
+        part.strip() for part in (completed.stdout, completed.stderr) if part.strip()
+    )
+    if re.search(r"\bHTTP 404\b", error_text):
+        return "unavailable"
+    raise ReleaseEvidenceError(
+        f"latest public release discovery failed: {error_text or 'unknown gh error'}"
+    )
 
 
 def normalize_utc_timestamp(value: str | None) -> str:
@@ -173,6 +216,179 @@ def record_environment(
     )
 
 
+def count_test_surface(tests_directory: Path) -> dict[str, int]:
+    if not tests_directory.is_dir():
+        raise ReleaseEvidenceError(f"test directory is missing: {tests_directory}")
+    test_methods = 0
+    test_modules = 0
+    for path in sorted(tests_directory.glob("test_*.py"), key=lambda item: item.name):
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except (OSError, SyntaxError) as error:
+            raise ReleaseEvidenceError(f"cannot inspect test module: {path}") from error
+        module_methods = sum(
+            1
+            for node in ast.walk(tree)
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name.startswith("test_")
+        )
+        if module_methods:
+            test_modules += 1
+            test_methods += module_methods
+    if test_methods == 0:
+        raise ReleaseEvidenceError("no test methods were discovered")
+    return {"methods": test_methods, "modules": test_modules}
+
+
+def ci_python_versions(workflow_path: Path) -> list[str]:
+    try:
+        workflow = workflow_path.read_text(encoding="utf-8")
+    except OSError as error:
+        raise ReleaseEvidenceError(f"cannot read CI workflow: {workflow_path}") from error
+    match = re.search(r"python-version:\s*\[(?P<versions>[^\]]+)\]", workflow)
+    if match is None:
+        raise ReleaseEvidenceError("CI workflow lacks a Python version matrix")
+    try:
+        versions = json.loads(f"[{match.group('versions')}]")
+    except json.JSONDecodeError as error:
+        raise ReleaseEvidenceError("CI Python version matrix is invalid") from error
+    if not isinstance(versions, list) or not versions:
+        raise ReleaseEvidenceError("CI Python version matrix is empty")
+    normalized: list[str] = []
+    for version in versions:
+        if not isinstance(version, str) or re.fullmatch(r"\d+\.\d+", version) is None:
+            raise ReleaseEvidenceError("CI Python version matrix contains an invalid version")
+        if version in normalized:
+            raise ReleaseEvidenceError("CI Python version matrix contains duplicate versions")
+        normalized.append(version)
+    return normalized
+
+
+def benchmark_surface(manifest_path: Path) -> dict[str, Any]:
+    manifest = read_json(manifest_path)
+    cases = manifest.get("cases")
+    if not isinstance(cases, list) or not cases:
+        raise ReleaseEvidenceError("benchmark manifest has no cases")
+    case_ids: list[str] = []
+    method_names: set[str] = set()
+    case_method_assignments = 0
+    for case in cases:
+        if not isinstance(case, dict):
+            raise ReleaseEvidenceError("benchmark manifest contains an invalid case")
+        case_id = case.get("id")
+        methods = case.get("methods")
+        if not isinstance(case_id, str) or not case_id:
+            raise ReleaseEvidenceError("benchmark case lacks an identifier")
+        if case_id in case_ids:
+            raise ReleaseEvidenceError("benchmark manifest contains duplicate case identifiers")
+        if not isinstance(methods, list) or not methods or not all(
+            isinstance(method, str) and method for method in methods
+        ):
+            raise ReleaseEvidenceError(f"benchmark case has invalid methods: {case_id}")
+        case_ids.append(case_id)
+        method_names.update(methods)
+        case_method_assignments += len(methods)
+    return {
+        "case_count": len(case_ids),
+        "case_ids": case_ids,
+        "declared_method_count": len(method_names),
+        "declared_methods": sorted(method_names),
+        "case_method_assignments": case_method_assignments,
+        "matrix_result_count": len(expected_comparison_keys(manifest_path)),
+    }
+
+
+def tracked_source_is_dirty(repository_root: Path) -> bool:
+    commands = (
+        ("diff", "--quiet", "HEAD", "--"),
+        ("diff", "--cached", "--quiet"),
+    )
+    for arguments in commands:
+        try:
+            completed = subprocess.run(
+                ["git", *arguments],
+                cwd=repository_root,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        except OSError as error:
+            raise ReleaseEvidenceError("git is unavailable for source-state inspection") from error
+        if completed.returncode not in {0, 1}:
+            raise ReleaseEvidenceError("git source-state inspection failed")
+        if completed.returncode == 1:
+            return True
+    return False
+
+
+def build_qualification_summary(
+    repository_root: Path,
+    evidence_directory: Path,
+    *,
+    benchmark_manifest: Path,
+    ci_workflow: Path,
+    latest_public_release: str,
+    allow_dirty: bool = False,
+) -> dict[str, Any]:
+    source_commit = read_text_evidence(evidence_directory, "SOURCE_COMMIT")
+    tag = read_text_evidence(evidence_directory, "TAG")
+    created_utc = normalize_utc_timestamp(
+        read_text_evidence(evidence_directory, "QUALIFICATION_CREATED_UTC")
+    )
+    validate_release_identity(source_commit, tag, allow_candidate=True)
+    validate_public_release_tag(latest_public_release)
+    actual_commit = command_output(
+        ["git", "-C", str(repository_root), "rev-parse", "HEAD"]
+    )
+    if actual_commit != source_commit:
+        raise ReleaseEvidenceError("qualification summary source commit does not match HEAD")
+    source_dirty = tracked_source_is_dirty(repository_root)
+    if source_dirty and not allow_dirty:
+        raise ReleaseEvidenceError("qualification summary refuses a dirty tracked source tree")
+    workflow = {
+        field: read_text_evidence(evidence_directory, name)
+        for field, name in WORKFLOW_FIELDS.items()
+    }
+    qualification_python_version = read_text_evidence(
+        evidence_directory,
+        "PYTHON_VERSION",
+    )
+    return {
+        "schema_version": QUALIFICATION_SUMMARY_SCHEMA_VERSION,
+        "source": {
+            "commit": source_commit,
+            "tracked_dirty": source_dirty,
+        },
+        "package": {
+            "project_name": _project.PROJECT_NAME,
+            "distribution": _project.DISTRIBUTION_NAME,
+            "package": _project.PACKAGE_NAME,
+            "version": _project.VERSION,
+            "python_requirement": _project.REQUIRES_PYTHON,
+            "license_expression": _project.LICENSE_EXPRESSION,
+            "license_file": _project.LICENSE_FILE,
+            "wheel": _project.wheel_filename(),
+        },
+        "qualification": {
+            "candidate_tag": tag,
+            "created_utc": created_utc,
+            "latest_public_release": latest_public_release,
+            "status": "tag_candidate" if tag == f"v{_project.VERSION}" else "candidate",
+        },
+        "tests": count_test_surface(repository_root / "tests"),
+        "bounded_candidates": {
+            "count": len(CANDIDATE_METHODS),
+            "methods": sorted(CANDIDATE_METHODS),
+        },
+        "benchmarks": benchmark_surface(benchmark_manifest),
+        "python": {
+            "ci_versions": ci_python_versions(ci_workflow),
+            "qualification_version": qualification_python_version,
+        },
+        "workflow": workflow,
+    }
+
+
 def validate_source_commit(source_commit: str) -> None:
     if len(source_commit) != 40 or any(character not in "0123456789abcdef" for character in source_commit):
         raise ReleaseEvidenceError("source commit must be a full lowercase 40-character SHA")
@@ -205,6 +421,7 @@ def expected_metadata() -> dict[str, str]:
         "Version": _project.VERSION,
         "Summary": _project.SUMMARY,
         "Requires-Python": _project.REQUIRES_PYTHON,
+        "License-Expression": _project.LICENSE_EXPRESSION,
     }
 
 
@@ -225,6 +442,7 @@ def inspect_wheel(wheel: Path, repository_root: Path) -> dict[str, Any]:
         f"{dist_info}/METADATA",
         f"{dist_info}/WHEEL",
         f"{dist_info}/entry_points.txt",
+        f"{dist_info}/licenses/{_project.LICENSE_FILE}",
         f"{dist_info}/RECORD",
     }
     expected_members = expected_package_members | expected_dist_members
@@ -263,6 +481,11 @@ def inspect_wheel(wheel: Path, repository_root: Path) -> dict[str, Any]:
         expected_entry_points = f"[console_scripts]\n{_project.CONSOLE_SCRIPT}\n"
         if entry_points != expected_entry_points:
             raise ReleaseEvidenceError("wheel console entry point does not match")
+        license_path = f"{dist_info}/licenses/{_project.LICENSE_FILE}"
+        if metadata.get_all("License-File") != [_project.LICENSE_FILE]:
+            raise ReleaseEvidenceError("wheel license-file metadata does not match")
+        if archive.read(license_path) != (repository_root / _project.LICENSE_FILE).read_bytes():
+            raise ReleaseEvidenceError("wheel license text does not match the source license")
     return {
         "filename": wheel.name,
         "sha256": sha256_file(wheel),
@@ -328,6 +551,8 @@ def evidence_role(name: str) -> str:
         return "artifact_equivalence"
     if name == "comparison-inspection.json":
         return "comparison_inspection"
+    if name == "qualification-summary.json":
+        return "qualification_summary"
     if name.endswith("tests.log"):
         return "test_log"
     if name.endswith("install.log"):
@@ -629,6 +854,52 @@ def build_manifest(
             f"/actions/runs/{workflow['run_id']}"
         ):
             raise ReleaseEvidenceError("candidate workflow URL does not match its run ID")
+    qualification_summary = None
+    qualification_summary_path = evidence_directory / "qualification-summary.json"
+    if qualification_summary_path.is_file():
+        qualification_summary = read_json(qualification_summary_path)
+        if qualification_summary.get("schema_version") != QUALIFICATION_SUMMARY_SCHEMA_VERSION:
+            raise ReleaseEvidenceError("qualification summary schema is unsupported")
+        summary_source = qualification_summary.get("source")
+        summary_package = qualification_summary.get("package")
+        summary_qualification = qualification_summary.get("qualification")
+        summary_workflow = qualification_summary.get("workflow")
+        if not isinstance(summary_source, dict) or (
+            summary_source.get("commit") != source_commit
+            or summary_source.get("tracked_dirty") is not False
+        ):
+            raise ReleaseEvidenceError("qualification summary source identity does not match")
+        if not isinstance(summary_package, dict) or (
+            summary_package.get("project_name") != _project.PROJECT_NAME
+            or summary_package.get("distribution") != _project.DISTRIBUTION_NAME
+            or summary_package.get("package") != _project.PACKAGE_NAME
+            or summary_package.get("version") != _project.VERSION
+            or summary_package.get("python_requirement") != _project.REQUIRES_PYTHON
+            or summary_package.get("license_expression") != _project.LICENSE_EXPRESSION
+            or summary_package.get("license_file") != _project.LICENSE_FILE
+            or summary_package.get("wheel") != wheel_name
+        ):
+            raise ReleaseEvidenceError("qualification summary package identity does not match")
+        if not isinstance(summary_qualification, dict) or (
+            summary_qualification.get("candidate_tag") != tag
+            or summary_qualification.get("created_utc") != created_utc
+        ):
+            raise ReleaseEvidenceError("qualification summary candidate identity does not match")
+        if summary_workflow != workflow:
+            raise ReleaseEvidenceError("qualification summary workflow identity does not match")
+        summary_python = qualification_summary.get("python")
+        if not isinstance(summary_python, dict) or (
+            summary_python.get("qualification_version") != environment["python_version"]
+            or not isinstance(summary_python.get("ci_versions"), list)
+            or not summary_python["ci_versions"]
+        ):
+            raise ReleaseEvidenceError("qualification summary Python identity does not match")
+        summary_tests = qualification_summary.get("tests")
+        if not isinstance(summary_tests, dict) or not all(
+            isinstance(summary_tests.get(field), int) and summary_tests[field] > 0
+            for field in ("methods", "modules")
+        ):
+            raise ReleaseEvidenceError("qualification summary test surface is invalid")
     tests = [
         parse_test_log(path)
         for path in sorted(evidence_directory.glob("*tests.log"), key=lambda item: item.name)
@@ -671,6 +942,7 @@ def build_manifest(
         },
         "environment": environment,
         "workflow": workflow,
+        "surface": qualification_summary,
         "tests": tests,
         "comparisons": comparisons,
         "required_files": required,
@@ -869,7 +1141,9 @@ def write_json(path: Path, data: Any) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Build and verify BAB-CS release evidence")
+    parser = argparse.ArgumentParser(
+        description=f"Build and verify {_project.PROJECT_NAME} release evidence"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     environment = subparsers.add_parser("record-environment")
@@ -882,6 +1156,18 @@ def build_parser() -> argparse.ArgumentParser:
     environment.add_argument("--workflow-event")
     environment.add_argument("--workflow-ref")
     environment.add_argument("--workflow-sha")
+
+    summary = subparsers.add_parser("write-qualification-summary")
+    summary.add_argument("--repository-root", default=".")
+    summary.add_argument("--evidence-dir", required=True)
+    summary.add_argument("--benchmark-manifest", default="benchmarks/manifest.json")
+    summary.add_argument("--ci-workflow", default=".github/workflows/ci.yml")
+    summary.add_argument("--latest-public-release", required=True)
+    summary.add_argument("--output", required=True)
+    summary.add_argument("--allow-dirty", action="store_true")
+
+    latest_release = subparsers.add_parser("latest-public-release")
+    latest_release.add_argument("--repository", required=True)
 
     wheel = subparsers.add_parser("inspect-wheel")
     wheel.add_argument("--wheel", required=True)
@@ -929,6 +1215,20 @@ def main(argv: list[str] | None = None) -> int:
                 workflow_event=arguments.workflow_event,
                 workflow_ref=arguments.workflow_ref,
                 workflow_sha=arguments.workflow_sha,
+            )
+        elif arguments.command == "latest-public-release":
+            print(discover_latest_public_release(arguments.repository))
+        elif arguments.command == "write-qualification-summary":
+            write_json(
+                Path(arguments.output),
+                build_qualification_summary(
+                    Path(arguments.repository_root),
+                    Path(arguments.evidence_dir),
+                    benchmark_manifest=Path(arguments.benchmark_manifest),
+                    ci_workflow=Path(arguments.ci_workflow),
+                    latest_public_release=arguments.latest_public_release,
+                    allow_dirty=arguments.allow_dirty,
+                ),
             )
         elif arguments.command == "inspect-wheel":
             write_json(

@@ -15,6 +15,7 @@ WORKFLOW_RUN_URL
 WORKFLOW_EVENT
 WORKFLOW_REF
 WORKFLOW_SHA
+qualification-summary.json
 compile.log
 source-tests.log
 source-scipy-install.log

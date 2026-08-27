@@ -20,6 +20,8 @@ class BuildBackendTests(unittest.TestCase):
         self.assertEqual(project["version"], _project.VERSION)
         self.assertEqual(project["description"], _project.SUMMARY)
         self.assertEqual(project["requires-python"], _project.REQUIRES_PYTHON)
+        self.assertEqual(project["license"], _project.LICENSE_EXPRESSION)
+        self.assertEqual(project["license-files"], [_project.LICENSE_FILE])
         self.assertEqual(
             project["optional-dependencies"]["sparse"],
             [_project.SPARSE_REQUIREMENT],
@@ -52,6 +54,12 @@ class BuildBackendTests(unittest.TestCase):
                 self.assertIn(f"Version: {_project.VERSION}\n", metadata)
                 self.assertIn(f"Summary: {_project.SUMMARY}\n", metadata)
                 self.assertIn(f"Requires-Python: {_project.REQUIRES_PYTHON}\n", metadata)
+                self.assertIn("Metadata-Version: 2.4\n", metadata)
+                self.assertIn(
+                    f"License-Expression: {_project.LICENSE_EXPRESSION}\n",
+                    metadata,
+                )
+                self.assertIn(f"License-File: {_project.LICENSE_FILE}\n", metadata)
                 self.assertIn("Provides-Extra: sparse", metadata)
                 self.assertIn(
                     f'Requires-Dist: {_project.SPARSE_REQUIREMENT}; extra == "sparse"',
@@ -61,6 +69,12 @@ class BuildBackendTests(unittest.TestCase):
                 self.assertEqual(
                     entry_points,
                     f"[console_scripts]\n{_project.CONSOLE_SCRIPT}\n",
+                )
+                self.assertEqual(
+                    archive.read(
+                        f"{dist_info}/licenses/{_project.LICENSE_FILE}"
+                    ),
+                    Path(_project.LICENSE_FILE).read_bytes(),
                 )
 
 
