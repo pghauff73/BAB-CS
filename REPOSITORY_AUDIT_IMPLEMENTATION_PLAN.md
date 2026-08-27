@@ -183,17 +183,17 @@ Repository implementation is complete when:
 | RA-4 qualification summary | Deterministic summary generation, canonical source discovery, workflow integration, required evidence role, manifest validation, and focused tests implemented | Generate the retained artifact in exact-SHA qualification |
 | RA-5 public research envelope | Citation, security, contribution, issue, changelog, architecture, reproducibility, governance, topic, and licence records implemented | Create a DOI-backed archive only after approved publication |
 
-Pre-commit local validation passed:
+Final local validation passed:
 
-- focused build, release-evidence, and CLI suite: 23 tests;
-- complete default suite: 246 tests passed, with 2 intentional skips;
+- focused root-finding and release-evidence suites: 35 tests;
+- complete default suite: 248 tests passed, with 2 intentional skips;
 - deterministic double wheel build: byte-identical;
 - wheel inspection: 19 members, Core Metadata 2.4, `MPL-2.0`, canonical
   `LICENSE` bytes, and installed CLI smoke with 500 accepted steps;
 - canonical licence SHA-256:
   `3f3d9e0024b1921b067d6f7f88deb4a60cbe7a78e76c64e3f1d7fc3b779b9d04`;
 - deterministic wheel SHA-256:
-  `f431ea7e2abd58736b475b9c3d474deef7a3a2b201e2ddc8e22b5c34ca88dce4`;
+  `7a0425585753d1d15d6eaacb39257b4112d36e7d58cce6b9d03862a4a3b218de`;
 - JSON, YAML, TOML, bytecode compilation, minimal reproducibility, and
   whitespace checks passed.
 

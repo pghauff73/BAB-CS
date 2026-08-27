@@ -5,6 +5,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import build_backend
 from babcs import _project
@@ -244,6 +245,35 @@ class ReleaseEvidenceTests(unittest.TestCase):
                         ci_workflow=Path(".github/workflows/ci.yml"),
                         latest_public_release="v1.0.0",
                     )
+
+    def test_latest_public_release_discovery_handles_only_not_found(self) -> None:
+        success = mock.Mock(returncode=0, stdout="v1.0.0\n", stderr="")
+        missing = mock.Mock(
+            returncode=1,
+            stdout="",
+            stderr="gh: Not Found (HTTP 404)\n",
+        )
+        forbidden = mock.Mock(
+            returncode=1,
+            stdout="",
+            stderr="gh: Forbidden (HTTP 403)\n",
+        )
+        with mock.patch.object(release_evidence.subprocess, "run", return_value=success):
+            self.assertEqual(
+                release_evidence.discover_latest_public_release("owner/repository"),
+                "v1.0.0",
+            )
+        with mock.patch.object(release_evidence.subprocess, "run", return_value=missing):
+            self.assertEqual(
+                release_evidence.discover_latest_public_release("owner/repository"),
+                "unavailable",
+            )
+        with mock.patch.object(release_evidence.subprocess, "run", return_value=forbidden):
+            with self.assertRaisesRegex(
+                release_evidence.ReleaseEvidenceError,
+                "HTTP 403",
+            ):
+                release_evidence.discover_latest_public_release("owner/repository")
 
     def test_comparison_inspection_requires_complete_matrix(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

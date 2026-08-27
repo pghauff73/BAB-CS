@@ -312,7 +312,7 @@ def bisection(
                 "enclosure tolerance satisfied",
                 trace,
             )
-        midpoint = lower + 0.5 * (upper - lower)
+        midpoint = _safe_midpoint(lower, upper)
         if midpoint == lower or midpoint == upper:
             return _bracket_result(
                 method,
@@ -492,7 +492,7 @@ def bounded_newton_raphson(
                 trace,
             )
 
-        midpoint = lower + 0.5 * (upper - lower)
+        midpoint = _safe_midpoint(lower, upper)
         if midpoint == lower or midpoint == upper:
             return _bracket_result(
                 method,
@@ -595,8 +595,8 @@ def interval_newton(
                 trace,
             )
 
-        previous_width = upper - lower
-        midpoint = lower + 0.5 * previous_width
+        previous_radius = _enclosure_radius(lower, upper)
+        midpoint = _safe_midpoint(lower, upper)
         if midpoint == lower or midpoint == upper:
             return _bracket_result(
                 method,
@@ -640,7 +640,7 @@ def interval_newton(
             )
             if contraction is None:
                 fallback_kind = "interval_newton_no_contraction"
-            elif contraction[1] - contraction[0] > 0.5 * previous_width:
+            elif _enclosure_radius(*contraction) > 0.5 * previous_radius:
                 contraction = None
                 fallback_kind = "interval_newton_insufficient_contraction"
 
@@ -771,7 +771,7 @@ def ridders(
                 "enclosure tolerance satisfied",
                 trace,
             )
-        midpoint = lower + 0.5 * (upper - lower)
+        midpoint = _safe_midpoint(lower, upper)
         if midpoint == lower or midpoint == upper:
             return _bracket_result(
                 method,
@@ -1018,8 +1018,12 @@ def _bracket_converged(lower: float, upper: float, settings: RootSettings) -> bo
     return _enclosure_radius(lower, upper) <= _position_tolerance(lower, upper, settings)
 
 
+def _safe_midpoint(lower: float, upper: float) -> float:
+    return 0.5 * lower + 0.5 * upper
+
+
 def _enclosure_radius(lower: float, upper: float) -> float:
-    midpoint = lower + 0.5 * (upper - lower)
+    midpoint = _safe_midpoint(lower, upper)
     return max(midpoint - lower, upper - midpoint)
 
 
@@ -1096,7 +1100,7 @@ def _bracket_result(
     reason: str,
     trace: list[RootIteration],
 ) -> RootResult:
-    root = lower + 0.5 * (upper - lower)
+    root = _safe_midpoint(lower, upper)
     value = _evaluate(function, root, "function")
     return RootResult(
         method,

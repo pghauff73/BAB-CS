@@ -59,6 +59,9 @@ WORKFLOW_FIELDS = {
     "sha": "WORKFLOW_SHA",
 }
 QUALIFICATION_SUMMARY_SCHEMA_VERSION = 1
+PUBLIC_RELEASE_TAG_PATTERN = re.compile(
+    r"v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?"
+)
 
 
 class ReleaseEvidenceError(RuntimeError):
@@ -89,6 +92,43 @@ def command_output(command: list[str], *, fallback: str = "unavailable") -> str:
     except (OSError, subprocess.CalledProcessError):
         return fallback
     return (completed.stdout or completed.stderr).strip() or fallback
+
+
+def validate_public_release_tag(value: str) -> None:
+    if value != "unavailable" and PUBLIC_RELEASE_TAG_PATTERN.fullmatch(value) is None:
+        raise ReleaseEvidenceError("latest public release is not a version tag")
+
+
+def discover_latest_public_release(repository: str) -> str:
+    if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repository) is None:
+        raise ReleaseEvidenceError("GitHub repository must use OWNER/NAME syntax")
+    try:
+        completed = subprocess.run(
+            [
+                "gh",
+                "api",
+                f"repos/{repository}/releases/latest",
+                "--jq",
+                ".tag_name",
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except OSError as error:
+        raise ReleaseEvidenceError("gh is unavailable for release discovery") from error
+    if completed.returncode == 0:
+        value = completed.stdout.strip()
+        validate_public_release_tag(value)
+        return value
+    error_text = "\n".join(
+        part.strip() for part in (completed.stdout, completed.stderr) if part.strip()
+    )
+    if re.search(r"\bHTTP 404\b", error_text):
+        return "unavailable"
+    raise ReleaseEvidenceError(
+        f"latest public release discovery failed: {error_text or 'unknown gh error'}"
+    )
 
 
 def normalize_utc_timestamp(value: str | None) -> str:
@@ -296,11 +336,7 @@ def build_qualification_summary(
         read_text_evidence(evidence_directory, "QUALIFICATION_CREATED_UTC")
     )
     validate_release_identity(source_commit, tag, allow_candidate=True)
-    if latest_public_release != "unavailable" and re.fullmatch(
-        r"v\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?",
-        latest_public_release,
-    ) is None:
-        raise ReleaseEvidenceError("latest public release is not a version tag")
+    validate_public_release_tag(latest_public_release)
     actual_commit = command_output(
         ["git", "-C", str(repository_root), "rev-parse", "HEAD"]
     )
@@ -1130,6 +1166,9 @@ def build_parser() -> argparse.ArgumentParser:
     summary.add_argument("--output", required=True)
     summary.add_argument("--allow-dirty", action="store_true")
 
+    latest_release = subparsers.add_parser("latest-public-release")
+    latest_release.add_argument("--repository", required=True)
+
     wheel = subparsers.add_parser("inspect-wheel")
     wheel.add_argument("--wheel", required=True)
     wheel.add_argument("--repository-root", default=".")
@@ -1177,6 +1216,8 @@ def main(argv: list[str] | None = None) -> int:
                 workflow_ref=arguments.workflow_ref,
                 workflow_sha=arguments.workflow_sha,
             )
+        elif arguments.command == "latest-public-release":
+            print(discover_latest_public_release(arguments.repository))
         elif arguments.command == "write-qualification-summary":
             write_json(
                 Path(arguments.output),

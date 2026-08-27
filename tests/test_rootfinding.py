@@ -204,6 +204,29 @@ class RootFindingTests(unittest.TestCase):
                 -1.0,
                 1.0,
             )
+
+    def test_bracketed_methods_compute_extreme_midpoints_without_overflow(self) -> None:
+        function = lambda value: value
+        results = (
+            bisection(function, -1.0e308, 1.0e308),
+            bounded_newton_raphson(
+                function,
+                lambda value: math.nan,
+                -1.0e308,
+                1.0e308,
+            ),
+            interval_newton(
+                function,
+                lambda lower, upper: (1.0, 1.0),
+                -1.0e308,
+                1.0e308,
+            ),
+            ridders(function, -1.0e308, 1.0e308),
+        )
+        for result in results:
+            self.assertTrue(result.converged, result)
+            self.assertEqual(result.root, 0.0)
+            self.assertEqual(result.residual, 0.0)
         with self.assertRaisesRegex(ValueError, "opposite function signs"):
             interval_newton(
                 lambda value: value * value + 1.0,

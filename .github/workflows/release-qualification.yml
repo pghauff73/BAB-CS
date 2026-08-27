@@ -79,7 +79,8 @@ jobs:
         run: |
           set -euo pipefail
           latest_public_release="$(
-            gh api "repos/${GITHUB_REPOSITORY}/releases/latest" --jq '.tag_name'
+            python tools/release_evidence.py latest-public-release \
+              --repository "${GITHUB_REPOSITORY}"
           )"
           python tools/release_evidence.py write-qualification-summary \
             --repository-root . \
