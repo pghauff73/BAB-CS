@@ -11,6 +11,21 @@ from tests.support.circuits import rc_charge_circuit
 
 
 class FailureGateTests(unittest.TestCase):
+    def test_simulator_preserves_rejection_step_evidence(self) -> None:
+        circuit = rc_charge_circuit(resistance=1.0, capacitance=1.0e-6)
+        integrator = _permissive_integrator(
+            predictor_reference_cap=1.0e-9,
+            maximum_rejections=12,
+        )
+        result = Simulator(integrator).run(circuit, 2.0e-7, 1.0e-7)
+        rejected_points = [point for point in result.points if point.rejections]
+        self.assertTrue(rejected_points)
+        for point in rejected_points:
+            self.assertEqual(point.rejection_count, len(point.rejections))
+            self.assertEqual(point.rejection_reasons, tuple(r.reason for r in point.rejections))
+            self.assertTrue(all(r.requested_step > 0.0 for r in point.rejections))
+            self.assertTrue(all(r.suggested_step > 0.0 for r in point.rejections))
+
     def test_requested_step_below_minimum_is_rejected_without_history_change(self) -> None:
         circuit = rc_charge_circuit()
         integrator = BoundedAdamsBashforthIntegrator(BABCSConfig(minimum_step=1.0e-6))

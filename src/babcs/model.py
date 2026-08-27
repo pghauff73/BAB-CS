@@ -250,8 +250,22 @@ def normalize_node(node: str) -> str:
     return GROUND if node_name.lower() in {"0", "gnd", "ground"} else node_name
 
 
+class _TopologyLockedElement:
+    _topology_locked = False
+
+    def __setattr__(self, name: str, value: object) -> None:
+        if self._topology_locked and name in {"name", "positive", "negative"}:
+            raise AttributeError(
+                f"{name} cannot change after the element joins a compiled circuit topology"
+            )
+        object.__setattr__(self, name, value)
+
+    def _lock_topology(self) -> None:
+        object.__setattr__(self, "_topology_locked", True)
+
+
 @dataclass
-class Resistor:
+class Resistor(_TopologyLockedElement):
     name: str
     positive: str
     negative: str
@@ -259,7 +273,7 @@ class Resistor:
 
 
 @dataclass
-class Capacitor:
+class Capacitor(_TopologyLockedElement):
     name: str
     positive: str
     negative: str
@@ -268,7 +282,7 @@ class Capacitor:
 
 
 @dataclass
-class Inductor:
+class Inductor(_TopologyLockedElement):
     name: str
     positive: str
     negative: str
@@ -277,7 +291,7 @@ class Inductor:
 
 
 @dataclass
-class CurrentSource:
+class CurrentSource(_TopologyLockedElement):
     name: str
     positive: str
     negative: str
@@ -285,7 +299,7 @@ class CurrentSource:
 
 
 @dataclass
-class VoltageSource:
+class VoltageSource(_TopologyLockedElement):
     name: str
     positive: str
     negative: str
@@ -293,7 +307,7 @@ class VoltageSource:
 
 
 @dataclass
-class Diode:
+class Diode(_TopologyLockedElement):
     name: str
     positive: str
     negative: str
@@ -302,7 +316,7 @@ class Diode:
 
 
 @dataclass
-class Switch:
+class Switch(_TopologyLockedElement):
     name: str
     positive: str
     negative: str
@@ -312,7 +326,7 @@ class Switch:
     off_resistance: float = 1.0e9
 
     def __setattr__(self, name: str, value: object) -> None:
-        object.__setattr__(self, name, value)
+        super().__setattr__(name, value)
         if name == "control":
             callback = getattr(self, "_control_change_callback", None)
             if callback is not None:
@@ -741,6 +755,8 @@ class Circuit:
             )
         self.elements = [self._normalize_element(element) for element in elements]
         self._classify_validate_and_index_elements()
+        for element in self.elements:
+            element._lock_topology()
         self._dynamic_size = len(self.capacitors) + len(self.inductors)
         self.branch_index = {
             element.name: len(self.nodes) + index for index, element in enumerate(self.constraint_branches)

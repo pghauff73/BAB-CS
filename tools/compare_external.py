@@ -39,9 +39,10 @@ def generate_ngspice_netlist(case_data: dict[str, Any]) -> tuple[str, tuple[str,
 
     lines = ["BAB-CS external comparison", ".options numdgt=15"]
     model_lines: list[str] = []
-    state_expressions: list[str] = []
-    state_names: list[str] = []
-    diode_model_added = False
+    capacitor_state_expressions: list[str] = []
+    capacitor_state_names: list[str] = []
+    inductor_state_expressions: list[str] = []
+    inductor_state_names: list[str] = []
 
     for raw_element in elements:
         if not isinstance(raw_element, dict):
@@ -58,19 +59,19 @@ def generate_ngspice_netlist(case_data: dict[str, Any]) -> tuple[str, tuple[str,
                 f"C{name} {positive} {negative} {_number(raw_element['capacitance'])} IC={_number(initial)}"
             )
             if negative == "0":
-                state_expressions.append(f"v({positive})")
+                capacitor_state_expressions.append(f"v({positive})")
             elif positive == "0":
-                state_expressions.append(f"-v({negative})")
+                capacitor_state_expressions.append(f"-v({negative})")
             else:
-                state_expressions.append(f"v({positive})-v({negative})")
-            state_names.append(f"v({name})")
+                capacitor_state_expressions.append(f"v({positive})-v({negative})")
+            capacitor_state_names.append(f"v({name})")
         elif kind in {"l", "inductor"}:
             initial = float(raw_element.get("initial_current", 0.0))
             lines.append(
                 f"L{name} {positive} {negative} {_number(raw_element['inductance'])} IC={_number(initial)}"
             )
-            state_expressions.append(f"i(L{name})")
-            state_names.append(f"i({name})")
+            inductor_state_expressions.append(f"i(L{name})")
+            inductor_state_names.append(f"i({name})")
         elif kind in {"v", "voltage_source"}:
             lines.append(
                 f"V{name} {positive} {negative} {_waveform(raw_element['waveform'], stop_time)}"
@@ -80,17 +81,18 @@ def generate_ngspice_netlist(case_data: dict[str, Any]) -> tuple[str, tuple[str,
                 f"I{name} {positive} {negative} {_waveform(raw_element['waveform'], stop_time)}"
             )
         elif kind in {"d", "diode"}:
+            saturation_current = float(raw_element.get("saturation_current", 1.0e-12))
             thermal_voltage = float(raw_element.get("thermal_voltage", 0.02585))
-            if not math.isclose(thermal_voltage, 0.02585, rel_tol=0.0, abs_tol=1.0e-12):
-                raise ExternalComparisonError(
-                    f"{name}: external diode mapping requires thermal_voltage 0.02585"
-                )
-            lines.append(f"D{name} {positive} {negative} BABD")
-            if not diode_model_added:
-                model_lines.append(
-                    f".model BABD D(Is={_number(raw_element.get('saturation_current', 1.0e-12))})"
-                )
-                diode_model_added = True
+            if not math.isfinite(saturation_current) or saturation_current <= 0.0:
+                raise ExternalComparisonError(f"{name}: saturation_current must be positive and finite")
+            if not math.isfinite(thermal_voltage) or thermal_voltage <= 0.0:
+                raise ExternalComparisonError(f"{name}: thermal_voltage must be positive and finite")
+            model_name = f"BABD_{name}"
+            ideality = thermal_voltage / 0.02585
+            lines.append(f"D{name} {positive} {negative} {model_name}")
+            model_lines.append(
+                f".model {model_name} D(Is={_number(saturation_current)} N={_number(ideality)})"
+            )
         elif kind in {"s", "switch"}:
             control_node = f"bab_ctrl_{name.lower()}"
             model_name = f"BABSW_{name}"
@@ -106,6 +108,8 @@ def generate_ngspice_netlist(case_data: dict[str, Any]) -> tuple[str, tuple[str,
         else:
             raise ExternalComparisonError(f"unsupported external element type: {kind}")
 
+    state_expressions = capacitor_state_expressions + inductor_state_expressions
+    state_names = capacitor_state_names + inductor_state_names
     if not state_expressions:
         raise ExternalComparisonError("external comparison requires at least one dynamic state")
     vector_names = [f"bab_state_{index}" for index in range(len(state_expressions))]

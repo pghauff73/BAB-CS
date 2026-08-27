@@ -33,6 +33,11 @@ built-in circuits. The sparse path retains the dependency-free dense backend,
 preserves extension fallbacks, and uses acceleration only behind explicit size,
 topology, residual, contraction, and finiteness gates.
 
+The candidate also adds a Method Observatory, Bound Coverage Atlas,
+Power-Stage Sandbox, and Teaching and Reproducibility Lab. These are evidence
+and education surfaces, not expanded release authority. The three power-stage
+cases are reduced-order numerical experiments, not production device models.
+
 ## Highlights
 
 ### Bounded multi-method controller
@@ -220,6 +225,12 @@ round improved by at least 8.853%. Replay steps fell from 390 to 263. Smooth,
 source-pulsed, and mixed C+L BDF2 circuits retain fixed replay because their
 broader prototypes did not pass the timing gate.
 
+The `390`-to-`263` replay count is historical evidence for exact commit
+`9a804a3`. It is not a current-source performance claim after the event-authority
+correction: events now force independent replay before history reset instead of
+allowing the reset to suppress authority work. Current switched replay counts
+and timing require fresh qualification from the eventual exact release commit.
+
 Repeated-topology construction against exact commit `dd8145e` measured 72.491%
 to 78.326% mean reductions across 16-, 32-, 64-, and 128-channel capacitor/diode
 families plus a 64-channel mixed family. Minimum construction reductions were
@@ -363,7 +374,7 @@ PYTHONPATH=src python tools/release_evidence.py verify \
 ```
 
 Review `comparison-inspection.json`, all test and installation summaries,
-source and installed numerical artifacts, the four `ngspice` bundles, timing
+source and installed numerical artifacts, the 20 `ngspice` bundles, timing
 claim scope, threshold or baseline changes, and the requirement audit. Tooling
 success is not semantic approval.
 

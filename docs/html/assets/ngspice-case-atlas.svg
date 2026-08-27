@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1400 1030">
+  <title id="title">BAB-CS ngspice 20-case mapping atlas</title>
+  <desc id="description">A twenty-card atlas groups mapped cases into first-order linear, resonant RLC, nonlinear diode, scheduled switching, and reduced-order power-stage categories.</desc>
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b7185"/><stop offset="1" stop-color="#174e63"/></linearGradient>
+    <linearGradient id="warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e1883b"/><stop offset="1" stop-color="#a6501d"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.13"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#4c7283"/></marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .title { fill:#10243a; font-size:29px; font-weight:820; letter-spacing:-0.02em; }
+      .subtitle { fill:#60758a; font-size:15px; }
+      .label { fill:#10243a; font-size:16px; font-weight:760; }
+      .small { fill:#5e7388; font-size:13px; }
+      .micro { fill:#74879a; font-size:10.5px; font-weight:720; letter-spacing:0.045em; }
+      .box { fill:#fff; stroke:#d2dee8; stroke-width:1.5; }
+      .soft { fill:#ebf6f8; stroke:#add3dd; stroke-width:1.5; }
+      .warm { fill:#fff2e6; stroke:#edbd8f; stroke-width:1.5; }
+      .line { fill:none; stroke:#4c7283; stroke-width:2.2; marker-end:url(#arrow); }
+      .grid { stroke:#d9e4ec; stroke-width:1; }
+    </style>
+  </defs>
+<rect width="1400" height="1030" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="60" y="66">BAB-CS ngspice mapping atlas · 20 declared cases</text>
+  <text class="sans subtitle" x="60" y="100">Each card names the engineering question class; mapped evidence remains scoped to the declared model and translation.</text>
+  <rect x="55" y="135" width="305" height="130" rx="16" fill="#eaf6f8" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="73" y="161">FIRST-ORDER LINEAR</text>
+  <text class="sans label" x="73" y="191">RC step response</text>
+  <text class="sans small" x="73" y="221">3 mapped features · canonical case</text>
+  <text class="sans micro" x="73" y="247">RC_STEP</text>
+  <rect x="392" y="135" width="305" height="130" rx="16" fill="#eaf6f8" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="410" y="161">FIRST-ORDER LINEAR</text>
+  <text class="sans label" x="410" y="191">RC stored-energy discharge</text>
+  <text class="sans small" x="410" y="221">3 mapped features · canonical case</text>
+  <text class="sans micro" x="410" y="247">RC_DISCHARGE</text>
+  <rect x="729" y="135" width="305" height="130" rx="16" fill="#eaf6f8" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="747" y="161">FIRST-ORDER LINEAR</text>
+  <text class="sans label" x="747" y="191">Sinusoidally driven RC filter</text>
+  <text class="sans small" x="747" y="221">3 mapped features · canonical case</text>
+  <text class="sans micro" x="747" y="247">DRIVEN_RC</text>
+  <rect x="1066" y="135" width="305" height="130" rx="16" fill="#eaf6f8" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="1084" y="161">FIRST-ORDER LINEAR</text>
+  <text class="sans label" x="1084" y="191">PWL current-driven RC network</text>
+  <text class="sans small" x="1084" y="221">3 mapped features · canonical case</text>
+  <text class="sans micro" x="1084" y="247">CURRENT_DRIVEN_RC</text>
+  <rect x="55" y="293" width="305" height="130" rx="16" fill="#eaf6f8" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="73" y="319">FIRST-ORDER LINEAR</text>
+  <text class="sans label" x="73" y="349">RL current buildup</text>
+  <text class="sans small" x="73" y="379">3 mapped features · canonical case</text>
+  <text class="sans micro" x="73" y="405">RL_STEP</text>
+  <rect x="392" y="293" width="305" height="130" rx="16" fill="#eaf6f8" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="410" y="319">FIRST-ORDER LINEAR</text>
+  <text class="sans label" x="410" y="349">RL stored-current decay</text>
+  <text class="sans small" x="410" y="379">3 mapped features · canonical case</text>
+  <text class="sans micro" x="410" y="405">RL_DECAY</text>
+  <rect x="729" y="293" width="305" height="130" rx="16" fill="#eef0fa" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="747" y="319">RESONANT AND RLC</text>
+  <text class="sans label" x="747" y="349">Lossless LC oscillation</text>
+  <text class="sans small" x="747" y="379">3 mapped features · canonical case</text>
+  <text class="sans micro" x="747" y="405">LC_LONG</text>
+  <rect x="1066" y="293" width="305" height="130" rx="16" fill="#eef0fa" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="1084" y="319">RESONANT AND RLC</text>
+  <text class="sans label" x="1084" y="349">LC mixed initial-condition oscillation</text>
+  <text class="sans small" x="1084" y="379">4 mapped features · canonical case</text>
+  <text class="sans micro" x="1084" y="405">LC_OFFSET</text>
+  <rect x="55" y="451" width="305" height="130" rx="16" fill="#eef0fa" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="73" y="477">RESONANT AND RLC</text>
+  <text class="sans label" x="73" y="507">Underdamped parallel RLC decay</text>
+  <text class="sans small" x="73" y="537">4 mapped features · canonical case</text>
+  <text class="sans micro" x="73" y="563">RLC_DAMPED</text>
+  <rect x="392" y="451" width="305" height="130" rx="16" fill="#eef0fa" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="410" y="477">RESONANT AND RLC</text>
+  <text class="sans label" x="410" y="507">Overdamped parallel RLC decay</text>
+  <text class="sans small" x="410" y="537">4 mapped features · canonical case</text>
+  <text class="sans micro" x="410" y="563">RLC_OVERDAMPED</text>
+  <rect x="729" y="451" width="305" height="130" rx="16" fill="#eef0fa" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="747" y="477">RESONANT AND RLC</text>
+  <text class="sans label" x="747" y="507">Driven series RLC network</text>
+  <text class="sans small" x="747" y="537">4 mapped features · canonical case</text>
+  <text class="sans micro" x="747" y="563">RLC_DRIVEN</text>
+  <rect x="1066" y="451" width="305" height="130" rx="16" fill="#fff2e6" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="1084" y="477">NONLINEAR DIODE</text>
+  <text class="sans label" x="1084" y="507">Diode clipper</text>
+  <text class="sans small" x="1084" y="537">4 mapped features · canonical case</text>
+  <text class="sans micro" x="1084" y="563">DIODE_CLIP</text>
+  <rect x="55" y="609" width="305" height="130" rx="16" fill="#fff2e6" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="73" y="635">NONLINEAR DIODE</text>
+  <text class="sans label" x="73" y="665">Capacitor-loaded diode rectifier</text>
+  <text class="sans small" x="73" y="695">4 mapped features · canonical case</text>
+  <text class="sans micro" x="73" y="721">DIODE_RECTIFIER</text>
+  <rect x="392" y="609" width="305" height="130" rx="16" fill="#fff2e6" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="410" y="635">NONLINEAR DIODE</text>
+  <text class="sans label" x="410" y="665">Diode bias-transition clamp</text>
+  <text class="sans small" x="410" y="695">4 mapped features · canonical case</text>
+  <text class="sans micro" x="410" y="721">DIODE_BIAS_RECOVERY</text>
+  <rect x="729" y="609" width="305" height="130" rx="16" fill="#eef7f1" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="747" y="635">SCHEDULED SWITCHING</text>
+  <text class="sans label" x="747" y="665">Scheduled switched RC network</text>
+  <text class="sans small" x="747" y="695">5 mapped features · canonical case</text>
+  <text class="sans micro" x="747" y="721">SWITCHED_RC</text>
+  <rect x="1066" y="609" width="305" height="130" rx="16" fill="#eef7f1" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="1084" y="635">SCHEDULED SWITCHING</text>
+  <text class="sans label" x="1084" y="665">Scheduled switched RL network</text>
+  <text class="sans small" x="1084" y="695">6 mapped features · canonical case</text>
+  <text class="sans micro" x="1084" y="721">SWITCHED_RL</text>
+  <rect x="55" y="767" width="305" height="130" rx="16" fill="#eef7f1" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="73" y="793">SCHEDULED SWITCHING</text>
+  <text class="sans label" x="73" y="823">Scheduled switched RLC network</text>
+  <text class="sans small" x="73" y="853">7 mapped features · canonical case</text>
+  <text class="sans micro" x="73" y="879">SWITCHED_RLC</text>
+  <rect x="392" y="767" width="305" height="130" rx="16" fill="#f7edf4" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="410" y="793">REDUCED-ORDER POWER STAGE</text>
+  <text class="sans label" x="410" y="823">Simplified buck-like converter</text>
+  <text class="sans small" x="410" y="853">6 mapped features · reduced order</text>
+  <text class="sans micro" x="410" y="879">BUCK_LIKE_REDUCED_ORDER</text>
+  <rect x="729" y="767" width="305" height="130" rx="16" fill="#f7edf4" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="747" y="793">REDUCED-ORDER POWER STAGE</text>
+  <text class="sans label" x="747" y="823">Scheduled H-bridge RL load</text>
+  <text class="sans small" x="747" y="853">4 mapped features · reduced order</text>
+  <text class="sans micro" x="747" y="879">H_BRIDGE_RL_REDUCED_ORDER</text>
+  <rect x="1066" y="767" width="305" height="130" rx="16" fill="#f7edf4" stroke="#cbd9e4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text class="sans micro" x="1084" y="793">REDUCED-ORDER POWER STAGE</text>
+  <text class="sans label" x="1084" y="823">DC-link RLC startup and interruption</text>
+  <text class="sans small" x="1084" y="853">7 mapped features · reduced order</text>
+  <text class="sans micro" x="1084" y="879">DC_LINK_RLC_REDUCED_ORDER</text>
+  <text class="sans small" x="700" y="982" text-anchor="middle">Coverage spans constant, sine, pulse, and piecewise-linear sources; R, L, C, diode, switch, and mixed initial-state mappings.</text>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 650">
+  <title id="title">DC-link RLC startup and interruption</title>
+  <desc id="description">A scheduled connection drives a series RL path into a capacitor and resistive load with a freewheel path. Generated from examples/power_stage/dc_link_rlc_reduced_order.json, SHA-256 f60ba5b539f3932b61f2e556c65b7cf730814bcb0b21ec73c439511dae2a088a.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="650" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="64" y="58" text-anchor="start">DC-link RLC startup and interruption</text>
+  <text class="sans subtitle" x="64" y="96" text-anchor="start">A scheduled connection drives a series RL path into a capacitor and resistive load with a freewheel path.</text>
+  <rect class="card" x="52" y="132" width="1096" height="364" rx="22" filter="url(#shadow)"/>
+  <g><path class="wire" d="M105 220 L105 288"/><circle class="symbol" cx="105" cy="330" r="42"/><text class="sans label" x="105" y="318" text-anchor="middle">+</text><text class="sans label" x="105" y="354" text-anchor="middle">−</text><path class="wire" d="M105 372 L105 440"/><text class="sans label" x="47" y="324" text-anchor="end">VDC</text><text class="sans value" x="47" y="349" text-anchor="end">5 V</text><path class="wire" d="M105 220 L175 220"/><path class="wire" d="M175 220 L199 220"/><path class="wire" d="M306 220 L330 220"/><circle class="symbol" cx="199" cy="220" r="5"/><circle class="symbol" cx="306" cy="220" r="5"/><path class="wire" d="M203 217 L300 193"/><text class="sans label" x="252.5" y="178" text-anchor="middle">S_CONNECT</text><text class="sans value" x="252.5" y="252" text-anchor="middle">200 mΩ on</text><path class="wire" d="M330 220 L352 220"/><path class="wire" d="M352 220 L365.875 207 L379.75 233 L393.625 207 L407.5 233 L421.375 207 L435.25 233 L449.125 207 L463 220"/><path class="wire" d="M463 220 L485 220"/><text class="sans label" x="407.5" y="192" text-anchor="middle">R_SERIES</text><text class="sans value" x="407.5" y="258" text-anchor="middle">2 Ω</text><path class="wire" d="M485 220 L540 220"/><circle class="node" cx="540" cy="220" r="5"/><text class="sans micro" x="540" y="205" text-anchor="middle">prelink</text><path class="wire" d="M540 220 L562 220"/><path class="wire" d="M562 220 a18.875 18.875 0 0 1 37.75 0 a18.875 18.875 0 0 1 37.75 0 a18.875 18.875 0 0 1 37.75 0 a18.875 18.875 0 0 1 37.75 0"/><path class="wire" d="M713 220 L735 220"/><text class="sans label" x="637.5" y="190" text-anchor="middle">L_LINK</text><text class="sans value" x="637.5" y="260" text-anchor="middle">1 mH</text><path class="wire" d="M735 220 L1000 220"/><circle class="node" cx="820" cy="220" r="5"/><text class="sans micro" x="820" y="205" text-anchor="middle">dc_link</text><path class="wire" d="M465 220 L465 302"/><path class="symbol" d="M443 302 L487 302 L465 338 Z M442 344 H488"/><path class="wire" d="M465 344 L465 440"/><text class="sans label" x="429" y="322" text-anchor="end">D_FREE</text><text class="sans value" x="429" y="347" text-anchor="end">Shockley diode</text><path class="wire" d="M590 220 L590 242"/><path class="wire" d="M590 242 L577 264 L603 286 L577 308 L603 330 L577 352 L603 374 L577 396 L590 418"/><path class="wire" d="M590 418 L590 440"/><text class="sans label" x="625" y="322" text-anchor="start">R_PRELINK_BLEED</text><text class="sans value" x="625" y="347" text-anchor="start">20 Ω</text><path class="wire" d="M810 220 L810 316"/><path class="symbol" d="M786 316 H834 M786 344 H834"/><path class="wire" d="M810 344 L810 440"/><text class="sans label" x="844" y="322" text-anchor="start">C_LINK</text><text class="sans value" x="844" y="347" text-anchor="start">100 µF</text><path class="wire" d="M970 220 L970 242"/><path class="wire" d="M970 242 L957 264 L983 286 L957 308 L983 330 L957 352 L983 374 L957 396 L970 418"/><path class="wire" d="M970 418 L970 440"/><text class="sans label" x="1005" y="322" text-anchor="start">R_LOAD</text><text class="sans value" x="1005" y="347" text-anchor="start">20 Ω</text><path class="wire" d="M105 440 L1000 440"/><path class="wire" d="M735 416 L735 440"/><path class="ground" d="M717 440 H753 M723 448 H747 M729 456 H741"/></g>
+  <rect class="warm" x="70" y="516" width="1060" height="50" rx="13"/>
+  <text class="sans small" x="92" y="547" text-anchor="start">Reduced-order numerical experiment, not a contactor, fault, protection, or production device model.</text>
+  <text class="mono micro" x="70" y="616">SOURCE examples/power_stage/dc_link_rlc_reduced_order.json · INPUT SHA-256 f60ba5b539f3932b</text>
+</svg>

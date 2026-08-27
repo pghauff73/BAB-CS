@@ -14,12 +14,20 @@ from .model import Circuit
 
 
 @dataclass(frozen=True)
+class RejectionRecord:
+    reason: str
+    requested_step: float
+    suggested_step: float
+
+
+@dataclass(frozen=True)
 class SimulationPoint:
     state: SimulationState
     metrics: StepMetrics | None
     event_boundary: bool = False
     rejection_count: int = 0
     rejection_reasons: tuple[str, ...] = ()
+    rejections: tuple[RejectionRecord, ...] = ()
     history_reset_reason: str = ""
 
     @property
@@ -59,6 +67,8 @@ class Simulator:
         start_time: float = 0.0,
         initial_dynamic_state: tuple[float, ...] | None = None,
     ) -> SimulationResult:
+        if not all(math.isfinite(value) for value in (start_time, stop_time, nominal_step)):
+            raise ValueError("simulation times and nominal_step must be finite")
         if stop_time <= start_time:
             raise ValueError("stop_time must follow start_time")
         if nominal_step <= 0.0:
@@ -71,11 +81,38 @@ class Simulator:
             else None
         )
         points = [SimulationPoint(state, None)]
-        time_tolerance = 64.0 * math.ulp(max(abs(start_time), abs(stop_time), 1.0))
         current_step = nominal_step
 
-        while state.time < stop_time - time_tolerance:
-            proposed_step = min(current_step, stop_time - state.time)
+        while state.time < stop_time:
+            remaining = stop_time - state.time
+            proposed_step = min(current_step, remaining)
+            terminal_breakpoints = (
+                Circuit._breakpoints_from_waveforms(
+                    breakpoint_waveforms,
+                    state.time,
+                    stop_time,
+                )
+                if remaining < self.integrator.config.minimum_step
+                and breakpoint_waveforms is not None
+                else (
+                    circuit.breakpoints(state.time, stop_time)
+                    if remaining < self.integrator.config.minimum_step
+                    else []
+                )
+            )
+            terminal_breakpoints = [
+                breakpoint
+                for breakpoint in terminal_breakpoints
+                if not _matching_time(state.time, breakpoint)
+            ]
+            if remaining < self.integrator.config.minimum_step:
+                if not terminal_breakpoints:
+                    break
+                proposed_step = terminal_breakpoints[0] - state.time
+            if state.time + proposed_step <= state.time:
+                raise RuntimeError(
+                    f"nominal step cannot advance simulation time at t={state.time:.17g}"
+                )
             breakpoints = (
                 Circuit._breakpoints_from_waveforms(
                     breakpoint_waveforms,
@@ -85,6 +122,11 @@ class Simulator:
                 if breakpoint_waveforms is not None
                 else circuit.breakpoints(state.time, state.time + proposed_step)
             )
+            breakpoints = [
+                breakpoint
+                for breakpoint in breakpoints
+                if not _matching_time(state.time, breakpoint)
+            ]
             event_time = breakpoints[0] if breakpoints else None
             if breakpoints:
                 proposed_step = event_time - state.time
@@ -92,16 +134,41 @@ class Simulator:
             attempt_step = proposed_step
             rejection_count = 0
             rejection_reasons: list[str] = []
+            rejections: list[RejectionRecord] = []
             while True:
                 try:
-                    result = self.integrator.step(circuit, state, history, attempt_step)
-                    reached_event = event_time is not None and abs(result.state.time - event_time) <= time_tolerance
-                    if not reached_event:
+                    result = (
+                        self.integrator.step_to_event(circuit, state, history, attempt_step)
+                        if event_time is not None
+                        else self.integrator.step(circuit, state, history, attempt_step)
+                    )
+                    if result.state.time <= state.time:
+                        raise RuntimeError(
+                            f"accepted step did not advance simulation time at t={state.time:.17g}"
+                        )
+                    reached_event = event_time is not None and _matching_time(
+                        result.state.time,
+                        event_time,
+                    )
+                    if reached_event:
+                        result = self.integrator.reanchor_if_due(
+                            circuit,
+                            result,
+                            force=True,
+                        )
+                    else:
                         result = self.integrator.reanchor_if_due(circuit, result)
                     break
                 except StepRejected as error:
                     rejection_count += 1
                     rejection_reasons.append(error.reason)
+                    rejections.append(
+                        RejectionRecord(
+                            reason=error.reason,
+                            requested_step=attempt_step,
+                            suggested_step=error.suggested_step,
+                        )
+                    )
                     history = self.integrator.record_rejection(history)
                     if rejection_count >= self.integrator.config.maximum_rejections:
                         raise RuntimeError(
@@ -130,12 +197,16 @@ class Simulator:
                     event_boundary=reached_event,
                     rejection_count=rejection_count,
                     rejection_reasons=tuple(rejection_reasons),
+                    rejections=tuple(rejections),
                     history_reset_reason=history_reset_reason,
                 )
             )
             if reached_event:
                 history = self.integrator.reset_history(state, history)
-                current_step = min(nominal_step, attempt_step)
+                current_step = min(
+                    nominal_step,
+                    max(attempt_step, self.integrator.config.minimum_step),
+                )
             elif rejection_count:
                 current_step = attempt_step
             elif max(
@@ -150,3 +221,10 @@ class Simulator:
                 current_step = attempt_step
 
         return SimulationResult(tuple(points), history, circuit.linear_backend)
+
+
+def _matching_time(left: float, right: float) -> bool:
+    if left == right:
+        return True
+    tolerance = 4.0 * max(math.ulp(left), math.ulp(right))
+    return abs(left - right) <= tolerance

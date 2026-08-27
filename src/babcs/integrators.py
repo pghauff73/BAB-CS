@@ -60,6 +60,32 @@ class ReferenceWindowResult:
     circuit_evaluations: int
     algebraic_iterations: int
     maximum_embedded_error: float
+    cumulative_energy_balance_error: float
+    maximum_energy_injection_ratio: float
+
+
+def energy_balance_metrics(
+    current: CircuitEvaluation,
+    candidate: CircuitEvaluation,
+    step: float,
+    absolute_tolerance: float,
+    relative_tolerance: float,
+) -> tuple[float, float]:
+    source_work = 0.5 * step * (current.source_power + candidate.source_power)
+    dissipated_work = 0.5 * step * (
+        current.dissipated_power + candidate.dissipated_power
+    )
+    energy_change = candidate.stored_energy - current.stored_energy
+    balance_error = energy_change - (source_work - dissipated_work)
+    scale = absolute_tolerance + relative_tolerance * max(
+        abs(current.stored_energy),
+        abs(candidate.stored_energy),
+        abs(source_work),
+        abs(dissipated_work),
+        absolute_tolerance,
+    )
+    injection_ratio = max(0.0, balance_error) / scale
+    return balance_error, injection_ratio
 
 
 def implicit_step(
@@ -408,6 +434,9 @@ def integrate_reference_window_with_stats(
     settings: ImplicitSettings = ImplicitSettings(),
     error_absolute_tolerance: float | None = None,
     error_relative_tolerance: float | None = None,
+    energy_absolute_tolerance: float | None = None,
+    energy_relative_tolerance: float | None = None,
+    exact_target_projection: bool = False,
 ) -> ReferenceWindowResult:
     requested_method = method.lower().replace("-", "_")
     if maximum_step <= 0.0:
@@ -426,6 +455,16 @@ def integrate_reference_window_with_stats(
         or not math.isfinite(error_relative_tolerance)
     ):
         raise ValueError("reference error tolerances must be positive and finite")
+    if (energy_absolute_tolerance is None) != (energy_relative_tolerance is None):
+        raise ValueError("reference energy tolerances must be configured together")
+    if energy_absolute_tolerance is not None and (
+        energy_absolute_tolerance <= 0.0
+        or energy_relative_tolerance is None
+        or energy_relative_tolerance <= 0.0
+        or not math.isfinite(energy_absolute_tolerance)
+        or not math.isfinite(energy_relative_tolerance)
+    ):
+        raise ValueError("reference energy tolerances must be positive and finite")
 
     current = initial
     previous_evaluation: CircuitEvaluation | None = None
@@ -443,12 +482,22 @@ def integrate_reference_window_with_stats(
     circuit_evaluations = 0
     algebraic_iterations = 0
     maximum_embedded_error = 0.0
+    cumulative_energy_balance_error = 0.0
+    maximum_energy_injection_ratio = 0.0
     for target_time in target_times:
         while current.time < target_time:
             remaining = target_time - current.time
             step = min(maximum_step, remaining)
-            if step <= 16.0 * max(abs(current.time), abs(target_time), 1.0) * 2.220446049250313e-16:
+            time_tolerance = 16.0 * max(
+                math.ulp(current.time),
+                math.ulp(target_time),
+            )
+            if remaining <= time_tolerance:
                 break
+            if current.time + step <= current.time:
+                raise IntegrationError(
+                    f"reference replay cannot advance time at t={current.time:.17g}"
+                )
             initial_guess = None
             initial_algebraic_guess = None
             if (
@@ -538,6 +587,20 @@ def integrate_reference_window_with_stats(
                 initial_algebraic_guess=initial_algebraic_guess,
                 settings=settings,
             )
+            if energy_absolute_tolerance is not None:
+                assert energy_relative_tolerance is not None
+                balance_error, injection_ratio = energy_balance_metrics(
+                    current,
+                    result.evaluation,
+                    step,
+                    energy_absolute_tolerance,
+                    energy_relative_tolerance,
+                )
+                cumulative_energy_balance_error += balance_error
+                if math.isnan(injection_ratio):
+                    maximum_energy_injection_ratio = injection_ratio
+                elif injection_ratio > maximum_energy_injection_ratio:
+                    maximum_energy_injection_ratio = injection_ratio
             embedded_error = None
             if error_absolute_tolerance is not None:
                 assert error_relative_tolerance is not None
@@ -583,8 +646,20 @@ def integrate_reference_window_with_stats(
             reference_iterations += result.iterations
             circuit_evaluations += result.circuit_evaluations
             algebraic_iterations += result.algebraic_iterations
-        if abs(current.time - target_time) > 64.0 * max(abs(target_time), 1.0) * 2.220446049250313e-16:
+        target_tolerance = 64.0 * max(
+            math.ulp(current.time),
+            math.ulp(target_time),
+        )
+        if abs(current.time - target_time) > target_tolerance:
             raise IntegrationError("reference replay failed to reach its target time")
+        if exact_target_projection and current.time != target_time:
+            current = circuit.evaluate(
+                target_time,
+                current.dynamic_state,
+                current.algebraic.unknowns,
+            )
+            circuit_evaluations += 1
+            algebraic_iterations += current.algebraic.iterations
         outputs.append(current)
     return ReferenceWindowResult(
         evaluations=tuple(outputs),
@@ -593,11 +668,13 @@ def integrate_reference_window_with_stats(
         circuit_evaluations=circuit_evaluations,
         algebraic_iterations=algebraic_iterations,
         maximum_embedded_error=maximum_embedded_error,
+        cumulative_energy_balance_error=cumulative_energy_balance_error,
+        maximum_energy_injection_ratio=maximum_energy_injection_ratio,
     )
 
 
 def _matching_replay_step(left: float, right: float) -> bool:
-    tolerance = 64.0 * max(abs(left), abs(right), 1.0) * 2.220446049250313e-16
+    tolerance = 64.0 * max(math.ulp(left), math.ulp(right))
     return abs(left - right) <= tolerance
 
 

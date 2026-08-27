@@ -1,0 +1,35 @@
+{
+  "elements": [
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "tank",
+      "negative": "0",
+      "capacitance": 2e-6,
+      "initial_voltage": 0.75
+    },
+    {
+      "type": "inductor",
+      "name": "L1",
+      "positive": "tank",
+      "negative": "0",
+      "inductance": 0.0005,
+      "initial_current": -0.02
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.0006,
+    "nominal_step": 0.000001
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "ab2",
+    "reference_method": "trapezoidal",
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 20
+  }
+}

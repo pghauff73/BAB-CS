@@ -15,6 +15,7 @@ from babcs import (
     VoltageSource,
 )
 from babcs.bounded import StepRejected, variable_step_ab2_predict
+from babcs.integrators import integrate_reference_window_with_stats
 from babcs.waveforms import Constant
 
 
@@ -256,6 +257,41 @@ class BoundedAdamsBashforthTests(unittest.TestCase):
         relative_span = (max(energies) - min(energies)) / energies[0]
         self.assertLess(relative_span, 2.0e-3)
         self.assertGreater(result.final_history.periodic_reanchors, 0)
+
+    def test_periodic_reanchor_revalidates_final_energy_metrics(self) -> None:
+        circuit = rc_circuit()
+        integrator = BoundedAdamsBashforthIntegrator(
+            BABCSConfig(anchor_interval_steps=1)
+        )
+
+        result = Simulator(integrator).run(circuit, 5.0e-5, 5.0e-5)
+
+        for previous, current in zip(result.points[:-1], result.points[1:], strict=True):
+            metrics = current.metrics
+            assert metrics is not None
+            replay_substeps = integrator._anchor_refinement_substeps(circuit)
+            replay = integrate_reference_window_with_stats(
+                circuit,
+                previous.state.evaluation,
+                (current.time,),
+                current.state.accepted_step / replay_substeps,
+                method=integrator.config.reference_method,
+                settings=integrator.config.implicit_settings,
+                energy_absolute_tolerance=integrator.config.energy_absolute_tolerance,
+                energy_relative_tolerance=integrator.config.energy_relative_tolerance,
+            )
+            self.assertEqual(
+                (metrics.energy_balance_error, metrics.energy_injection_ratio),
+                (
+                    replay.cumulative_energy_balance_error,
+                    replay.maximum_energy_injection_ratio,
+                ),
+            )
+            self.assertLessEqual(
+                metrics.energy_injection_ratio,
+                integrator.config.energy_injection_cap,
+            )
+            self.assertIsNotNone(metrics.pre_anchor_dynamic_state)
 
 
 if __name__ == "__main__":

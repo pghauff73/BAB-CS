@@ -187,3 +187,23 @@ a general speed claim.
 
 Release publication still requires human review of changed thresholds,
 baselines, and deterministic artifacts.
+
+## Observatory and Atlas Profiles
+
+`benchmarks/observatory/manifest.json` is the canonical six-case,
+seven-candidate profile. `tools/method_observatory.py` requires all 126
+fixed-step rows and derives fixed-accuracy and fixed-work selections only from
+measured rows, preserving each selected `row_id`. A missing, duplicate, or
+unexpected row is a qualification failure.
+
+`tools/bound_coverage_atlas.py` consumes those exact row IDs, rejects a
+source-tree hash mismatch, replays each exact configuration, and reconciles
+sample diagnostics and deterministic work before reporting. Its empirical
+coverage fraction compares authority-epoch drift with the recursive internal
+bound only on documented eligible samples. It is characterization evidence,
+not a proof of physical-trajectory enclosure.
+
+`benchmarks/power_stage/manifest.json` separately characterizes three
+reduced-order numerical experiments. It is not part of the production-device
+model surface and must retain that classification in inputs, reports, and
+review language.

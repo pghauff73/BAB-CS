@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "external_tool": "ngspice",
+  "claim_boundary": "Mapped cross-implementation evidence does not make ngspice an oracle or turn reduced-order cases into production device models.",
+  "cases": [
+    {
+      "id": "rc_step",
+      "title": "RC step response",
+      "category": "first_order_linear",
+      "input": "../cases/rc_step.json",
+      "engineering_question": "Does the mapped capacitor charging transient preserve the declared resistance, capacitance, source, and initial state?",
+      "mapped_features": ["constant_voltage", "resistor", "capacitor"]
+    },
+    {
+      "id": "rc_discharge",
+      "title": "RC stored-energy discharge",
+      "category": "first_order_linear",
+      "input": "cases/rc_discharge.json",
+      "engineering_question": "Does an initially charged capacitor discharge consistently through the mapped resistor without an independent source?",
+      "mapped_features": ["initial_capacitor_voltage", "resistor", "capacitor"]
+    },
+    {
+      "id": "driven_rc",
+      "title": "Sinusoidally driven RC filter",
+      "category": "first_order_linear",
+      "input": "../cases/driven_rc.json",
+      "engineering_question": "Do both implementations reproduce the declared sinusoidal forcing, attenuation, and phase-lag trend?",
+      "mapped_features": ["sine_voltage", "resistor", "capacitor"]
+    },
+    {
+      "id": "current_driven_rc",
+      "title": "PWL current-driven RC network",
+      "category": "first_order_linear",
+      "input": "cases/current_driven_rc.json",
+      "engineering_question": "Does a piecewise-linear current command create the same resistor-capacitor state trajectory and event times?",
+      "mapped_features": ["pwl_current", "resistor", "capacitor"]
+    },
+    {
+      "id": "rl_step",
+      "title": "RL current buildup",
+      "category": "first_order_linear",
+      "input": "../cases/rl_step.json",
+      "engineering_question": "Does the mapped inductor current rise consistently under the declared voltage and resistance?",
+      "mapped_features": ["constant_voltage", "resistor", "inductor"]
+    },
+    {
+      "id": "rl_decay",
+      "title": "RL stored-current decay",
+      "category": "first_order_linear",
+      "input": "cases/rl_decay.json",
+      "engineering_question": "Does a nonzero initial inductor current decay consistently through the mapped resistor?",
+      "mapped_features": ["initial_inductor_current", "resistor", "inductor"]
+    },
+    {
+      "id": "lc_long",
+      "title": "Lossless LC oscillation",
+      "category": "resonant_and_rlc",
+      "input": "../cases/lc_long.json",
+      "engineering_question": "How closely do mapped lossless trajectories agree when phase and energy drift accumulate over many steps?",
+      "mapped_features": ["initial_capacitor_voltage", "capacitor", "inductor"]
+    },
+    {
+      "id": "lc_offset",
+      "title": "LC mixed initial-condition oscillation",
+      "category": "resonant_and_rlc",
+      "input": "cases/lc_offset.json",
+      "engineering_question": "Does the mapping preserve simultaneous initial capacitor voltage and inductor current?",
+      "mapped_features": ["initial_capacitor_voltage", "initial_inductor_current", "capacitor", "inductor"]
+    },
+    {
+      "id": "rlc_damped",
+      "title": "Underdamped parallel RLC decay",
+      "category": "resonant_and_rlc",
+      "input": "../cases/rlc_damped.json",
+      "engineering_question": "Do the implementations agree on oscillatory decay when resistance removes stored energy?",
+      "mapped_features": ["initial_capacitor_voltage", "resistor", "inductor", "capacitor"]
+    },
+    {
+      "id": "rlc_overdamped",
+      "title": "Overdamped parallel RLC decay",
+      "category": "resonant_and_rlc",
+      "input": "../cases/rlc_overdamped.json",
+      "engineering_question": "Do both solvers preserve the non-oscillatory overdamped regime?",
+      "mapped_features": ["initial_capacitor_voltage", "resistor", "inductor", "capacitor"]
+    },
+    {
+      "id": "rlc_driven",
+      "title": "Driven series RLC network",
+      "category": "resonant_and_rlc",
+      "input": "cases/rlc_driven.json",
+      "engineering_question": "Does sinusoidal forcing produce consistent inductor-current and capacitor-voltage states in a loaded RLC network?",
+      "mapped_features": ["sine_voltage", "resistor", "inductor", "capacitor"]
+    },
+    {
+      "id": "diode_clip",
+      "title": "Diode clipper",
+      "category": "nonlinear_diode",
+      "input": "../cases/diode_clip.json",
+      "engineering_question": "Does the Shockley-diode mapping reproduce the same nonlinear clipping trend?",
+      "mapped_features": ["sine_voltage", "resistor", "capacitor", "diode"]
+    },
+    {
+      "id": "diode_rectifier",
+      "title": "Capacitor-loaded diode rectifier",
+      "category": "nonlinear_diode",
+      "input": "cases/diode_rectifier.json",
+      "engineering_question": "Do both nonlinear solvers reproduce charging pulses and load discharge in a reduced rectifier?",
+      "mapped_features": ["sine_voltage", "resistor", "capacitor", "diode"]
+    },
+    {
+      "id": "diode_bias_recovery",
+      "title": "Diode bias-transition clamp",
+      "category": "nonlinear_diode",
+      "input": "cases/diode_bias_recovery.json",
+      "engineering_question": "Does a piecewise-linear bias reversal produce consistent clamp and recovery behavior?",
+      "mapped_features": ["pwl_voltage", "resistor", "capacitor", "diode"]
+    },
+    {
+      "id": "switched_rc",
+      "title": "Scheduled switched RC network",
+      "category": "scheduled_switching",
+      "input": "../cases/switched_rc.json",
+      "engineering_question": "Are switch transitions aligned and mapped with the same on and off resistances?",
+      "mapped_features": ["constant_voltage", "pulse_control", "switch", "resistor", "capacitor"]
+    },
+    {
+      "id": "switched_rl",
+      "title": "Scheduled switched RL network",
+      "category": "scheduled_switching",
+      "input": "cases/switched_rl.json",
+      "engineering_question": "Do the mapped switch and freewheel path preserve inductor-current continuity across scheduled events?",
+      "mapped_features": ["constant_voltage", "pulse_control", "switch", "diode", "resistor", "inductor"]
+    },
+    {
+      "id": "switched_rlc",
+      "title": "Scheduled switched RLC network",
+      "category": "scheduled_switching",
+      "input": "cases/switched_rlc.json",
+      "engineering_question": "Do both implementations reproduce event-driven energy transfer between an inductor and capacitor?",
+      "mapped_features": ["constant_voltage", "pulse_control", "switch", "diode", "resistor", "inductor", "capacitor"]
+    },
+    {
+      "id": "buck_like_reduced_order",
+      "title": "Simplified buck-like converter",
+      "category": "reduced_order_power_stage",
+      "input": "../../examples/power_stage/buck_like_reduced_order.json",
+      "engineering_question": "Does the semantic mapping preserve the scheduled switch, freewheel diode, inductor, capacitor, and load response?",
+      "mapped_features": ["constant_voltage", "pulse_control", "switch", "scaled_diode_thermal_voltage", "inductor", "capacitor"],
+      "reduced_order": true
+    },
+    {
+      "id": "h_bridge_rl_reduced_order",
+      "title": "Scheduled H-bridge RL load",
+      "category": "reduced_order_power_stage",
+      "input": "../../examples/power_stage/h_bridge_rl_reduced_order.json",
+      "engineering_question": "Do four scheduled switches produce a consistent bipolar RL-load current trajectory?",
+      "mapped_features": ["constant_voltage", "four_switch_schedule", "resistor", "inductor"],
+      "reduced_order": true
+    },
+    {
+      "id": "dc_link_rlc_reduced_order",
+      "title": "DC-link RLC startup and interruption",
+      "category": "reduced_order_power_stage",
+      "input": "../../examples/power_stage/dc_link_rlc_reduced_order.json",
+      "engineering_question": "Does the mapping preserve startup, interruption, freewheel behavior, and link-energy transients?",
+      "mapped_features": ["constant_voltage", "pulse_control", "switch", "diode", "resistor", "inductor", "capacitor"],
+      "reduced_order": true
+    }
+  ]
+}

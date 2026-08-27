@@ -65,3 +65,22 @@ This example proves deterministic execution and the reported local authority
 behavior for one RC input and one exact source state. It does not qualify sparse
 backends, nonlinear devices, long-horizon oscillators, external ngspice
 agreement, an installed wheel, or a release.
+
+## 5. Extend to the observatory and lab
+
+After the minimal RC check, run the compact numerical teaching path:
+
+```bash
+PYTHONPATH=src python lab/support/verify.py \
+  --exercise 01-mna \
+  --exercise 02-convergence \
+  --exercise 03-phase-versus-energy \
+  --exercise 04-shadow-authority
+```
+
+Then generate the complete Method Observatory and Bound Coverage Atlas using
+the commands in `docs/METHOD_OBSERVATORY.md` and
+`docs/BOUND_COVERAGE_ATLAS.md`. Full packaging exercises require a clean exact
+source commit for release evidence; `--development` labels dirty-tree output as
+non-release evidence. Fixture regeneration is explicit and never constitutes
+approval by itself.

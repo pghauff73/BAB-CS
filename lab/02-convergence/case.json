@@ -1,0 +1,9 @@
+{
+  "elements": [
+    {"type": "voltage_source", "name": "V1", "positive": "vin", "negative": "0", "waveform": 1.0},
+    {"type": "resistor", "name": "R1", "positive": "vin", "negative": "out", "resistance": 1000.0},
+    {"type": "capacitor", "name": "C1", "positive": "out", "negative": "0", "capacitance": 1e-6, "initial_voltage": 0.0}
+  ],
+  "simulation": {"start_time": 0.0, "stop_time": 0.001, "nominal_step": 0.0001},
+  "babcs": {"rollout_mode": "disabled", "reference_method": "trapezoidal", "anchor_interval_steps": 1000000000, "energy_injection_cap": 1000000000000.0, "stiffness_limit": 1000000000000.0}
+}

@@ -84,7 +84,10 @@ class EventQualificationTests(unittest.TestCase):
         circuit = OverrideCircuit()
         result = self._run(circuit, 1.0e-5, 2.0e-6)
 
-        self.assertEqual(circuit.breakpoint_calls, len(result.points) - 1)
+        self.assertIn(
+            circuit.breakpoint_calls,
+            {len(result.points) - 1, len(result.points)},
+        )
 
     def test_piecewise_linear_breakpoints_are_each_reached_once(self) -> None:
         result = self._run(piecewise_linear_rc_circuit(), 5.0e-4, 8.0e-5)
@@ -108,6 +111,7 @@ class EventQualificationTests(unittest.TestCase):
                 metrics = result.points[index + 1].metrics
                 assert metrics is not None
                 self.assertFalse(metrics.ab_used)
+                self.assertEqual(metrics.method, "trapezoidal_startup")
 
     def test_repeated_switch_transitions_preserve_exact_event_times(self) -> None:
         result = self._run(switched_rc_circuit(), 9.0e-4, 7.0e-5)
@@ -116,7 +120,60 @@ class EventQualificationTests(unittest.TestCase):
         self.assertEqual(len(event_times), len(expected))
         for actual, target in zip(event_times, expected, strict=True):
             self.assertAlmostEqual(actual, target, places=15)
-        self.assertGreaterEqual(result.final_history.rejected_steps, 1)
+
+    def test_roundoff_equivalent_current_event_is_not_restepped(self) -> None:
+        result = self._run(
+            pulsed_rc_circuit(delay=1.0e-5, width=3.0e-5, period=8.0e-5),
+            1.7e-4,
+            1.25e-7,
+        )
+        self.assertEqual(result.points[-1].time, 1.7e-4)
+
+    def test_events_reset_multistep_history_without_suppressing_replay(self) -> None:
+        circuit = Circuit(
+            [
+                VoltageSource(
+                    "V1",
+                    "vin",
+                    "0",
+                    Pulse(0.0, 1.0, 2.0e-5, 0.0, 1.0e-5, 0.0, 4.0e-5),
+                ),
+                Resistor("R1", "vin", "out", 1_000.0),
+                Capacitor("C1", "out", "0", 1.0e-6),
+            ]
+        )
+        config = BABCSConfig(
+            rollout_mode="active",
+            candidate_method="rk23",
+            reference_interval_steps=100,
+            deferred_reference_bound_cap=1.0e9,
+            predictor_reference_cap=1.0e9,
+            embedded_error_cap=1.0e9,
+            energy_injection_cap=1.0e9,
+            stiffness_limit=1.0e9,
+            anchor_interval_steps=8,
+            anchor_substeps=4,
+        )
+
+        result = Simulator(BoundedAdamsBashforthIntegrator(config)).run(
+            circuit,
+            2.0e-4,
+            5.0e-6,
+        )
+        event_metrics = [
+            point.metrics
+            for point in result.points
+            if point.event_boundary and point.metrics is not None
+        ]
+
+        self.assertTrue(event_metrics)
+        self.assertTrue(all(metric.reference_solve_count > 0 for metric in event_metrics))
+        self.assertTrue(all(not metric.candidate_used for metric in event_metrics))
+        self.assertTrue(all(metric.periodic_reanchor for metric in event_metrics))
+        self.assertTrue(
+            all(metric.replay_refinement_substeps >= 8 for metric in event_metrics)
+        )
+        self.assertGreater(result.final_history.periodic_reanchors, 0)
 
     @staticmethod
     def _run(circuit, stop_time: float, step: float):

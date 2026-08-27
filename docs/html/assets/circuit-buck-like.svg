@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 650">
+  <title id="title">Simplified buck-like converter</title>
+  <desc id="description">A scheduled switch transfers energy through an inductor while a diode provides a freewheel path. Generated from examples/power_stage/buck_like_reduced_order.json, SHA-256 09281a85110d4d45d8e21871e462833e1067c32a9bf06f78f044127c6ca87b4a.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="650" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="64" y="58" text-anchor="start">Simplified buck-like converter</text>
+  <text class="sans subtitle" x="64" y="96" text-anchor="start">A scheduled switch transfers energy through an inductor while a diode provides a freewheel path.</text>
+  <rect class="card" x="52" y="132" width="1096" height="364" rx="22" filter="url(#shadow)"/>
+  <g><path class="wire" d="M120 220 L120 288"/><circle class="symbol" cx="120" cy="330" r="42"/><text class="sans label" x="120" y="318" text-anchor="middle">+</text><text class="sans label" x="120" y="354" text-anchor="middle">−</text><path class="wire" d="M120 372 L120 440"/><text class="sans label" x="62" y="324" text-anchor="end">VDC</text><text class="sans value" x="62" y="349" text-anchor="end">1 V</text><path class="wire" d="M120 220 L215 220"/><path class="wire" d="M215 220 L239 220"/><path class="wire" d="M366 220 L390 220"/><circle class="symbol" cx="239" cy="220" r="5"/><circle class="symbol" cx="366" cy="220" r="5"/><path class="wire" d="M243 217 L360 193"/><text class="sans label" x="302.5" y="178" text-anchor="middle">S_HIGH</text><text class="sans value" x="302.5" y="252" text-anchor="middle">100 mΩ on</text><path class="wire" d="M390 220 L455 220"/><circle class="node" cx="455" cy="220" r="5"/><text class="sans micro" x="455" y="205" text-anchor="middle">sw</text><path class="wire" d="M455 220 L477 220"/><path class="wire" d="M477 220 a23.875 23.875 0 0 1 47.75 0 a23.875 23.875 0 0 1 47.75 0 a23.875 23.875 0 0 1 47.75 0 a23.875 23.875 0 0 1 47.75 0"/><path class="wire" d="M668 220 L690 220"/><text class="sans label" x="572.5" y="190" text-anchor="middle">L_OUT</text><text class="sans value" x="572.5" y="260" text-anchor="middle">500 µH</text><path class="wire" d="M690 220 L960 220"/><circle class="node" cx="790" cy="220" r="5"/><text class="sans micro" x="790" y="205" text-anchor="middle">out</text><path class="wire" d="M390 220 L390 302"/><path class="symbol" d="M368 302 L412 302 L390 338 Z M367 344 H413"/><path class="wire" d="M390 344 L390 440"/><text class="sans label" x="354" y="322" text-anchor="end">D_FREE</text><text class="sans value" x="354" y="347" text-anchor="end">Shockley diode</text><path class="wire" d="M510 220 L510 242"/><path class="wire" d="M510 242 L497 264 L523 286 L497 308 L523 330 L497 352 L523 374 L497 396 L510 418"/><path class="wire" d="M510 418 L510 440"/><text class="sans label" x="545" y="322" text-anchor="start">R_SW_BLEED</text><text class="sans value" x="545" y="347" text-anchor="start">10 Ω</text><path class="wire" d="M780 220 L780 316"/><path class="symbol" d="M756 316 H804 M756 344 H804"/><path class="wire" d="M780 344 L780 440"/><text class="sans label" x="746" y="322" text-anchor="end">C_OUT</text><text class="sans value" x="746" y="347" text-anchor="end">100 µF</text><path class="wire" d="M940 220 L940 242"/><path class="wire" d="M940 242 L927 264 L953 286 L927 308 L953 330 L927 352 L953 374 L927 396 L940 418"/><path class="wire" d="M940 418 L940 440"/><text class="sans label" x="975" y="322" text-anchor="start">R_LOAD</text><text class="sans value" x="975" y="347" text-anchor="start">20 Ω</text><path class="wire" d="M120 440 L960 440"/><path class="wire" d="M690 416 L690 440"/><path class="ground" d="M672 440 H708 M678 448 H702 M684 456 H696"/></g>
+  <rect class="warm" x="70" y="516" width="1060" height="50" rx="13"/>
+  <text class="sans small" x="92" y="547" text-anchor="start">Reduced-order numerical experiment, not a production device model.</text>
+  <text class="mono micro" x="70" y="616">SOURCE examples/power_stage/buck_like_reduced_order.json · INPUT SHA-256 09281a85110d4d45</text>
+</svg>

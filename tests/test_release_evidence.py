@@ -162,7 +162,7 @@ class ReleaseEvidenceTests(unittest.TestCase):
         benchmarks = release_evidence.benchmark_surface(Path("benchmarks/manifest.json"))
         versions = release_evidence.ci_python_versions(Path(".github/workflows/ci.yml"))
         self.assertGreaterEqual(tests["methods"], 243)
-        self.assertEqual(tests["modules"], 20)
+        self.assertEqual(tests["modules"], 26)
         self.assertEqual(benchmarks["case_count"], 8)
         self.assertEqual(benchmarks["declared_method_count"], 15)
         self.assertEqual(benchmarks["case_method_assignments"], 51)

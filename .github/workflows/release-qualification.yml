@@ -172,14 +172,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for case in rc_step rl_step diode_clip switched_rc; do
-            /tmp/babcs-source-scipy/bin/python tools/compare_external.py \
-              "benchmarks/cases/${case}.json" \
-              --output "artifacts/release/ngspice-${case}.json" \
-              --netlist-output "artifacts/release/ngspice-${case}.cir" \
-              --raw-output "artifacts/release/ngspice-${case}.dat" \
-              --log-output "artifacts/release/ngspice-${case}.log"
-          done
+          /tmp/babcs-source-scipy/bin/python tools/run_external_suite.py \
+            benchmarks/external/manifest.json \
+            --output-root artifacts/release \
+            --filename-prefix ngspice-
 
       - name: Build candidate wheel twice
         shell: bash

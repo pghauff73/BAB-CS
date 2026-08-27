@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 760">
+  <title id="title">Method Observatory accuracy versus deterministic work</title>
+  <desc id="description">A representative fixed-step RC scatter plot for all seven bounded candidate profiles. Each point shows maximum authority error and deterministic work from a measured simulation row.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="760" rx="28" fill="#f5f8fb"/>
+<text class="sans title" x="64" y="58" text-anchor="start">Method Observatory: accuracy versus deterministic work</text>
+<text class="sans subtitle" x="64" y="96" text-anchor="start">Seven bounded candidate profiles on the same declared RC fixed-step configuration.</text>
+<text class="sans section" x="64" y="124" text-anchor="start">REPRESENTATIVE FIXED-STEP VIEW · NOT A UNIVERSAL METHOD RANKING</text>
+  <rect class="card" x="52" y="140" width="1096" height="570" rx="20"/>
+  <path class="grid" d="M125 160 V590"/>
+  <path class="grid" d="M125 590 H1125"/>
+<text class="sans micro" x="125" y="614" text-anchor="middle">1.88</text>
+<text class="sans micro" x="111" y="594" text-anchor="end">-3.02</text>
+  <path class="grid" d="M325 160 V590"/>
+  <path class="grid" d="M125 504 H1125"/>
+<text class="sans micro" x="325" y="614" text-anchor="middle">1.94</text>
+<text class="sans micro" x="111" y="508" text-anchor="end">-2.77</text>
+  <path class="grid" d="M525 160 V590"/>
+  <path class="grid" d="M125 418 H1125"/>
+<text class="sans micro" x="525" y="614" text-anchor="middle">1.99</text>
+<text class="sans micro" x="111" y="422" text-anchor="end">-2.51</text>
+  <path class="grid" d="M725 160 V590"/>
+  <path class="grid" d="M125 332 H1125"/>
+<text class="sans micro" x="725" y="614" text-anchor="middle">2.05</text>
+<text class="sans micro" x="111" y="336" text-anchor="end">-2.26</text>
+  <path class="grid" d="M925 160 V590"/>
+  <path class="grid" d="M125 246 H1125"/>
+<text class="sans micro" x="925" y="614" text-anchor="middle">2.11</text>
+<text class="sans micro" x="111" y="250" text-anchor="end">-2.01</text>
+  <path class="grid" d="M1125 160 V590"/>
+  <path class="grid" d="M125 160 H1125"/>
+<text class="sans micro" x="1125" y="614" text-anchor="middle">2.17</text>
+<text class="sans micro" x="111" y="164" text-anchor="end">-1.76</text>
+<text class="sans small" x="625" y="642" text-anchor="middle">log10 work units</text>
+<text class="sans small" x="38" y="375" text-anchor="middle" transform="rotate(-90 38 375)">log10 maximum authority error</text>
+  <circle cx="193.966" cy="339.821" r="9" fill="#0d7185" stroke="#fff" stroke-width="3"><title>ab2 · work 79 · error 0.00516504</title></circle>
+  <circle cx="70" cy="670" r="5" fill="#0d7185"/>
+<text class="sans small" x="83" y="674" text-anchor="start">ab2</text>
+  <circle cx="692.699" cy="202.233" r="9" fill="#d9782d" stroke="#fff" stroke-width="3"><title>backward euler · work 110 · error 0.0129935</title></circle>
+  <circle cx="340" cy="670" r="5" fill="#d9782d"/>
+<text class="sans small" x="353" y="674" text-anchor="start">backward euler</text>
+  <circle cx="692.699" cy="372.534" r="9" fill="#6856a8" stroke="#fff" stroke-width="3"><title>bdf2 · work 110 · error 0.00414778</title></circle>
+  <circle cx="610" cy="670" r="5" fill="#6856a8"/>
+<text class="sans small" x="623" y="674" text-anchor="start">bdf2</text>
+  <circle cx="212.917" cy="189.655" r="9" fill="#2f8f68" stroke="#fff" stroke-width="3"><title>explicit euler · work 80 · error 0.0141368</title></circle>
+  <circle cx="880" cy="670" r="5" fill="#2f8f68"/>
+<text class="sans small" x="893" y="674" text-anchor="start">explicit euler</text>
+  <circle cx="692.699" cy="552.891" r="9" fill="#b34e63" stroke="#fff" stroke-width="3"><title>heun · work 110 · error 0.00123772</title></circle>
+  <circle cx="70" cy="694" r="5" fill="#b34e63"/>
+<text class="sans small" x="83" y="698" text-anchor="start">heun</text>
+  <circle cx="1056.034" cy="560.345" r="9" fill="#4d6e93" stroke="#fff" stroke-width="3"><title>rk23 · work 140 · error 0.00117738</title></circle>
+  <circle cx="340" cy="694" r="5" fill="#4d6e93"/>
+<text class="sans small" x="353" y="698" text-anchor="start">rk23</text>
+  <circle cx="692.699" cy="470.802" r="9" fill="#8a6b1f" stroke="#fff" stroke-width="3"><title>trapezoidal · work 110 · error 0.00214615</title></circle>
+  <circle cx="610" cy="694" r="5" fill="#8a6b1f"/>
+<text class="sans small" x="623" y="698" text-anchor="start">trapezoidal</text>
+</svg>

@@ -90,13 +90,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/external
-          for case in rc_step rl_step diode_clip switched_rc; do
-            python tools/compare_external.py "benchmarks/cases/${case}.json" \
-              --output "artifacts/external/${case}.json" \
-              --netlist-output "artifacts/external/${case}.cir" \
-              --raw-output "artifacts/external/${case}.dat" \
-              --log-output "artifacts/external/${case}.log"
-          done
+          python tools/run_external_suite.py benchmarks/external/manifest.json \
+            --output-root artifacts/external
           sha256sum \
             artifacts/external/*.json \
             artifacts/external/*.cir \

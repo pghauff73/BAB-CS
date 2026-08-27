@@ -60,6 +60,10 @@ class ComparisonRunnerTests(unittest.TestCase):
                 "performance evidence\n",
                 encoding="utf-8",
             )
+            (audit_directory / "OBSERVATORY_ATLAS_SANDBOX_LAB_IMPLEMENTATION_AUDIT.md").write_text(
+                "implementation evidence\n",
+                encoding="utf-8",
+            )
             self.assertFalse(source_metadata(repository)["dirty"])
 
             source.write_text("VALUE = 2\n", encoding="utf-8")

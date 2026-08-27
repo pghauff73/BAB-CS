@@ -1,362 +1,240 @@
-# Circuit Engineering and Performance Work in Bounded-Authority-Based-Circuit-Simulation
+# Circuit Engineering and Performance in Bounded-Authority-Based-Circuit-Simulation
 
-## Architectural Ownership
+## Why Authority Must Survive Optimization
 
-BAB-CS is implemented as a set of deliberately separated numerical owners. The
-circuit model owns topology, algebraic unknown ordering, device stamping,
-projection, energy, and differential sensitivity. Candidate integrators own
-only candidate construction and candidate work counters. Implicit integrators
-own backward Euler, trapezoidal, BDF2, nonlinear iteration, and refined replay.
-The bounded controller owns authority, correction, gates, recursive bounds, and
-anchors. The simulator owns event-aligned stepping and rejection recovery
-[[23]](REFERENCES.md#ref-23) [[24]](REFERENCES.md#ref-24)
-[[25]](REFERENCES.md#ref-25) [[26]](REFERENCES.md#ref-26)
-[[28]](REFERENCES.md#ref-28). This ownership model prevents a fast path from
-quietly bypassing safety logic.
+Bounded-Authority-Based-Circuit-Simulation (`BAB-CS`) is engineered so that a
+faster numerical path cannot quietly bypass the checks that make a result
+reviewable. The project treats performance as an optimization problem inside a
+fixed authority architecture. A proposed acceleration is retained only when it
+improves complete workloads, preserves numerical behavior, keeps failure modes
+visible, and leaves a safe fallback available.
 
-The `Circuit` constructor normalizes nodes and elements, validates component
-parameters, establishes deterministic node and branch ordering, and divides
-the model into dynamic and algebraic parts [[25]](REFERENCES.md#ref-25).
-Capacitor voltages and inductor currents preserve passive sign conventions.
-Voltage sources and inductors introduce branch-current unknowns where needed by
-the algebraic equations. That organization follows the purpose of modified
-nodal analysis: retain sparse nodal structure while supporting ideal voltage-
-defined elements [[1]](REFERENCES.md#ref-1).
+For a novice, the central rule is simple: **the part that runs faster is not
+allowed to redefine what counts as correct**. Candidate methods propose states.
+The circuit model enforces electrical equations. Independent methods and replay
+challenge the proposal. The controller owns acceptance. The simulator owns
+event alignment and retry behavior [[23]](REFERENCES.md#ref-23)
+[[28]](REFERENCES.md#ref-28).
 
-At evaluation time, the model samples source and switch inputs, solves the
-algebraic equations, derives the differential state derivative, and calculates
-stored energy, source power, and dissipated power. The accepted
-`CircuitEvaluation` therefore carries both numerical state and the diagnostics
-needed by the controller. Algebraic solutions retain node-voltage and branch-
-current maps for output, but optimized internal paths operate on deterministic
-ordered storage rather than repeatedly rebuilding semantic dictionaries.
+## Follow One Timestep Through Its Decision Owners
 
-Linear algebra is dependency-free at the baseline. The dense path implements
-partial pivoting, singularity detection, factored solves, multi-right-hand-side
-solves, finite-difference Jacobians, infinity norms, and weighted RMS scaling
-[[27]](REFERENCES.md#ref-27). This path is valuable beyond convenience: it gives
-small tests and clean-wheel installations an auditable implementation that does
-not depend on a compiled external package.
+Five owners divide the decisions made during one timestep. An **owner** is the
+part of the software allowed to make one specific class of decision.
 
-## Sparse Execution
+1. The **simulator** chooses the attempted timestep and shortens it when needed
+   to land exactly on a declared source or switch event.
+2. A **candidate integrator** applies one numerical formula and proposes the next
+   dynamic state. It also records how much numerical work it performed, but it
+   cannot accept its own proposal.
+3. The **circuit model** applies topology and component equations, projects the
+   proposal onto the circuit constraints, and computes stored energy, source
+   power, dissipated power, and sensitivity.
+4. An **independent integrator** computes a reference or replay result. The
+   implicit integrators own backward Euler, trapezoidal integration, backward
+   differentiation formula order two (`BDF2`), nonlinear iteration, and replay.
+   An implicit method solves an equation that contains the new state itself.
+5. The **bounded controller** compares the evidence, applies correction and hard
+   gates, updates the recursive error bound, and either accepts, falls back to a
+   safer method, or rejects the attempt for retry.
 
-The optional sparse path uses SciPy’s CSC matrices and SuperLU factorization
-interface [[7]](REFERENCES.md#ref-7) [[9]](REFERENCES.md#ref-9). A second optional
-adapter can use a compatible system SuiteSparse KLU 2 library through `ctypes`
-[[35]](REFERENCES.md#ref-35). BAB-CS exposes `dense`, `auto`, `scipy`, and `klu`
-backend choices. `auto` is a measured policy rather than an alias for sparse. It
-considers problem size, matrix density, whether a structure can be reused, and
-whether multiple right-hand sides can amortize setup. Small or dense systems
-remain on the dense implementation.
+This ownership chain prevents a convenient fast path from changing a circuit
+equation, weakening an acceptance rule, or approving its own answer without the
+rest of the authority system noticing [[24]](REFERENCES.md#ref-24)
+[[25]](REFERENCES.md#ref-25) [[26]](REFERENCES.md#ref-26).
 
-One high-value optimization was to make topology a compiled asset. For eligible
-circuits, the model builds the CSC row indices, column pointers, device stamp
-locations, constraint locations, and sensitivity right-hand-side structure
-once. Repeated evaluations then update numeric values without reconstructing
-the sparse graph [[17]](REFERENCES.md#ref-17) [[25]](REFERENCES.md#ref-25).
-Mutable resistance, capacitance, inductance, source, diode, and switch values
-remain live; compilation records where values belong, not what their future
-values must be.
+## Build the Circuit in a Repeatable Order
 
-The sparse factorization adapter maintains a bounded thread-local workspace for
-each structural pattern. A mutable CSC numeric array can be refilled and passed
-to SuperLU without allocating a complete matrix object on every solve. The
-cache is capped, and tests verify that previously returned factor objects remain
-independent after workspace reuse [[17]](REFERENCES.md#ref-17)
-[[27]](REFERENCES.md#ref-27). Bounded cache ownership is important because an
-unbounded structural cache would exchange numerical speed for process-level
-memory drift.
+The `Circuit` constructor validates component values, normalizes node names,
+establishes a repeatable node and branch order, and separates dynamic variables
+from algebraic variables. Capacitor voltages and inductor currents are the
+dynamic state because they store electrical memory. Node voltages and currents
+through voltage-defined branches are algebraic unknowns because they must satisfy
+the circuit equations at each evaluation.
 
-KLU adds a distinct bounded workspace that retains symbolic analysis and
-refactors numeric values for exact repeated CSC patterns. The 128-entry
-per-thread LRU has an identity fast path for hot circuit-owned structures and an
-exact structural fallback for separately constructed circuits. Reusable factor
-objects hold immutable matrix values and weak workspace references, so stale,
-evicted, or cross-thread solves can restore the correct factor without allowing
-native memory to escape the cache bound. Unscaled U diagonals must pass the same
-absolute pivot threshold as the existing solvers, and automatic KLU failure
-falls back to SciPy.
+The formulation uses modified nodal analysis (`MNA`), a standard method that
+turns a circuit into equations while retaining the sparse connectivity of the
+network [[1]](REFERENCES.md#ref-1). **Deterministic ordering** means that the
+same declared circuit produces the same internal ordering rather than depending
+on incidental container or allocation behavior. That property supports stable
+reports, repeatable hashes, and reliable comparison between source and installed
+packages.
 
-Ordering is also evidence-gated. Repeated structures initially use a general
-fill-reducing ordering. After enough observations, the implementation may probe
-natural ordering and retain it only when the normal singularity gate passes and
-the factor fill does not increase. A failed natural-order factorization disables
-that choice for the workspace. This turns an optimization hypothesis into a
-reversible local policy rather than an unconditional global switch.
+At each evaluation, the model samples sources and switch controls, solves the
+algebraic equations, calculates the dynamic derivative, and reports stored
+energy, source power, and dissipated power. The accepted evaluation therefore
+contains both the state and the diagnostics required to judge it. Public output
+retains meaningful node and branch names; optimized internal paths use ordered
+arrays so they do not rebuild dictionaries during every solve.
 
-Algebraic assembly was split into dense, sparse full-Jacobian, and sparse
-residual-only paths. The sparse paths fuse device voltage lookup, residual
-stamping, and compiled CSC value updates. Large eligible circuits can use
-demand-generated kernels specialized to the exact built-in `Circuit` class
-[[17]](REFERENCES.md#ref-17) [[25]](REFERENCES.md#ref-25). Subclasses and
-extension points retain generic fallbacks, preventing generated code from
-assuming semantics that a derived circuit may override.
+## Solve Small Systems with the Dense Baseline
 
-Input sampling was reduced without freezing input objects. Current-source
-waveforms, switch controls, and constraint waveforms can be sampled once per
-eligible algebraic evaluation and reused through Newton iteration and power
-accounting. The owning waveform objects are still consulted at each new time
-and state evaluation. This preserves mutable test behavior and source semantics
-while removing repeated dispatch inside a single evaluation.
+BAB-CS solves small systems with dependency-free linear algebra. **Linear
+algebra** is the matrix-based mathematics used to solve simultaneous circuit
+equations. The dense implementation stores every matrix entry, including zeros,
+and provides:
 
-Diode evaluation uses overflow-safe Shockley behavior and supplies both current
-and conductance. Accepted large nonlinear evaluations can reuse already
-validated diode values for accounting rather than evaluating the exponential
-again. The implementation keeps subclass overrides and nonstandard device
-behavior on the generic path [[25]](REFERENCES.md#ref-25). This is an example of
-the project’s general optimization rule: reuse evidence only while its owner,
-state, time, and topology remain exact.
+- partial pivoting, which rearranges equations to avoid weak division points;
+- singularity detection, which identifies an unsolvable or underdetermined
+  equation system;
+- factored solves for one or several right-hand sides;
+- finite-difference Jacobians, which estimate sensitivities by small input
+  changes;
+- infinity norms; and
+- weighted root-mean-square scaling, which combines component errors after
+  applying absolute and relative tolerances [[27]](REFERENCES.md#ref-27).
 
-Differential Jacobians require sensitivity of the algebraic solution to the
-dynamic state. The optimized sparse path forms multiple right-hand sides and
-solves them against one factorization, instead of solving each sensitivity
-column independently. Native array storage is retained through this batch when
-eligible. The resulting differential Jacobian and its norm can be reused by
-candidate stages, stiffness detection, and amplification modeling within their
-validated scope [[17]](REFERENCES.md#ref-17) [[25]](REFERENCES.md#ref-25).
+This path is not merely a convenience. It gives small circuits, tests, and clean
+package installations an auditable implementation that does not require a
+compiled third-party solver.
 
-## Nonlinear and Replay Acceleration
+## Scale Repeated Solves with Sparse Execution
 
-Implicit integration originally expressed nonlinear updates through an
-explicitly materialized differential Jacobian and Schur complement. The current
-sparse path can instead solve the exact coupled algebraic/dynamic block system.
-This preserves the same Newton equation while avoiding dense intermediate
-materialization. Structural-equivalence tests compare block and Schur updates,
-so the optimization is tied to a mathematical identity rather than endpoint
-timing alone [[17]](REFERENCES.md#ref-17) [[26]](REFERENCES.md#ref-26).
+A **sparse matrix** contains mostly zeros. Larger circuit equations are usually
+sparse because each device connects only a few nodes. BAB-CS can use SciPy, a
+Python scientific-computing library, to store a matrix in compressed sparse
+column (`CSC`) form. CSC stores nonzero values by column rather than storing the
+whole matrix. SciPy supplies the SuperLU sparse factorization interface.
+**Factorization** rewrites a matrix into parts that make repeated equation solves
+more efficient
+[[7]](REFERENCES.md#ref-7) [[9]](REFERENCES.md#ref-9).
 
-The nonlinear solver uses damped Newton iteration and a fail-closed residual
-test. An initial differential guess can come from the candidate or replay
-history, while an algebraic guess can come from the previous accepted solution
-or guarded extrapolation. If a proposed guess increases residual or becomes
-nonfinite, the solver restores the accepted base state and continues with the
-exact path. Predictor success can reduce work, but predictor failure cannot
-relax the convergence criterion.
+BAB-CS also supports an optional SuiteSparse KLU adapter. KLU is a sparse linear
+solver designed for circuit-like matrices. The adapter reaches a compatible
+system library through `ctypes`, Python’s standard interface for calling compiled
+C functions [[35]](REFERENCES.md#ref-35). Users may select `dense`, `scipy`,
+`klu`, or `auto`. The `auto` policy considers size, density, structural reuse,
+and the number of right-hand sides. It does not assume that sparse execution is
+always faster.
 
-A guarded chord predictor reuses a previous validated factorization for one
-proposal when the evidence is recent, topologically compatible, finite, and
-contractive. It does not replace exact Newton iteration. The line search must
-show residual reduction, and a failed proposal returns to the untouched base
-state [[17]](REFERENCES.md#ref-17). This makes the chord operation analogous to
-an initial guess with attached provenance rather than a cached solution.
+One important optimization compiles circuit topology once. The compiler records
+CSC row indices, column pointers, device stamp locations, constraint locations,
+and sensitivity structure. Repeated evaluations then change only numeric values.
+Component parameters remain live: compilation records where a value belongs,
+not what the future value must be [[17]](REFERENCES.md#ref-17)
+[[25]](REFERENCES.md#ref-25).
 
-The contractively bounded Schur predictor extends that idea to an implicit
-update. Retained algebraic sensitivity and differential-Jacobian evidence form
-a reduced proposal, but the attempt is limited to once per implicit solve and
-reserves capacity for the exact coupled solve. Future timestamps, excessive
-evidence age, changed switch state, singularity, nonfinite updates, and failed
-contraction reject the shortcut. The same mathematical two-step age window now
-uses a scale-aware eight-ULP tolerance so accumulated timestamp representation
-does not reject exactly two-step-old evidence. A broader three-step policy was
-rejected after a corrected baseline showed no additional mixed-workload
-eligibility and possible pulsed-workload overhead
-[[17]](REFERENCES.md#ref-17).
+Sparse workspaces are bounded. A **workspace** is reusable memory associated
+with a matrix structure. A bounded cache limits how many workspaces a thread may
+retain, preventing a speed optimization from becoming unbounded memory growth.
+KLU can reuse symbolic analysis, which studies the nonzero pattern, and then
+refactor only new numeric values for the same pattern. If KLU fails in automatic
+mode, BAB-CS falls back to SciPy rather than converting an optional accelerator
+into a single point of failure.
 
-Replay performance work follows the same authority rule. AB3 differential
-extrapolation and quartic algebraic extrapolation improve initial guesses after
-enough matching history exists. The first replay step and incompatible spacing
-remain conservative. Failed guesses restart from accepted values. Because the
-replay interval is still completely reintegrated by the reference method,
-initial-guess acceleration does not convert the anchor into extrapolation-only
-authority.
+## Accelerate Nonlinear Solves without Weakening Replay
 
-Several smaller retained changes remove repeated norm, conversion, and result-
-materialization work. Accepted dynamic-state norms are stored after the
-mandatory finite scan. Exact accepted algebraic tuple objects can retain an
-infinity norm, while copied sequences are recomputed. Specialized result
-construction delays public dictionaries until required. These changes are
-modest individually, but they matter because circuit simulation repeats the
-same kernels many times.
+A diode makes the circuit equations nonlinear. BAB-CS uses Newton iteration,
+which repeatedly linearizes the equations and solves for a correction. The
+implementation preserves damping, limiting, finite-value checks, iteration
+limits, and residual gates while optimizing repeated assembly work. A
+**residual** is the remaining equation mismatch at the computed state.
 
-## Measured Performance Evidence
+Replay is an independent recomputation from a trusted anchor. Mixed capacitor-
+and-inductor trapezoidal replay now uses derivative-defect evidence to decide
+whether a complete replay window needs finer internal subdivisions. A
+**derivative defect** is disagreement between the derivative behavior implied by
+different points or methods. Piecewise-switched BDF2 replay has separate startup,
+order, and event evidence because a multistep method cannot safely reuse history
+across a discontinuity.
 
-The performance audit records both retained and rejected experiments
-[[17]](REFERENCES.md#ref-17). A cumulative local sparse scaling workload reported
-mean dense-to-auto reductions of approximately 62.1%, 92.0%, and 97.6% at 32,
-64, and 128 algebraic unknowns. Those figures describe one named workload and
-environment; they are not portable speed guarantees. Small sparse cases with
-negative gains were retained as crossover evidence, which is why the automatic
-policy leaves them dense.
+Event handling preserves authority before it preserves speed. An accepted switch
+or source breakpoint forces independent replay before multistep history is
+cleared. The next startup step uses the reference method. This prevents a fast
+event reset from erasing the independent check that should have occurred at the
+event.
 
-Event-heavy performance now has a separate retained optimization. The exact
-built-in circuit path compiles breakpoint providers once per simulation run and
-deduplicates pure built-in schedules by timing signature. Balanced local runs
-reduced pulsed workloads by approximately 11.6% to 16.2% and switched workloads
-by 18.3% to 22.1%, with exact state, metric, rejection, and work traces. A
-bounded cache for the demand-gated generated sparse assembly kernel added a
-further 4.0% to 5.9% on repeated switched topologies while continuing to read
-all mutable numerical values from the live circuit. Later circuit instances can
-now adopt a previously demand-qualified exact-topology kernel immediately, and
-32-or-more-switch circuits can share duplicate immutable built-in control values
-while unique and custom controls stay on the original sampler. Together those
-two new changes reduced the repeated 16- and 32-channel switched workloads by
-4.1% and 6.0% against their exact pre-loop baseline
-[[17]](REFERENCES.md#ref-17).
+## Measure the Whole Simulation, Not One Fast Kernel
 
-Qualified KLU reuse adds another large-network gain. Automatic adoption is
-limited to native sensitivity systems with at least 128 algebraic unknowns and
-32 right-hand sides. Balanced local runs reduced 32-channel sine, mixed, pulsed,
-and switched workloads by approximately 2.0%, 4.2%, 4.3%, and 3.1%, respectively,
-with exact state, metric, rejection, and deterministic work traces. This is a
-backend- and host-specific result, not a portable guarantee
-[[17]](REFERENCES.md#ref-17).
+A **kernel** is a small, frequently executed operation such as assembling a
+matrix, calculating a norm, or solving a factored equation. Making a kernel
+faster can be valuable, but an engineering project pays for the complete
+simulation: setup, candidate work, projection, reference work, replay, event
+handling, rejected attempts, report generation, and data movement.
 
-A second KLU hot-path loop followed the measured costs rather than the initial
-ownership hypothesis. Vectorized pivot and matrix-scale checks, batched reactive
-sensitivity processing, constant-time native RHS shape validation, stable native
-pointers, and direct independent result-buffer solves reduced the same four workload
-classes by a further 4.1% to 6.8% against the exact first-KLU baseline, again with
-exact traces [[17]](REFERENCES.md#ref-17).
+For example, a faster matrix solve may provide little complete-run benefit if it
+requires repeated format conversion or causes more reference recomputations. A
+cache can reduce setup work but become harmful if it grows without a limit or
+reuses data after component values change. BAB-CS therefore retains an
+optimization only after end-to-end workloads show a gain and the authority path
+still produces equivalent accepted results and failure causes.
 
-A third boundary loop retained public immutable factorization behavior while
-removing unnecessary private assembly objects. The generated sparse kernel can
-return its raw scalar value list directly to one combined KLU factor-and-batched-
-solve operation, which also returns the reusable factorization required by the
-subsequent projection correction. Isolated native sensitivity improved by about
-3.3% in both capacitor-only and mixed profiles. Whole-run effects were smaller
-and workload-dependent, so the project records the kernel evidence separately
-from end-to-end timing [[17]](REFERENCES.md#ref-17).
+For a novice engineer, the practical test is: **did the whole declared workload
+become faster while producing the same governed result?** A microbenchmark of one
+inner operation cannot answer that question by itself.
 
-A fourth KLU loop separated Jacobian authority from residual accounting. Native
-sensitivity needs only live algebraic derivatives, so an exact generated
-Jacobian-only kernel now omits residual allocation, current stamping, diode-
-current materialization, and accepted-cache replacement. The fast path is
-limited to the already qualified large KLU crossover. Balanced local runs
-against exact commit `351a8e0` reduced 32-channel workloads by approximately
-0.9% to 8.0% and 64-channel workloads by 3.7% to 6.9%, with exact state, metric,
-rejection, and deterministic work traces [[17]](REFERENCES.md#ref-17).
+## Separate Algorithmic Work from Wall-Clock Time
 
-The mixed inductor path then removed a redundant ownership boundary. Advanced
-indexing already creates an independent writable voltage-sensitivity gather, so
-copying that gather again added bandwidth without additional isolation. The
-one-line removal measured approximately 1.1% mean end-to-end improvement at 32
-channels and 0.8% at 64 channels with exact traces
-[[17]](REFERENCES.md#ref-17).
+Wall-clock time changes with processor load, operating-system scheduling,
+library versions, and hardware. BAB-CS therefore records **deterministic work
+counters** alongside timing. These counters include candidate solves, reference
+solves, circuit evaluations, algebraic iterations, projections, Jacobian
+evaluations, replay steps, accepted steps, and rejected attempts
+[[15]](REFERENCES.md#ref-15).
 
-Deferred-reference execution then separated sensitivity evidence from storage
-that only implicit correction consumes. At 64 or more dynamic states, an
-unscheduled reference step retains the batched sensitivities and conservative
-Jacobian norm without constructing the dense dynamic matrix. A later forced
-reference upgrades the same owned result before chord correction. Balanced
-64-channel runs at a reference interval of eight improved mixed, pulsed, and
-switched workloads by approximately 1.1%, 1.4%, and 1.6%, with exact state,
-metric, rejection, and work traces [[17]](REFERENCES.md#ref-17).
+A fixed-work report compares methods under a declared operation budget. A timing
+report measures elapsed time on a named machine and environment. The two answer
+different questions. Work counts help explain algorithmic cost. Timing helps
+characterize one implementation on one system. Neither is allowed to replace
+correctness evidence.
 
-Independent replay was then measured as 17% to 43% of runtime in the profiled
-anchor configurations. Mixed C+L trapezoidal replay now starts at the minimum
-subdivision and evaluates a three-derivative quadrature defect. Failed evidence
-restarts from the trusted anchor at a cubically predicted finer subdivision;
-the original fixed `anchor_substeps` resolution remains the fail-closed ceiling.
-In the qualified 32-channel mixed workload, replay steps fell from 201 to 101
-at a 50-step anchor and balanced end-to-end timing improved by 13.45% on average
-with a 12.85% minimum round gain. The adaptive endpoint remained within 0.864
-weighted RMS of an eight-substep authority in the calibration run.
+## Keep Only End-to-End Improvements
 
-BDF2 required a different estimator because every independent replay window
-starts without multistep history. Its first step is Backward Euler, so the
-startup evidence is `0.5 h (f_1 - f_0)`. For a following variable-step BDF2
-step of length `h` after a step of length `k`, the state-defect estimate is
-`h^2 (h + k) / (3 (k + 2h))` times the difference between the two adjacent
-derivative slopes. The maximum weighted defect controls the complete-window
-retry. The startup term is second order, so the refinement law uses a square
-root rather than pretending the whole replay is third order.
+BAB-CS keeps a chain of guarded improvements rather than one dramatic shortcut.
+Retained work includes compiled sparse topology, batched sensitivity solves,
+reusable sparse workspaces, bounded KLU reuse, direct access to generated numeric
+stamp values, compiled built-in event schedules, and roundoff-aware evidence
+windows. A **unit in the last place** (`ULP`) is the gap between adjacent
+floating-point numbers near a value; ULP-aware comparisons avoid treating
+representational rounding as a large physical difference.
 
-The broad BDF2 prototype exposed useful negative evidence. Smooth sine replay
-became about 14.6% slower, source-pulsed replay was neutral after startup error
-was included, and mixed C+L replay retried to the fixed ceiling. The retained
-path therefore applies only to capacitive circuits with piecewise-controlled
-switches. Across balanced one-, 16-, 32-, and 64-channel switched runs, mean
-end-to-end reductions were 10.307%, 9.094%, 11.229%, and 11.116%; minimum round
-reductions were 9.127%, 8.853%, 10.923%, and 10.388%. Replay steps fell from
-390 to 263. Maximum distance from an eight-substep authority remained below
-0.384 weighted RMS in every scaling case.
+Several plausible optimizations were rejected after end-to-end measurement:
 
-Repeated-topology construction is now treated as an ensemble workload rather
-than as unavoidable setup. A bounded structural cache shares frozen algebraic
-CSC templates, device and constraint stamps, sensitivity right-hand sides,
-implicit coupled-block layouts, and generated residual functions between exact
-matching topologies. Reactive multipliers and every mutable device or waveform
-value remain per-circuit. Exact built-in elements also use a direct normalized
-copy path, while subclasses retain general dataclass replacement. Against exact
-commit `dd8145e`, balanced repeated construction improved by 72.5% to 78.3%
-across 16 to 128 capacitor/diode channels and a 64-channel mixed case. Building
-and taking one evaluation improved by 64.1% to 72.8%. Simulation-only traces and
-deterministic work were exactly equal, so this is an ensemble-latency result and
-not a claim of faster per-step arithmetic.
+- broad array batching of the current diode workload did not improve the
+  qualified 32-channel crossover and changed floating-operation ordering at
+  larger sizes;
+- carrying replay subdivision choices across anchors reduced some replay counts
+  but slowed measured complete workloads and did not improve authority agreement
+  consistently;
+- a general backward-Euler defect policy over-refined a simple resistor-
+  capacitor replay and increased work;
+- dynamic anchor intervals appeared faster in some switched runs only because
+  event resets suppressed independent replay; and
+- several isolated copy, norm, and residual kernels improved microbenchmarks but
+  did not produce a reliable full-simulation gain.
 
-The same audit records rejected optimizations. Shared accepted-evaluation
-Jacobian caching was rejected because later stiffness evaluations did not own
-the same differential state. An exact-index accounting prototype improved an
-isolated kernel but regressed end-to-end workloads. A generated residual-plus-
-norm kernel produced negligible or negative whole-simulation gains. Preserving
-these failures is scientifically useful because it prevents repeated work and
-shows that local microbenchmarks do not automatically justify complexity. A
-later deferred dense-Jacobian design was rejected for the same reason: switched
-runs improved by about 0.6%, but sine regressed by 1.4% on average and mixed and
-pulsed cases each contained a negative round. A direct C-order NumPy clone for
-KLU right-hand sides was likewise rejected: the isolated copy became faster,
-but native solve gains stayed below 0.7%, contained negative rounds, and the
-switched end-to-end workload regressed by about 0.7% on average. The explicit
-owned allocation and assignment therefore remains the simpler qualified path.
+These negative results are engineering evidence. They show why a fast inner
+operation is not automatically a faster complete simulation or a better
+engineering result.
 
-Two broader replay follow-ups were rejected as well. Carrying a qualified subdivision
-across compatible anchors reduced retries from 31 to 17 in a one-channel run
-and from eight to four in a 32-channel run, but total time increased by about
-7.4% and 16.2%, respectively. It also improved agreement with an eight-substep
-authority in the first case while worsening it in the second, so lower replay
-work did not establish a uniform accuracy or performance gain. A Backward Euler
-standalone derivative-defect estimator was mathematically ordered under refinement, but
-the default evidence cap repeatedly forced the maximum replay subdivision and
-made the RC replay more expensive than fixed four-substep authority. Neither
-prototype is retained as a general Backward Euler replay policy; the same term
-is still required to bound BDF2 startup.
+## Prioritize the Remaining Measured Costs
 
-Deterministic work counters accompany timing. Candidate and reference solves,
-circuit evaluations, algebraic iterations, projections, differential Jacobian
-evaluations, replay work, accepted steps, and rejected attempts are reported
-separately [[15]](REFERENCES.md#ref-15). This makes it possible to explain why a
-method is faster or slower without treating wall-clock noise as the only
-measurement.
+The next performance work should target costs that remain visible in complete
+profiles:
 
-## Remaining Work
+1. keep KLU numeric buffers resident without weakening independent factor
+   ownership;
+2. move residual calculation closer to native factorization so the same matrix
+   data does not cross language boundaries repeatedly;
+3. expose cache hits, misses, refactors, evictions, and fallbacks before making
+   cache policy more automatic;
+4. continue method-specific replay research while enforcing a maximum elapsed
+   authority age; and
+5. expand nonlinear batching only at a larger evidence-gated workload where
+   complete simulation gains can be demonstrated.
 
-The project’s current high-value performance frontier is therefore clear. Exact-
-type classification, parameter validation, constraint collection, and first-seen
-node indexing now share one order-preserving pass. The remaining constructor
-profile is led by normalized copying and by the still separate classification
-pass. A future fusion must retain duplicate-name error precedence, input-object
-isolation, subclass constructors, exact error messages, and first-seen ordering.
-Compact structural-key formation and cache diagnostics follow that target.
+Each direction must preserve mutable parameters, deterministic failure behavior,
+source-versus-installed equivalence, nonlinear qualification, exact event
+alignment, and generic fallback.
 
-Direct solver instrumentation found one initial KLU workspace miss followed by
-identity hits, zero evictions, and one numeric refactor per new sensitivity in
-the qualified workloads. Broader cache policy would not remove measured work,
-and safe reusable KLU scratch-plus-copy prototypes regressed isolated solves.
-Cross-anchor subdivision retention and general Backward Euler adaptation have
-failed their retention gates, while switched BDF2 replay now has method-
-specific startup, order, authority, and timing evidence. Dynamic anchor
-scheduling also failed its performance gate. In uninterrupted fixed replay,
-increasing the interval did not reduce total replay steps because fewer anchors
-reintegrated proportionally longer windows. In switched runs, intervals above
-the event spacing appeared 31--34% faster only because event history resets
-prevented periodic independent replay altogether. That apparent gain removes
-authority rather than making it cheaper. Each proposal must retain source and
-installed equivalence, nonlinear qualification, bound behavior, independent
-result ownership, and exact fallback.
+## Know Where This Engineering Claim Stops
 
-Replay subdivision is now independently evidence-controlled for mixed C+L
-trapezoidal anchors and qualified piecewise-switched BDF2 anchors. Remaining
-replay research must first separate an event-driven integrator-history reset
-from an independently recomputed authority refresh, then enforce a hard maximum
-elapsed authority age. Merely increasing the anchor interval either preserves
-roughly the same complete-window work or weakens refresh frequency without
-proving that omitted replay work was unnecessary
-[[17]](REFERENCES.md#ref-17).
+BAB-CS is not presented as the fastest circuit simulator in general. Its current
+performance evidence is local to declared workloads, hardware, software, and
+backend configurations. It is also not a production semiconductor, thermal,
+electromagnetic, or hardware-in-the-loop environment. Hardware-in-the-loop means
+testing real controller hardware against a simulated plant.
 
-The engineering result is not a single fast kernel. It is a chain of guarded
-specializations whose validity can be traced to topology, state, time,
-structure, and residual evidence. Dense and generic paths remain available;
-accelerated paths fail back to them; and comparison plus release tooling checks
-that packaging does not alter numerical output. This is the practical form of
-the BAB-CS design principle: acceleration may propose, but validated numerical
-authority must remain explicit.
+The engineering contribution is narrower and more defensible: BAB-CS shows how
+to accelerate a circuit simulation while preserving a visible chain from model
+equations to proposed state, independent authority, accepted result, work report,
+artifact identity, and fallback behavior.

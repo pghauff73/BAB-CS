@@ -68,6 +68,11 @@ Heun, RK23, and AB2 also expose embedded lower-order estimates. Setting
 steps accumulate a recursive bound without an implicit reference, while a hard
 `deferred_reference_bound_cap` dynamically promotes full reference authority.
 Periodic independent replay remains mandatory and resets the accumulated bound.
+Known event boundaries also force independent replay before multistep history is
+cleared. Event replay uses at least eight refinement subdivisions, lands on the
+exact event time, rechecks replay-native energy and final residual gates, and
+then starts the next step with the configured reference method. An event reset
+is therefore not treated as an authority refresh unless that replay succeeds.
 
 Every configured anchor interval, BAB-CS independently replays the interval
 from the previous trusted checkpoint using smaller implicit steps. The replay
@@ -194,20 +199,47 @@ byte-reproducible for the same source, manifest, interpreter, and platform.
 Timing is written separately because it is characterization evidence, not a
 correctness threshold.
 
+Run the six-case, seven-candidate Method Observatory and its Bound Coverage
+Atlas with:
+
+```bash
+PYTHONPATH=src python tools/method_observatory.py \
+  --output /tmp/babcs-observatory.json \
+  --fixed-step-csv /tmp/babcs-fixed-step.csv \
+  --fixed-accuracy-csv /tmp/babcs-fixed-accuracy.csv \
+  --fixed-work-csv /tmp/babcs-fixed-work.csv
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --observatory-report /tmp/babcs-observatory.json \
+  --output /tmp/babcs-atlas.json \
+  --sample-csv /tmp/babcs-atlas-samples.csv
+```
+
+The observatory requires all 126 fixed-step rows. The atlas reports actual
+authority error, recursive internal bound, anchor deviation, phase and energy,
+empirical coverage, and fallback/rejection causes without promoting empirical
+coverage to a theorem. The three examples under `examples/power_stage/` are
+**reduced-order numerical experiments, not production device models**. The ten
+exercises under `lab/` cover MNA, convergence, phase versus energy, shadow
+authority, deterministic packaging, source-versus-wheel equivalence, event
+alignment, empirical bound coverage, fallback forensics, and ngspice mapping.
+
 When `ngspice` is installed, generate optional cross-implementation evidence:
 
 ```bash
-PYTHONPATH=src python tools/compare_external.py \
-  benchmarks/cases/rc_step.json \
-  --output /tmp/babcs-ngspice.json \
-  --netlist-output /tmp/babcs-ngspice.cir \
-  --raw-output /tmp/babcs-ngspice.dat \
-  --log-output /tmp/babcs-ngspice.log
+PYTHONPATH=src python tools/run_external_suite.py \
+  benchmarks/external/manifest.json \
+  --output-root /tmp/babcs-ngspice-suite
 ```
 
 See `docs/COMPARISON_PROTOCOL.md` and `docs/EXTERNAL_COMPARISON.md` for the
 authority hierarchy, metrics, fixed-timestep/fixed-accuracy/fixed-work
 interpretation, and claim boundaries.
+
+See `docs/METHOD_OBSERVATORY.md`, `docs/BOUND_COVERAGE_ATLAS.md`,
+`docs/POWER_STAGE_SANDBOX.md`, and
+`docs/TEACHING_AND_REPRODUCIBILITY_LAB.md` for the new experiment surfaces. See
+`docs/NGSPICE_CASE_ATLAS.md` for the 20 mapped external cases and reference-run
+graphs.
 
 See `docs/PERFORMANCE_OPTIMIZATION_AUDIT.md` for the latest locally validated
 solver hot-path improvements, exact baseline comparison, and remaining

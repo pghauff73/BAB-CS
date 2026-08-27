@@ -60,7 +60,13 @@ recursive bound, and increment the anchor generation.
 ### BAB-009 — Event Safety
 
 Known waveform breakpoints shall terminate integration steps exactly. No AB
-history may cross an event boundary. The next step shall use implicit startup.
+history may cross an event boundary. Before multistep history is cleared, the
+solver shall independently replay from the trusted anchor to the exact event
+time, replace the provisional event state, and reapply energy and residual
+gates. Event replay shall use at least eight refinement subdivisions. The next
+step shall use the configured reference method for implicit startup. An event
+history reset shall not, by itself, advance authority generation or replace the
+trusted anchor.
 
 ### BAB-010 — Stiffness Fallback
 

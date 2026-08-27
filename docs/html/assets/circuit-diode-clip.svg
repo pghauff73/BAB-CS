@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 650">
+  <title id="title">Diode-clip circuit</title>
+  <desc id="description">A sine source drives an RC node with a nonlinear diode clamp. Generated from benchmarks/cases/diode_clip.json, SHA-256 7e0bd8068d5931b1bfa6d0cd0e47c8b6d4398fea847063db06bcfe6ca13907a4.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="650" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="64" y="58" text-anchor="start">Diode-clip circuit</text>
+  <text class="sans subtitle" x="64" y="96" text-anchor="start">A sine source drives an RC node with a nonlinear diode clamp.</text>
+  <rect class="card" x="52" y="132" width="1096" height="364" rx="22" filter="url(#shadow)"/>
+  <g><path class="wire" d="M155 220 L155 283"/><circle class="symbol" cx="155" cy="325" r="42"/><text class="sans label" x="155" y="313" text-anchor="middle">+</text><text class="sans label" x="155" y="349" text-anchor="middle">−</text><path class="wire" d="M155 367 L155 430"/><text class="sans label" x="97" y="319" text-anchor="end">V1</text><text class="sans value" x="97" y="344" text-anchor="end">1 V sine · 1 kHz</text><path class="wire" d="M155 220 L275 220"/><path class="wire" d="M275 220 L297 220"/><path class="wire" d="M297 220 L321.5 207 L346 233 L370.5 207 L395 233 L419.5 207 L444 233 L468.5 207 L493 220"/><path class="wire" d="M493 220 L515 220"/><text class="sans label" x="395" y="192" text-anchor="middle">R1</text><text class="sans value" x="395" y="258" text-anchor="middle">1 kΩ</text><path class="wire" d="M515 220 L825 220"/><circle class="node" cx="650" cy="220" r="5"/><text class="sans micro" x="650" y="205" text-anchor="middle">out</text><path class="wire" d="M600 220 L600 297"/><path class="symbol" d="M578 297 L622 297 L600 333 Z M577 339 H623"/><path class="wire" d="M600 339 L600 430"/><text class="sans label" x="564" y="317" text-anchor="end">D1</text><text class="sans value" x="564" y="342" text-anchor="end">Shockley diode</text><path class="wire" d="M760 220 L760 311"/><path class="symbol" d="M736 311 H784 M736 339 H784"/><path class="wire" d="M760 339 L760 430"/><text class="sans label" x="794" y="317" text-anchor="start">C1</text><text class="sans value" x="794" y="342" text-anchor="start">10 nF</text><path class="wire" d="M155 430 L825 430"/><path class="wire" d="M650 406 L650 430"/><path class="ground" d="M632 430 H668 M638 438 H662 M644 446 H656"/><text class="sans section" x="888" y="250" text-anchor="start">Nonlinear check</text><text class="sans label" x="888" y="282" text-anchor="start">Diode conduction clips</text><text class="sans value" x="888" y="313" text-anchor="start">the positive output swing</text></g>
+
+  <text class="mono micro" x="70" y="616">SOURCE benchmarks/cases/diode_clip.json · INPUT SHA-256 7e0bd8068d5931b1</text>
+</svg>

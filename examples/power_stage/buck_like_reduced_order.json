@@ -1,0 +1,106 @@
+{
+  "experiment": {
+    "title": "Simplified buck-like converter",
+    "classification": "reduced-order numerical experiment, not a production device model",
+    "purpose": "Observe scheduled energy transfer, freewheel-diode conduction, event authority, inductor-current continuity, and capacitor ripple.",
+    "omitted_effects": [
+      "transistor switching loss",
+      "semiconductor charge storage",
+      "inductor saturation and winding loss",
+      "capacitor ESR and ESL",
+      "thermal behavior",
+      "EMI and layout parasitics",
+      "closed-loop control"
+    ]
+  },
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VDC",
+      "positive": "vdc",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "switch",
+      "name": "S_HIGH",
+      "positive": "vdc",
+      "negative": "sw",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 1e-5,
+        "rise": 0.0,
+        "width": 3e-5,
+        "fall": 0.0,
+        "period": 8e-5
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 1000000000.0
+    },
+    {
+      "type": "diode",
+      "name": "D_FREE",
+      "positive": "0",
+      "negative": "sw",
+      "saturation_current": 1e-9,
+      "thermal_voltage": 0.05
+    },
+    {
+      "type": "resistor",
+      "name": "R_SW_BLEED",
+      "positive": "sw",
+      "negative": "0",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L_OUT",
+      "positive": "sw",
+      "negative": "out",
+      "inductance": 0.0005,
+      "initial_current": 0.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C_OUT",
+      "positive": "out",
+      "negative": "0",
+      "capacitance": 0.0001,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_LOAD",
+      "positive": "out",
+      "negative": "0",
+      "resistance": 20.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.00032,
+    "nominal_step": 1e-6
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "ab2",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 1,
+    "predictor_reference_cap": 1000000.0,
+    "anchor_reference_cap": 1000000.0,
+    "energy_injection_cap": 1000000.0,
+    "stiffness_limit": 1000000.0,
+    "anchor_interval_steps": 16,
+    "algebraic_residual_cap": 1e-6,
+    "full_residual_cap": 1e-6,
+    "implicit_settings": {
+      "absolute_tolerance": 1e-7,
+      "relative_tolerance": 1e-7,
+      "max_iterations": 40,
+      "minimum_damping": 6.103515625e-5
+    }
+  }
+}

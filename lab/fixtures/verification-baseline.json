@@ -1,0 +1,218 @@
+{
+  "all_passed": true,
+  "exercises": [
+    {
+      "evidence": {
+        "algebraic_residual": 0.0,
+        "algebraic_size": 4,
+        "dynamic_names": [
+          "v(C1)"
+        ],
+        "dynamic_size": 1,
+        "initial_derivative": [
+          1000.0000000000001
+        ],
+        "nodes": [
+          "vin",
+          "out"
+        ],
+        "state_is_not_node_voltage_vector": true
+      },
+      "id": "01-mna",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "maximum_errors": [
+          0.0003068987885731511,
+          7.666231473091312e-05,
+          1.9161684994717376e-05
+        ],
+        "observed_orders": [
+          2.0011734866053392,
+          2.000293128382485
+        ],
+        "steps": [
+          0.0001,
+          5e-05,
+          2.5e-05
+        ]
+      },
+      "id": "02-convergence",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "methods": {
+          "backward_euler": {
+            "final_phase_error_radians": 0.08248810247463056,
+            "final_relative_energy_error": 0.9805531365134604,
+            "relative_energy_span": 0.9805531365134604
+          },
+          "trapezoidal": {
+            "final_phase_error_radians": 0.020658618955850548,
+            "final_relative_energy_error": 6.352747104407253e-16,
+            "relative_energy_span": 4.658681209898652e-15
+          }
+        },
+        "periods": 10,
+        "phase_and_energy_are_separate": true
+      },
+      "id": "03-phase-versus-energy",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "accepted_authority": {
+          "active": "bounded",
+          "disabled": "implicit",
+          "shadow": "implicit"
+        },
+        "active_candidate_steps": 19,
+        "maximum_roundoff_tolerance": 3.552713678800501e-15,
+        "maximum_shadow_authority_delta": 1.3877787807814457e-17,
+        "shadow_candidate_steps": 19,
+        "shadow_matches_disabled_within_solver_roundoff": true,
+        "shadow_reference_solves": 20
+      },
+      "id": "04-shadow-authority",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "fixed_permissions": true,
+        "fixed_timestamps": true,
+        "member_count": 19,
+        "member_order_matches_backend_contract": true,
+        "wheel_filename": "bab_cs-1.1.0-py3-none-any.whl",
+        "wheel_hashes_match": true
+      },
+      "id": "05-deterministic-packaging",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "cases": {
+          "buck_like_reduced_order": {
+            "artifacts_match": true
+          },
+          "dc_link_rlc_reduced_order": {
+            "artifacts_match": true
+          },
+          "h_bridge_rl_reduced_order": {
+            "artifacts_match": true
+          },
+          "rc_step": {
+            "artifacts_match": true
+          },
+          "switched_rc": {
+            "artifacts_match": true
+          }
+        },
+        "observatory_smoke": {
+          "artifacts_match": true
+        },
+        "source_tree_excluded": true
+      },
+      "id": "06-source-wheel-equivalence",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "accepted_event_times": [
+          0.0001,
+          0.0002,
+          0.0005,
+          0.0006000000000000001,
+          0.0009000000000000001
+        ],
+        "event_count": 5,
+        "events_are_exactly_aligned": true,
+        "history_resets": {
+          "event": 5
+        },
+        "scheduled_event_times": [
+          0.0001,
+          0.0002,
+          0.0005,
+          0.0006000000000000001,
+          0.0009000000000000001
+        ],
+        "startup_steps_after_events": 4
+      },
+      "id": "07-event-alignment",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "covered_samples": 0,
+        "eligible_samples": 17,
+        "empirical_coverage_ratio": 0.0,
+        "formal_enclosure_claim": false,
+        "maximum_authority_epoch_drift_error": 11512.211750693821,
+        "maximum_recursive_internal_bound": 642.995485991595
+      },
+      "id": "08-bound-coverage",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "accepted_stop_time": 0.0004,
+        "history_resets": {
+          "event": 8,
+          "periodic_reanchor": 12
+        },
+        "implicit_fallbacks": 8,
+        "production_device_claim": false,
+        "reduced_order_numerical_experiment": true,
+        "rejected_steps": 9,
+        "rejection_causes": {
+          "embedded candidate cap exceeded": 8,
+          "reference solve failed": 1
+        }
+      },
+      "id": "09-fallback-forensics",
+      "status": "passed"
+    },
+    {
+      "evidence": {
+        "case_sha256": {
+          "buck_like_reduced_order": "09281a85110d4d45d8e21871e462833e1067c32a9bf06f78f044127c6ca87b4a",
+          "current_driven_rc": "5c324b5034dbdf1a45d27215c0dcbc95694a50f3f07a731c6caf8900656f333f",
+          "dc_link_rlc_reduced_order": "f60ba5b539f3932b61f2e556c65b7cf730814bcb0b21ec73c439511dae2a088a",
+          "diode_bias_recovery": "aba0f510622e501e627e03547945fcd8209e9abf6cf47b4d473b660fe6e86cc1",
+          "diode_clip": "7e0bd8068d5931b1bfa6d0cd0e47c8b6d4398fea847063db06bcfe6ca13907a4",
+          "diode_rectifier": "b4a5ad478733fbdf2f0183145ed1d59e1d6ae6feb610643f5d5611b83f5a25a0",
+          "driven_rc": "d721bb58a013dd1306a91a50ce3480b0eaf65dfccb6b4533a7173f530ded0017",
+          "h_bridge_rl_reduced_order": "fb3d4143d2a4009ae54ccb66d9b659de3eeba3fd39b056395cf88eaebe61d77c",
+          "lc_long": "5af8aea635c93ea38f93300800eaf10ce9303300711349b453dd50ce7d42bd70",
+          "lc_offset": "4a172991519ec14360e798c36958ada167c5d23f122656e4e199cb35f4075159",
+          "rc_discharge": "fa83a9b04e75831a94232d05a611a0221fec1f9be420f5bc078700931f9405f3",
+          "rc_step": "5431d8f89b06afdc20558725a5415ff176e411b7802796744925faee708a2d73",
+          "rl_decay": "ed64e8f21ab18b6d08bb2062d1f44f5f06d72bf04f7785f2adf4f49e34924910",
+          "rl_step": "409e82b4b5b32f85c2f32a4bcf2a6d5ceea450ebd5421291005dce6f77f29bcf",
+          "rlc_damped": "3d4ddaf9257d97db8ba8945b01e12207feb1639b362a4583a0d58f253c11cadb",
+          "rlc_driven": "df644ccf8ccc43c748c06c52e867021acced808256f6e0c792f5f7262a427698",
+          "rlc_overdamped": "b13b9c1f0fac22369779036bba1f27ef4f4f571fa9b6082bb21bcc9561c82831",
+          "switched_rc": "6980909a519ca6087111c3005add11997c7ae482c4cbbd987f8e513898d16195",
+          "switched_rl": "e3ac916995dde15870fe379a04cd96cc35db49d3f8166a98ce232dd2f5d9b70d",
+          "switched_rlc": "8dd2e4e44b2cd33ceaf3bb3b34d59ea9b0e61386e56b0948e5e8bbfff1fa2352"
+        },
+        "category_counts": {
+          "first_order_linear": 6,
+          "nonlinear_diode": 3,
+          "reduced_order_power_stage": 3,
+          "resonant_and_rlc": 5,
+          "scheduled_switching": 3
+        },
+        "external_tool_is_oracle": false,
+        "mapped_case_count": 20,
+        "mapped_feature_count": 14,
+        "total_dynamic_states": 28
+      },
+      "id": "10-ngspice-mapping",
+      "status": "passed"
+    }
+  ],
+  "schema_version": 1
+}

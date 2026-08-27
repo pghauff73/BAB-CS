@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 from collections import Counter
 from dataclasses import fields
 from pathlib import Path
@@ -24,7 +25,10 @@ from .waveforms import waveform_from_data
 
 
 def load_case(path: str | Path) -> tuple[Circuit, dict[str, float], BABCSConfig]:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    data = json.loads(
+        Path(path).read_text(encoding="utf-8"),
+        parse_constant=_reject_non_finite_json_constant,
+    )
     if not isinstance(data, dict):
         raise ValueError("BAB-CS input must be a JSON object")
     raw_elements = data.get("elements")
@@ -46,6 +50,8 @@ def load_case(path: str | Path) -> tuple[Circuit, dict[str, float], BABCSConfig]
         "stop_time": float(simulation["stop_time"]),
         "nominal_step": float(simulation["nominal_step"]),
     }
+    if not all(math.isfinite(value) for value in settings.values()):
+        raise ValueError("simulation times and nominal_step must be finite")
 
     config_data = data.get("babcs", {})
     if not isinstance(config_data, dict):
@@ -62,6 +68,10 @@ def load_case(path: str | Path) -> tuple[Circuit, dict[str, float], BABCSConfig]
             raise ValueError("implicit_settings must be an object")
         config_values["implicit_settings"] = ImplicitSettings(**raw_implicit)
     return circuit, settings, BABCSConfig(**config_values)
+
+
+def _reject_non_finite_json_constant(value: str) -> None:
+    raise ValueError(f"non-finite JSON constant is not supported: {value}")
 
 
 def _element_from_data(data: object):
@@ -154,6 +164,8 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
             "history_reset_reason",
             "rejection_count",
             "rejection_reasons",
+            "rejection_requested_steps",
+            "rejection_suggested_steps",
         ]
         + [f"state:{name}" for name in circuit.dynamic_names]
         + [f"voltage:{node}" for node in node_names]
@@ -171,6 +183,14 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
                 "history_reset_reason": point.history_reset_reason,
                 "rejection_count": point.rejection_count,
                 "rejection_reasons": " | ".join(point.rejection_reasons),
+                "rejection_requested_steps": " | ".join(
+                    format(rejection.requested_step, ".17g")
+                    for rejection in point.rejections
+                ),
+                "rejection_suggested_steps": " | ".join(
+                    format(rejection.suggested_step, ".17g")
+                    for rejection in point.rejections
+                ),
             }
             row.update(
                 {

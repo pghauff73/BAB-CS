@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 520">
+  <title id="title">Bound Coverage Atlas: authority error and recursive bound</title>
+  <desc id="description">The representative RC view compares weighted authority error with the accepted recursive internal bound. Result generated from benchmarks/cases/rc_step.json, SHA-256 5431d8f89b06afdc20558725a5415ff176e411b7802796744925faee708a2d73.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="520" rx="28" fill="#f5f8fb"/>
+<text class="sans title" x="64" y="58" text-anchor="start">Bound Coverage Atlas: authority error and recursive bound</text>
+<text class="sans subtitle" x="64" y="96" text-anchor="start">The representative RC view compares weighted authority error with the accepted recursive internal bound.</text>
+<text class="sans section" x="64" y="124" text-anchor="start">ACCEPTED BAB-CS SIMULATION POINTS</text>
+  <rect class="card" x="52" y="132" width="1096" height="278" rx="18"/>
+<text class="sans label" x="112" y="156" text-anchor="start">Scaled error and bound</text>
+<text class="sans micro" x="1138" y="156" text-anchor="end">log10 weighted RMS</text>
+  <path class="grid" d="M112 380 H1138"/>
+<text class="sans micro" x="99" y="384" text-anchor="end">-13.33</text>
+  <path class="grid" d="M112 325 H1138"/>
+<text class="sans micro" x="99" y="329" text-anchor="end">-8.504</text>
+  <path class="grid" d="M112 270 H1138"/>
+<text class="sans micro" x="99" y="274" text-anchor="end">-3.677</text>
+  <path class="grid" d="M112 215 H1138"/>
+<text class="sans micro" x="99" y="219" text-anchor="end">1.15</text>
+  <path class="grid" d="M112 160 H1138"/>
+<text class="sans micro" x="99" y="164" text-anchor="end">5.977</text>
+  <path class="grid" d="M112 160 V380"/>
+<text class="sans micro" x="112" y="402" text-anchor="middle">0</text>
+  <path class="grid" d="M317.2 160 V380"/>
+<text class="sans micro" x="317.2" y="402" text-anchor="middle">0.2</text>
+  <path class="grid" d="M522.4 160 V380"/>
+<text class="sans micro" x="522.4" y="402" text-anchor="middle">0.4</text>
+  <path class="grid" d="M727.6 160 V380"/>
+<text class="sans micro" x="727.6" y="402" text-anchor="middle">0.6</text>
+  <path class="grid" d="M932.8 160 V380"/>
+<text class="sans micro" x="932.8" y="402" text-anchor="middle">0.8</text>
+  <path class="grid" d="M1138 160 V380"/>
+<text class="sans micro" x="1138" y="402" text-anchor="middle">1</text>
+<text class="sans small" x="625" y="423" text-anchor="middle">time (ms)</text>
+  <path class="plot" stroke="#0d7185" d="M214.600 175.172 L317.200 178.735 L419.800 180.710 L522.400 182.132 L625.000 183.254 L727.600 184.189 L830.200 185.001 L932.800 185.724 L1035.400 186.383 L1138.000 186.992"/>
+  <path d="M112 178 H140" stroke="#0d7185" stroke-width="4"/>
+<text class="sans small" x="148" y="183" text-anchor="start">actual authority error</text>
+  <path class="plot" stroke="#d9782d" d="M214.600 364.828 L317.200 194.975 L419.800 191.306 L522.400 190.282 L625.000 189.971 L727.600 189.990 L830.200 190.194 L932.800 190.513 L1035.400 190.908 L1138.000 191.357"/>
+  <path d="M347 178 H375" stroke="#d9782d" stroke-width="4"/>
+<text class="sans small" x="383" y="183" text-anchor="start">recursive internal bound</text>
+  <text class="mono micro" x="64" y="466">SOURCE benchmarks/cases/rc_step.json · INPUT SHA-256 5431d8f89b06afdc · METHOD ab2 · NOMINAL STEP 0.0001 s · ACCEPTED POINTS 11</text>
+<text class="sans small" x="64" y="492" text-anchor="start">Coverage on measured samples is characterization evidence, not a formal enclosure theorem.</text>
+</svg>

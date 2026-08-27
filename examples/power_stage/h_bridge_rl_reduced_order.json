@@ -1,0 +1,113 @@
+{
+  "experiment": {
+    "title": "Scheduled H-bridge RL load",
+    "classification": "reduced-order numerical experiment, not a production device model",
+    "purpose": "Observe scheduled polarity reversal, explicit dead time, event authority, and RL current continuity.",
+    "omitted_effects": [
+      "transistor and body-diode models",
+      "shoot-through physics",
+      "gate-driver dynamics",
+      "switching loss and dead-time distortion models",
+      "magnetic saturation",
+      "thermal behavior",
+      "PWM control synthesis"
+    ]
+  },
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VDC",
+      "positive": "vdc",
+      "negative": "0",
+      "waveform": 12.0
+    },
+    {
+      "type": "switch",
+      "name": "S_LEFT_HIGH",
+      "positive": "vdc",
+      "negative": "left",
+      "control": {"type": "pulse", "low": 0.0, "high": 1.0, "delay": 1e-5, "rise": 0.0, "width": 8e-5, "fall": 0.0, "period": 0.0002},
+      "threshold": 0.5,
+      "on_resistance": 0.2,
+      "off_resistance": 1000000000.0
+    },
+    {
+      "type": "switch",
+      "name": "S_LEFT_LOW",
+      "positive": "left",
+      "negative": "0",
+      "control": {"type": "pulse", "low": 0.0, "high": 1.0, "delay": 0.00011, "rise": 0.0, "width": 8e-5, "fall": 0.0, "period": 0.0002},
+      "threshold": 0.5,
+      "on_resistance": 0.2,
+      "off_resistance": 1000000000.0
+    },
+    {
+      "type": "switch",
+      "name": "S_RIGHT_HIGH",
+      "positive": "vdc",
+      "negative": "right",
+      "control": {"type": "pulse", "low": 0.0, "high": 1.0, "delay": 0.00011, "rise": 0.0, "width": 8e-5, "fall": 0.0, "period": 0.0002},
+      "threshold": 0.5,
+      "on_resistance": 0.2,
+      "off_resistance": 1000000000.0
+    },
+    {
+      "type": "switch",
+      "name": "S_RIGHT_LOW",
+      "positive": "right",
+      "negative": "0",
+      "control": {"type": "pulse", "low": 0.0, "high": 1.0, "delay": 1e-5, "rise": 0.0, "width": 8e-5, "fall": 0.0, "period": 0.0002},
+      "threshold": 0.5,
+      "on_resistance": 0.2,
+      "off_resistance": 1000000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_LEFT_SNUBBER",
+      "positive": "left",
+      "negative": "0",
+      "resistance": 10000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_RIGHT_SNUBBER",
+      "positive": "right",
+      "negative": "0",
+      "resistance": 10000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_LOAD",
+      "positive": "left",
+      "negative": "load",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L_LOAD",
+      "positive": "load",
+      "negative": "right",
+      "inductance": 0.001,
+      "initial_current": 0.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.0004,
+    "nominal_step": 2e-6
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "rk23",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 1,
+    "predictor_reference_cap": 1000000.0,
+    "embedded_error_cap": 1000000.0,
+    "anchor_reference_cap": 1000000.0,
+    "energy_injection_cap": 1000000.0,
+    "stiffness_limit": 1000000.0,
+    "anchor_interval_steps": 16,
+    "algebraic_residual_cap": 1e-7,
+    "full_residual_cap": 1e-7
+  }
+}

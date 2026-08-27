@@ -1645,6 +1645,29 @@ class CircuitModelTests(unittest.TestCase):
         self.assertEqual(circuit.resistors[0].resistance, 1_000.0)
         self.assertEqual(circuit.resistors[1].resistance, 2_000.0)
 
+    def test_compiled_circuit_topology_is_immutable(self) -> None:
+        circuit = Circuit(
+            [
+                VoltageSource("V1", "vin", "0", Constant(1.0)),
+                Resistor("R1", "vin", "out", 1_000.0),
+                Capacitor("C1", "out", "0", 1.0e-6),
+            ]
+        )
+
+        for field, value in (
+            ("name", "R2"),
+            ("positive", "0"),
+            ("negative", "vin"),
+        ):
+            with self.subTest(field=field), self.assertRaisesRegex(
+                AttributeError,
+                "compiled circuit topology",
+            ):
+                setattr(circuit.resistors[0], field, value)
+
+        circuit.resistors[0].resistance = 2_000.0
+        self.assertEqual(circuit.resistors[0].resistance, 2_000.0)
+
     def test_classification_keeps_order_and_duplicate_error_precedence(self) -> None:
         circuit = Circuit(
             [

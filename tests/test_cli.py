@@ -8,9 +8,22 @@ from io import StringIO
 from pathlib import Path
 
 from babcs.cli import main
+from babcs.io import load_case
 
 
 class CommandLineTests(unittest.TestCase):
+    def test_case_loader_rejects_non_finite_json_constants(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = Path(directory) / "case.json"
+            input_path.write_text(
+                '{"elements": [], "simulation": '
+                '{"stop_time": NaN, "nominal_step": 1e-6}}',
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(ValueError, "non-finite JSON constant"):
+                load_case(input_path)
+
     def test_json_case_writes_csv_and_summary(self) -> None:
         case = {
             "elements": [

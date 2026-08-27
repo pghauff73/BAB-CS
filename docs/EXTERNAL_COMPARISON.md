@@ -9,8 +9,8 @@ trajectory error.
 
 The adapter currently maps resistors, capacitors, inductors, independent
 voltage/current sources, constant/sine/pulse/PWL waveforms, Shockley diodes with
-the supported thermal-voltage convention, and time-controlled resistive
-switches. Unsupported element or parameter mappings fail closed.
+thermal voltage preserved through ngspice ideality, and time-controlled
+resistive switches. Unsupported element or parameter mappings fail closed.
 
 ## Prerequisite
 
@@ -25,32 +25,26 @@ The executable can be overridden with `--executable PATH`.
 ## Run
 
 ```bash
-PYTHONPATH=src python tools/compare_external.py \
-  benchmarks/cases/rc_step.json \
-  --mode active \
-  --output artifacts/external/rc_step.json \
-  --netlist-output artifacts/external/rc_step.cir \
-  --raw-output artifacts/external/rc_step.dat \
-  --log-output artifacts/external/rc_step.log
+PYTHONPATH=src python tools/run_external_suite.py \
+  benchmarks/external/manifest.json \
+  --output-root artifacts/external
 ```
 
-The standard scheduled set is:
-
-```text
-rc_step
-rl_step
-diode_clip
-switched_rc
-```
-
-Output paths refuse overwrite unless `--overwrite` is provided.
+The manifest owns 20 cases across first-order linear, resonant and RLC,
+nonlinear diode, scheduled switching, and reduced-order power-stage families.
+See the [20-case mapping atlas](NGSPICE_CASE_ATLAS.md) for every case, graph,
+engineering question, and claim boundary. Output paths refuse overwrite unless
+`--overwrite` is provided.
 
 ## Translation Contract
 
 The generated netlist uses the case's nominal step and stop time, preserves
 initial capacitor voltage and inductor current, and evaluates the same dynamic
-state coordinates used by BAB-CS. Explicit `bab_state_N` vectors are created
-after `tran` so `wrdata` has a stable one-time-column-plus-state-columns shape.
+state coordinates used by BAB-CS. Capacitor voltages are exported before
+inductor currents to match BAB-CS canonical state ownership even when the input
+elements are listed in another order. Explicit `bab_state_N` vectors are
+created after `tran` so `wrdata` has a stable one-time-column-plus-state-columns
+shape.
 
 The adapter validates finite, strictly increasing output times and the exact
 column count. Missing executables, failed processes, malformed output,
@@ -71,9 +65,10 @@ The JSON report contains:
 - BAB-CS diagnostic summary.
 - An explicit claim-boundary statement.
 
-Preserve the JSON, generated netlist, raw data, and log together. Hash the
-files and associate them with the exact source commit before using them in a
-release review.
+The suite writes those four files for every case plus `suite.json`: 81 files for
+the complete 20-case set. Preserve the JSON, generated netlist, raw data, and
+log together. Hash the files and associate them with the exact source commit
+before using them in a release review.
 
 ## Interpretation
 

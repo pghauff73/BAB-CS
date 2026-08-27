@@ -2,6 +2,13 @@
 
 Audit date: August 24, 2026
 
+> **Historical-scope notice:** This audit qualifies the four-case external
+> mapping surface that existed on August 24, 2026. The current additive
+> 20-case ngspice inventory, ten-exercise lab, tutorial set, and generated SVG
+> evidence are owned by `NGSPICE_AND_TEACHING_TUTORIAL_EXPANSION_PLAN.md` and
+> fresh validation output. The historical counts below are retained to preserve
+> exact-snapshot evidence; they are not the current repository totals.
+
 ## Status
 
 - **Local implementation:** achieved against the committed source snapshot identified below.

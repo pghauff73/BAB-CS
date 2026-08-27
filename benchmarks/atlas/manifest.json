@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "observatory_manifest": "../observatory/manifest.json",
+  "cases": [
+    "rc_step",
+    "rl_step",
+    "rlc_damped",
+    "lc_long",
+    "diode_clip",
+    "switched_rc"
+  ],
+  "coverage_error": "authority_epoch_drift_error",
+  "global_error": "actual_authority_error",
+  "bound": "recursive_internal_bound",
+  "claim_boundary": "Empirical coverage is characterization, not a formal enclosure proof."
+}

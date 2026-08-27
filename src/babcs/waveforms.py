@@ -12,7 +12,7 @@ class Waveform(Protocol):
 
 
 def _inside(time: float, start: float, end: float) -> bool:
-    tolerance = 32.0 * math.ulp(max(abs(time), abs(start), abs(end), 1.0))
+    tolerance = 32.0 * max(math.ulp(time), math.ulp(start), math.ulp(end))
     return time > start + tolerance and time <= end + tolerance
 
 

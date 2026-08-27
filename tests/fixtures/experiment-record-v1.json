@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "row_id": "exp-0123456789abcdef01234567",
+  "case_id": "fixture_rc",
+  "method": "bounded_heun",
+  "nominal_step": 0.0001,
+  "anchor_interval": 16,
+  "authority": {"type": "analytic"},
+  "configuration": {"candidate_method": "heun"},
+  "accuracy": {
+    "maximum_absolute_error": 0.001,
+    "rms_absolute_error": 0.0005
+  },
+  "bound": {"authority": "internal_reference_and_independent_replay"},
+  "diagnostics": {"rejection_reasons": {}},
+  "work": {"deterministic_work_units": 100},
+  "oscillator": null,
+  "status": "success",
+  "reason_codes": [],
+  "applicability": {
+    "internal_bound": true,
+    "anchor": true,
+    "passivity": true,
+    "oscillator": false,
+    "phase": false,
+    "energy_span": false
+  }
+}
