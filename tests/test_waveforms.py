@@ -8,6 +8,13 @@ from babcs.waveforms import Constant
 
 
 class WaveformTests(unittest.TestCase):
+    def test_microsecond_breakpoint_survives_nearby_retry_time(self) -> None:
+        pulse = Pulse(0.0, 1.0, 1.0e-5, 0.0, 3.0e-5, 0.0, 8.0e-5)
+        event = 4.0e-5
+        start = event - 1.0e-15
+
+        self.assertEqual(pulse.breakpoints(start, event + 1.0e-6), [event])
+
     def test_piecewise_linear_interpolates_and_reports_breakpoints(self) -> None:
         waveform = PiecewiseLinear(((0.0, 0.0), (1.0, 2.0), (3.0, 0.0)))
         self.assertAlmostEqual(waveform.value(0.5), 1.0)

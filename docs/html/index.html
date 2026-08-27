@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <meta name="description" content="BAB-CS engineering project portfolio, bounded-authority simulation workflow, evidence visualizations, and specialist software comparisons">
+    <title>BAB-CS · Engineering Simulation with Bounded Authority</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#document-content">Skip to document</a>
+    <div class="reading-progress" aria-hidden="true"><span id="reading-progress-bar"></span></div>
+
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Documentation navigation">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true">BA</div>
+          <div>
+            <p class="eyebrow">Bounded Circuit Simulation</p>
+            <h1>BAB-CS</h1>
+          </div>
+        </div>
+
+        <label class="search-box" for="document-search">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <input id="document-search" type="search" placeholder="Search documentation" autocomplete="off">
+          <kbd>/</kbd>
+        </label>
+
+        <div class="library-meta" aria-live="polite">
+          <span id="document-count">Loading documents…</span>
+          <button class="text-button" id="clear-search" type="button" hidden>Clear search</button>
+        </div>
+
+        <nav class="document-tree" id="document-tree"></nav>
+
+        <footer class="sidebar-footer">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>Local, deterministic, evidence-linked build</span>
+        </footer>
+      </aside>
+
+      <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="Close navigation"></button>
+
+      <main class="main-column">
+        <header class="topbar">
+          <div class="topbar-leading">
+            <button class="icon-button mobile-only" id="sidebar-toggle" type="button" aria-label="Open navigation">☰</button>
+            <div class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></div>
+          </div>
+          <div class="topbar-actions">
+            <button class="action-button" id="copy-link" type="button">Copy link</button>
+            <button class="icon-button" id="print-document" type="button" aria-label="Print current document">⎙</button>
+            <button class="icon-button" id="theme-toggle" type="button" aria-label="Toggle color theme">◐</button>
+          </div>
+        </header>
+
+        <section class="document-stage">
+          <div class="stage-progress" aria-hidden="true"><span id="stage-progress-bar"></span></div>
+          <div class="document-hero" id="document-hero">
+            <div class="hero-copy">
+              <p class="eyebrow" id="document-category">Documentation</p>
+              <h2 id="document-title">Loading BAB-CS documentation…</h2>
+              <p class="document-summary" id="document-summary"></p>
+              <div class="document-meta" id="document-meta"></div>
+            </div>
+            <aside class="hero-critical-card" id="hero-critical-card" aria-label="Why bounded numerical authority matters" hidden>
+              <p class="eyebrow">Critical Simulation Role</p>
+              <div class="authority-monitor-status"><span aria-hidden="true"></span><small>Authority monitor</small><strong>Independent checks active</strong></div>
+              <h3>A plausible waveform can still support the wrong engineering decision.</h3>
+              <p>Bounded-Authority-Based-Circuit-Simulation keeps the method that proposes a timestep separate from the independent calculation that decides whether the timestep is trustworthy.</p>
+              <ul>
+                <li><strong>Events:</strong> reach commanded switching times exactly, rather than crossing them inside one timestep, which is one advance in simulated time.</li>
+                <li><strong>Nonlinear solves:</strong> expose whether iterative device equations converged.</li>
+                <li><strong>Long runs:</strong> separate timing drift from stored-energy drift.</li>
+                <li><strong>Delivery:</strong> verify that source code and the installed package produce equivalent evidence.</li>
+              </ul>
+            </aside>
+          </div>
+
+          <section class="landing-dashboard" id="landing-dashboard" aria-label="BAB-CS usefulness and evidence overview" hidden></section>
+          <article class="document-content" id="document-content" tabindex="-1"></article>
+          <div class="document-footer" id="document-footer"></div>
+        </section>
+      </main>
+
+      <aside class="toc-panel" aria-label="On this page">
+        <div class="toc-heading">
+          <p class="toc-label">On this page</p>
+          <span class="toc-progress" id="toc-progress" aria-label="No subsections">0 / 0</span>
+        </div>
+        <nav id="table-of-contents"></nav>
+      </aside>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <noscript>
+      <div class="noscript-message">JavaScript is required to browse the embedded Markdown document tree.</div>
+    </noscript>
+    <script src="documents.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 650">
+  <title id="title">Lossless parallel LC circuit</title>
+  <desc id="description">Electrical and magnetic energy exchange without a declared resistive loss path. Generated from benchmarks/cases/lc_long.json, SHA-256 5af8aea635c93ea38f93300800eaf10ce9303300711349b453dd50ce7d42bd70.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="650" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="64" y="58" text-anchor="start">Lossless parallel LC circuit</text>
+  <text class="sans subtitle" x="64" y="96" text-anchor="start">Electrical and magnetic energy exchange without a declared resistive loss path.</text>
+  <rect class="card" x="52" y="132" width="1096" height="364" rx="22" filter="url(#shadow)"/>
+  <g><path class="wire" d="M280 210 L920 210"/><path class="wire" d="M280 420 L920 420"/><circle class="node" cx="600" cy="210" r="5"/><text class="sans micro" x="600" y="195" text-anchor="middle">tank</text><path class="wire" d="M470 210 L470 301"/><path class="symbol" d="M446 301 H494 M446 329 H494"/><path class="wire" d="M470 329 L470 420"/><text class="sans label" x="436" y="307" text-anchor="end">C1</text><text class="sans value" x="436" y="332" text-anchor="end">1 µF</text><g transform="translate(730 210) rotate(90)"><path class="wire" d="M0 0 L22 0"/><path class="wire" d="M22 0 a20.75 20.75 0 0 1 41.5 0 a20.75 20.75 0 0 1 41.5 0 a20.75 20.75 0 0 1 41.5 0 a20.75 20.75 0 0 1 41.5 0"/><path class="wire" d="M188 0 L210 0"/><text class="sans label" x="105" y="-30" text-anchor="middle"></text><text class="sans value" x="105" y="40" text-anchor="middle"></text></g><text class="sans label" x="768" y="307" text-anchor="start">L1</text><text class="sans value" x="768" y="332" text-anchor="start">1 mH</text><path class="wire" d="M600 396 L600 420"/><path class="ground" d="M582 420 H618 M588 428 H612 M594 436 H606"/><text class="sans section" x="86" y="244" text-anchor="start">Initial condition</text><text class="sans label" x="86" y="278" text-anchor="start">v(C1) = 1 V</text><text class="sans value" x="86" y="309" text-anchor="start">i(L1) = 0 A</text></g>
+  <rect class="warm" x="70" y="516" width="1060" height="50" rx="13"/>
+  <text class="sans small" x="92" y="547" text-anchor="start">Lossless here means no declared resistor; numerical phase and energy must still be reported separately.</text>
+  <text class="mono micro" x="70" y="616">SOURCE benchmarks/cases/lc_long.json · INPUT SHA-256 5af8aea635c93ea3</text>
+</svg>

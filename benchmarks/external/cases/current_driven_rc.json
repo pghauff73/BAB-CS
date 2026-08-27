@@ -1,0 +1,51 @@
+{
+  "elements": [
+    {
+      "type": "current_source",
+      "name": "I1",
+      "positive": "0",
+      "negative": "out",
+      "waveform": {
+        "type": "pwl",
+        "points": [
+          [0.0, 0.0],
+          [0.0002, 0.001],
+          [0.0006, 0.001],
+          [0.0008, 0.0],
+          [0.001, 0.0]
+        ]
+      }
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "out",
+      "negative": "0",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out",
+      "negative": "0",
+      "capacitance": 1e-6,
+      "initial_voltage": 0.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.001,
+    "nominal_step": 0.00001
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "rk23",
+    "reference_method": "trapezoidal",
+    "predictor_reference_cap": 1000000000.0,
+    "embedded_error_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  }
+}

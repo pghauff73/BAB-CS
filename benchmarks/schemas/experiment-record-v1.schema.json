@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bab-cs.invalid/schemas/experiment-record-v1.schema.json",
+  "title": "BAB-CS deterministic experiment record v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "row_id",
+    "case_id",
+    "method",
+    "nominal_step",
+    "anchor_interval",
+    "authority",
+    "configuration",
+    "accuracy",
+    "bound",
+    "diagnostics",
+    "work",
+    "oscillator",
+    "status",
+    "reason_codes",
+    "applicability"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "row_id": {"type": "string", "pattern": "^exp-[0-9a-f]{24}$"},
+    "case_id": {"type": "string", "minLength": 1},
+    "method": {"type": "string", "minLength": 1},
+    "nominal_step": {"type": "number", "exclusiveMinimum": 0},
+    "anchor_interval": {"type": ["integer", "null"], "minimum": 1},
+    "authority": {"type": "object"},
+    "configuration": {"type": "object"},
+    "accuracy": {"type": "object"},
+    "bound": {"type": "object"},
+    "diagnostics": {"type": "object"},
+    "work": {"type": "object"},
+    "oscillator": {"type": ["object", "null"]},
+    "status": {
+      "enum": ["success", "controlled_rejection", "execution_failure"]
+    },
+    "reason_codes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "applicability": {"type": "object"}
+  },
+  "additionalProperties": true
+}

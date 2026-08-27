@@ -74,7 +74,7 @@ Update `.github/workflows/release-qualification.yml` to:
 5. compile source and tools;
 6. run full long and very-long source tests with SciPy available;
 7. generate source comparisons;
-8. run all four external ngspice cases;
+8. run all 20 manifest-owned external ngspice cases;
 9. build the wheel twice and compare bytes;
 10. inspect wheel identity and contents;
 11. install the exact retained wheel into a clean environment;

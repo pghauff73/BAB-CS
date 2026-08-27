@@ -1,251 +1,282 @@
 # Numerical Methods and Error Bounding in Bounded-Authority-Based-Circuit-Simulation
 
-## Constrained Circuit State
+## Five Engineering Decisions BAB-CS Makes Reviewable
 
-The central numerical idea of BAB-CS is that bounded behavior should be created
-by a hierarchy of independent controls rather than inferred from one favorable
-local error estimate. A candidate integrator advances the differential state,
-algebraic projection restores circuit consistency, an implicit method provides
-reference authority, a correction limits modeled propagation, hard gates reject
-unsafe transitions, and periodic replay independently reconstructs the recent
-trajectory [[12]](REFERENCES.md#ref-12) [[13]](REFERENCES.md#ref-13). Each layer
-addresses a different failure mode, so none is allowed to stand in for all the
-others.
+Choose a numerical method by asking what engineering decision its evidence must
+support. Bounded-Authority-Based-Circuit-Simulation (`BAB-CS`) makes five
+questions reviewable:
 
-The semiexplicit state is written conceptually as
+1. How can a fast method propose a circuit state without being allowed to approve
+   its own answer?
+2. How does the simulator keep voltages and currents consistent with the circuit
+   equations after every timestep?
+3. What happens when two methods disagree, a nonlinear solve fails, or a switch
+   changes the circuit suddenly?
+4. How can phase, stored energy, and error-bound coverage be inspected separately
+   instead of being hidden inside one accuracy number?
+5. Which claim is justified by the evidence, and which stronger claim remains
+   unproved?
+
+These questions matter in engineering projects where an attractive waveform is
+not enough. The result must also show why the timestep was accepted, what
+independent check challenged it, and what failure path remained available.
+
+## Read BAB-CS as a Supervised Timestep
+
+Bounded-Authority-Based-Circuit-Simulation (`BAB-CS`) separates **proposal** from
+**authority**. A candidate numerical method proposes the next circuit state.
+Independent equations, reference methods, and gates decide whether that proposal
+is accepted, corrected, recomputed, or rejected. This design does not make every
+candidate stable or accurate. It makes the candidate’s authority conditional and
+observable [[12]](REFERENCES.md#ref-12) [[13]](REFERENCES.md#ref-13).
+
+The word **bound** also has a specific meaning. BAB-CS maintains an internal
+estimate of error relative to its implemented numerical authority model. That
+estimate is useful for diagnostics and control, but it is not a proof that the
+unknown exact physical trajectory lies inside a formal interval. Empirical
+coverage is reported separately so readers can see where the implemented bound
+does and does not cover independently measured authority error.
+
+## Follow One Timestep from Proposal to Replay
+
+Follow one attempted timestep from start to finish:
+
+1. **A candidate proposes.** A selected numerical formula predicts the next
+   capacitor voltages and inductor currents. At this point the values are only a
+   proposal, not an accepted result.
+2. **Projection restores circuit consistency.** The circuit equations are solved
+   so node voltages and branch currents satisfy the declared electrical
+   constraints. This prevents an internally inconsistent state from advancing.
+3. **An independent reference challenges the proposal.** A different numerical
+   method computes its own answer. The disagreement exposes error that the
+   candidate cannot measure by comparing only with itself.
+4. **The controller corrects or transfers authority.** If the candidate remains
+   within the declared model, the controller can move its result toward the
+   reference. If contraction cannot be established, the reference receives full
+   authority.
+5. **Hard gates make the final decision.** Failed projection, excessive equation
+   mismatch, invalid history, nonfinite values, failed nonlinear convergence,
+   or an energy-rule violation can reject the attempt or invoke a safer fallback.
+6. **Replay checks accumulated behavior.** At declared intervals and events, an
+   independent recomputation starts from a retained anchor and checks whether the
+   accepted path has drifted.
+
+Each control addresses a visible engineering failure: projection addresses
+equation inconsistency, method comparison addresses unchecked local error,
+contraction addresses error growth, hard gates address invalid states, and
+replay addresses accumulated drift. Later sections explain the mathematics
+behind each control.
+
+## Circuit Equations and Projection
+
+BAB-CS represents a circuit as a semiexplicit differential-algebraic equation
+(`DAE`). A DAE combines differential equations, which describe change with time,
+with algebraic equations, which must be satisfied immediately. Conceptually,
 
 ```text
 z' = f(t, z, y)
-0  = g(t, z, y),
+0  = g(t, z, y)
 ```
 
-where `z` contains capacitor voltages followed by inductor currents, and `y`
-contains algebraic node voltages and voltage-defined branch currents. Given a
-candidate `z`, the circuit solves `g(t, z, y) = 0` before evaluating `f`. This is
-a modified-nodal construction specialized around physically meaningful dynamic
-coordinates [[1]](REFERENCES.md#ref-1) [[25]](REFERENCES.md#ref-25). The
-projection is a nonlinear solve for diode circuits and a linear solve for purely
-linear circuits.
+Here `z` contains capacitor voltages and inductor currents, and `y` contains node
+voltages and currents through voltage-defined branches. The prime in `z'` means
+the time derivative. The equation `g(t, z, y) = 0` states the circuit constraints.
 
-Projection prevents one kind of drift: departure from the algebraic manifold.
-It does not by itself prevent error that lies along the manifold. Projection
-methods for constrained systems similarly distinguish constraint satisfaction
-from accumulated trajectory accuracy [[6]](REFERENCES.md#ref-6). BAB-CS therefore
-uses projection after prediction and correction, but still requires reference,
-bound, energy, and replay evidence.
+The equation system follows modified nodal analysis (`MNA`), a standard way to
+convert a circuit into equations while retaining useful sparse structure
+[[1]](REFERENCES.md#ref-1) [[25]](REFERENCES.md#ref-25). **Sparse** means that
+most entries in the equation matrix are zero because each component connects to
+only a small part of the circuit.
+
+Given a proposed `z`, BAB-CS performs **projection** by solving
+`g(t, z, y) = 0`. In a linear resistor, capacitor, and inductor network, this is
+a linear solve. With a diode, it becomes a nonlinear iterative solve. Projection
+prevents departure from the circuit-equation surface, but it does not prevent
+error along that surface. A state can satisfy Kirchhoff’s laws and still have the
+wrong phase, amplitude, or stored energy [[6]](REFERENCES.md#ref-6). Projection
+therefore supports authority; it does not replace authority.
 
 ## Candidate Methods
 
-For valid history, variable-step AB2 proposes
+BAB-CS supervises seven numerical candidates. A **candidate** is the formula
+allowed to propose the next dynamic state.
+
+### Explicit Euler
+
+Explicit Euler uses the present derivative to take one forward step. It is
+first-order, meaning its accumulated error normally decreases roughly in
+proportion to the timestep. It is simple and useful as a control case, but it
+can require very small steps on stiff problems.
+
+### Heun
+
+Heun’s method first makes an Euler proposal and then averages the starting and
+ending slopes. It is second-order, so its accumulated error normally decreases
+roughly with the square of the timestep. The difference between the Euler and
+Heun results supplies an embedded error estimate, meaning two accuracy levels
+are obtained from related work [[4]](REFERENCES.md#ref-4).
+
+### Bogacki-Shampine RK23
+
+Bogacki-Shampine order 2/3 (`RK23`) is a Runge-Kutta method. A Runge-Kutta method
+samples several intermediate slopes within one timestep. RK23 produces related
+second- and third-order results, allowing their difference to estimate local
+error [[24]](REFERENCES.md#ref-24).
+
+### Variable-Step AB2
+
+Adams-Bashforth order two (`AB2`) is an explicit multistep method. **Multistep**
+means it reuses information from an earlier accepted step. For current timestep
+`h_n`, previous timestep `h_(n-1)`, current derivative `f_n`, and previous
+derivative `f_(n-1)`, the proposal is
 
 ```text
 r = h_n / h_(n-1)
 z_ab = z_n + h_n [(1 + r/2) f_n - (r/2) f_(n-1)].
 ```
 
-The implementation rejects nonpositive steps, invalid dimensions, and history
-whose step ratio exceeds configured bounds. After startup, rejection, events,
-or a replay reset, implicit integration rebuilds authority before AB history is
-trusted again [[5]](REFERENCES.md#ref-5) [[23]](REFERENCES.md#ref-23). This is
-important because changing a multistep timestep alters more than the simple
-constant-step truncation-error scaling.
+The ratio `r` changes the coefficients when the timestep changes. BAB-CS rejects
+invalid history and excessive step-ratio changes. Startup, rejection, accepted
+events, and replay resets transfer authority to an implicit method until safe
+multistep history has been rebuilt [[5]](REFERENCES.md#ref-5)
+[[23]](REFERENCES.md#ref-23).
 
-Explicit Euler supplies a first-order one-stage control candidate. Heun uses an
-Euler stage and a second projected endpoint, with their difference serving as
-an embedded estimate. Bogacki–Shampine RK23 uses a third-order endpoint and a
-second-order companion state derived from its stages
-[[4]](REFERENCES.md#ref-4) [[24]](REFERENCES.md#ref-24). These methods make the
-controller’s generality testable: the same authority rules must work when the
-candidate has no history, one-step embedded history, or multistep history.
+### Backward Euler, Trapezoidal, and BDF2
 
-Backward Euler, trapezoidal, and variable-step BDF2 are available both as
-candidate methods and as implicit references [[26]](REFERENCES.md#ref-26). An
-active implicit candidate must be paired with a different reference method.
-Otherwise, a zero candidate/reference difference would say only that the same
-calculation was repeated, not that an independent defect estimate had been
-obtained. BDF2 falls back to backward Euler when its history is unavailable.
+Backward Euler, trapezoidal integration, and backward differentiation formula
+order two (`BDF2`) are implicit methods. **Implicit** means that the new state
+appears inside the equation being solved. Backward Euler is first-order and
+strongly damping. Trapezoidal integration is second-order and often preserves
+oscillatory amplitude better. BDF2 is a second-order multistep method and uses
+backward Euler when valid history is unavailable [[26]](REFERENCES.md#ref-26).
 
-Classical stability theory explains why the implicit methods remain essential.
-Backward Euler and trapezoidal behavior is suitable for stiff authority roles,
-whereas explicit Adams–Bashforth retains a bounded stability region
-[[3]](REFERENCES.md#ref-3). BAB-CS does not override that fact. Its stiffness
-indicator and amplification-domain checks transfer authority to an implicit
-reference when the candidate’s local model is not credible.
+These methods may serve as candidates or references. An implicit candidate is
+paired with a different reference method. Comparing a method with itself would
+produce a misleading zero difference rather than independent evidence.
 
-## Correction and Recursive Bounds
+## Amplification, Correction, and Accepted Authority
 
-For each candidate, BAB-CS estimates a conservative amplification `G_c`. For
-explicit methods this estimate applies the method’s stability polynomial to
-`h ||J||` using the infinity norm of the differential Jacobian. AB2 also uses
-the previous Jacobian norm and variable-step coefficients. Implicit estimates
-are accepted only where the corresponding denominator model remains valid
-[[14]](REFERENCES.md#ref-14) [[24]](REFERENCES.md#ref-24). The estimate is a
-runtime upper model, not a spectral decomposition of the exact transition.
+The controller estimates a conservative candidate amplification `G_c`.
+**Amplification** describes how existing error may grow through one numerical
+step. The estimate uses the timestep and a norm of the differential Jacobian.
+A **Jacobian** is a matrix of local sensitivities: it records how each derivative
+changes when each state variable changes. The infinity norm used here is the
+largest absolute row sum.
 
-When an implicit reference is present, the corrected differential proposal is
+For explicit methods, BAB-CS evaluates a stability-polynomial model at
+`h ||J||`, where `h` is the timestep and `J` is the Jacobian. AB2 also includes
+the previous Jacobian norm and the step ratio. Implicit amplification estimates
+are used only where their denominator models remain valid
+[[14]](REFERENCES.md#ref-14). These are conservative runtime models, not exact
+spectral decompositions of the circuit transition.
+
+When a candidate state `z_c` and independent reference state `z_r` are
+available, the corrected proposal is
 
 ```text
-z_* = (1 - gamma) z_c + gamma z_r,
+z_* = (1 - gamma) z_c + gamma z_r.
 ```
 
-where `z_c` is the candidate and `z_r` is the reference. The controller chooses
-`gamma` within configured limits so that
+The correction gain `gamma` determines how far the state moves toward the
+reference. BAB-CS chooses it so the modeled corrected propagation
+`q = (1 - gamma) G_c` meets the configured contraction target. **Contraction**
+means that the model expects inherited error to decrease. If the controller
+cannot establish `q < 1`, the reference receives full authority. The corrected
+state is projected again before acceptance [[13]](REFERENCES.md#ref-13).
+
+## Recursive Internal Bound
+
+The recursive bound carries modeled uncertainty from one accepted state to the
+next. In simplified form,
 
 ```text
-q = (1 - gamma) G_c
+B_next = q B + delta.
 ```
 
-meets the target contraction. If it cannot establish `q < 1`, the reference is
-accepted with full authority. The blended state is then projected again
-[[13]](REFERENCES.md#ref-13) [[23]](REFERENCES.md#ref-23).
+`B` is the previous bound, `q` is corrected propagation, and `delta` is the new
+local contribution. The contribution can include candidate/reference
+disagreement, an embedded lower-order difference, normalized algebraic residual,
+and floating-point allowance. A **residual** is the mismatch left when the
+circuit equations are evaluated at the computed solution. **Floating-point**
+numbers are the finite-precision values used by the computer.
 
-The fixed contraction target is easy to interpret but can impose a nonvanishing
-blend on a high-order method as `h` decreases. BAB-CS therefore also supports a
-rate form, `q_target = exp(-mu h)`. For smooth problems this allows the required
-correction gain to shrink with the timestep, reducing the risk that a fixed
-blend masks the observed order of a higher-order candidate
-[[14]](REFERENCES.md#ref-14).
-
-The per-step recursive model is
-
-```text
-B_(n+1) = q_n B_n + delta_n,
-```
-
-where `delta_n` includes corrected/reference deviation and normalized algebraic
-or full-residual defect. Under uniform bounds `q_n <= q_max < 1` and
-`delta_n <= delta_max`, iteration gives
-
-```text
-B_n <= q_max^n B_0 + delta_max (1 - q_max^n) / (1 - q_max).
-```
-
-The asymptotic envelope is therefore at most `delta_max / (1 - q_max)` within
-the model [[13]](REFERENCES.md#ref-13). This is the mathematical reason a
-contractive corrected recurrence does not exhibit indefinite modeled drift.
-
-That conclusion has a strict claim boundary. `B_n` is expressed in the
-project’s weighted norm and is driven by implemented defect and residual
-estimates. It is not an interval enclosure of the unknown physical solution,
-and it can be optimistic if the amplification or local-defect model omits
-important dynamics. BAB-CS reports `certified_contractive` only for its local
-recurrence conditions; it does not use that label to claim a global theorem
-about the physical circuit [[13]](REFERENCES.md#ref-13)
+The controller also uses a scaled norm so large and small state components can
+be compared against absolute and relative tolerances. A finite bound does not
+override hard gates. Nonfinite values, failed projection, excessive residual,
+failed nonlinear convergence, invalid history, passivity violations, and replay
+failure can all reject a step or transfer authority to a safer method
 [[15]](REFERENCES.md#ref-15).
 
-The embedded fast path changes the model because no same-step implicit
-reference is available on a deferred step. For an embedded candidate, the
-controller records
+**Passivity** means that a passive circuit model may not create net energy from
+nothing. A passivity violation indicates that the numerical result conflicts
+with that declared physical property beyond its allowed tolerance.
 
-```text
-B_(n+1) = G_c B_n + E_embedded + residual_ratio.
-```
+## Nonlinear Solves
 
-This step is not called contractive when `G_c >= 1`. Instead, bounded operation
-depends on a finite interval to the next reference checkpoint and on a hard
-cap. If the projected bound would cross that cap, reference authority is
-promoted immediately and the propagation term resets
-[[14]](REFERENCES.md#ref-14).
+Diodes make the algebraic equations nonlinear. BAB-CS uses Newton iteration,
+which repeatedly linearizes the equations around a current guess and solves for
+an update. A line search reduces the update when the full Newton step does not
+improve the residual. **Convergence** means that the iteration reaches the
+declared residual and update tolerances before its iteration limit.
 
-Scheduled reference intervals and dynamic checkpoints serve different
-purposes. The schedule ensures regular comparison even in smooth regions. The
-dynamic checkpoint reacts to unexpectedly rapid modeled growth. Stiffness,
-invalid amplification domains, shadow mode, and nonfinite quantities can also
-force reference authority before the scheduled interval. This makes the fast
-path opportunistic rather than permissive.
+Nonlinear convergence is evidence, not a cosmetic status flag. If the solve
+does not converge, the state cannot be accepted merely because the waveform
+looks smooth. Candidate and reference solves record iteration counts, residuals,
+fallbacks, and rejection causes so an engineer can distinguish physical
+clipping from numerical failure [[18]](REFERENCES.md#ref-18).
 
-## Independent Replay and Physical Gates
+## Events, Anchors, and Replay
 
-Periodic replay is independent of the same-step reference schedule. At an
-anchor, the solver starts from the previous trusted checkpoint and covers the
-entire accepted interval using smaller implicit steps. The endpoint deviation
+A commanded source or switch breakpoint is an **event**: a declared time at
+which the model changes formula or value. BAB-CS shortens the current step so it
+lands exactly on the event. Exact event alignment prevents a multistep method
+from averaging unknowingly across a discontinuity. After an accepted event,
+multistep history is invalidated.
 
-```text
-eta_anchor = ||z_provisional - z_replay||_W
-```
+An **anchor** is a retained accepted state used as the start of an independent
+check. **Replay** recomputes the interval from that anchor with an implicit
+method and smaller internal steps. Replay serves three purposes:
 
-is retained as evidence, and the replay endpoint becomes authoritative even
-when the deviation is below the safety threshold
-[[13]](REFERENCES.md#ref-13) [[26]](REFERENCES.md#ref-26). A large deviation is
-classified as a safety re-anchor rather than ignored.
+- it challenges accumulated candidate behavior independently;
+- it measures anchor deviation, the distance between the accepted path and the
+  replayed path; and
+- it refreshes authority before the candidate continues.
 
-Replay refinement is topology-aware. Circuits containing both capacitors and
-inductors retain the full configured refinement because long-time phase error
-is a central risk. Other built-in topologies may use a smaller minimum
-refinement, while backward-Euler reference replay retains the full value because
-of its lower order [[14]](REFERENCES.md#ref-14). This is a cost policy, not a
-removal of replay coverage.
+Current event handling forces independent replay before event-driven history is
+cleared. This prevents an event reset from accidentally removing the very
+independent check needed at a discontinuity [[28]](REFERENCES.md#ref-28).
 
-AB3 extrapolation during replay is used only to initialize Newton’s method:
+## Phase, Energy, and Coverage
 
-```text
-z_guess = z_n + h (23 f_n - 16 f_(n-1) + 5 f_(n-2)) / 12.
-```
+One error number cannot explain every engineering failure. BAB-CS therefore
+reports several dimensions separately:
 
-It activates only after matching uniform substeps. Variable spacing falls back
-to variable-step AB2, and the first replay substep remains unpredicted. The
-implicit formula, nonlinear residual, damping, and convergence tests still
-decide acceptance [[17]](REFERENCES.md#ref-17) [[26]](REFERENCES.md#ref-26).
-The extrapolation can therefore improve solver work without weakening replay
-authority.
+- **state error** measures voltage and current disagreement;
+- **phase error** measures the timing shift of an oscillation;
+- **energy error** measures numerical change in capacitor and inductor energy;
+- **anchor deviation** measures disagreement with independent replay;
+- **authority age** measures elapsed time since the last independent refresh;
+  and
+- **empirical coverage** measures how often the recursive bound covers observed
+  authority error on eligible samples.
 
-The energy monitor is based on the discrete balance
+This separation is especially important for an inductor-capacitor (`LC`)
+oscillator. A method can preserve total energy while accumulating phase error,
+or damp energy while keeping short-term zero crossings close. The correct metric
+depends on the engineering decision.
 
-```text
-defect = H_(n+1) - H_n
-       - h/2 [(P_s,n - P_d,n) + (P_s,n+1 - P_d,n+1)].
-```
+## Where the Numerical Claim Stops
 
-Only positive normalized defect counts as artificial energy injection for the
-hard gate. Negative defect remains visible as numerical damping. This diagnostic
-is especially valuable for nominally passive or lossless circuits, but it does
-not identify waveform phase displacement [[13]](REFERENCES.md#ref-13).
+BAB-CS supports a bounded multi-method control claim: candidate authority is
+limited by projection, independent reference calculations, correction, hard
+gates, and replay. It does not support a claim that raw AB2 has become A-stable,
+which would mean stable for every stable linear problem at every timestep,
+that the recursive bound encloses exact physical truth, or that one candidate is
+best for every circuit.
 
-Algebraic residual and full circuit residual are also distinct. The former
-measures the projected KCL and voltage-constraint solve. The latter includes
-the complete evaluated circuit state. Small values establish equation
-consistency at the sampled endpoint but do not establish small accumulated
-trajectory error. BAB-CS records both and rejects either cap independently
-[[12]](REFERENCES.md#ref-12) [[25]](REFERENCES.md#ref-25).
-
-Event resets prevent multistep history from crossing a known discontinuity.
-When a waveform breakpoint is reached, previous derivatives, step history,
-Jacobian history, and recursive bound ownership are reset to the accepted event
-state. The next step uses implicit startup [[28]](REFERENCES.md#ref-28). This is
-mathematically preferable to applying a smooth-history extrapolation across a
-jump that invalidates its assumptions.
-
-## Portability and Limits
-
-The hard-gate structure is fail closed. Nonfinite metrics, failed projection,
-failed implicit solves, excessive residual, excessive positive energy
-injection, predictor/reference caps, failed replay, minimum-step exhaustion,
-and rejection-budget exhaustion prevent partial state commitment
-[[12]](REFERENCES.md#ref-12) [[32]](REFERENCES.md#ref-32). A fallback is not
-counted as evidence that the candidate succeeded; diagnostics preserve the
-authority transfer.
-
-The resulting bounded design can attach to other methods when three conditions
-hold. First, the method must expose a candidate endpoint that can be projected.
-Second, the controller must have a defensible amplification or local-defect
-model. Third, an independent reference and replay path must remain available.
-The existing explicit, implicit, one-step, and multistep candidates demonstrate
-this portability, while also showing that different candidates incur different
-cost and evidence quality [[14]](REFERENCES.md#ref-14).
-
-A bounded embedded RK23 is especially attractive because its third-order
-candidate and second-order companion provide an error signal without an
-additional implicit solve. It spends three projected stages, so it is not
-automatically cheaper than AB2, but it can reduce reference frequency while
-retaining a direct embedded defect estimate. The current local characterization
-shows that this trade can be favorable for smooth RC and nonlinear diode cases,
-subject to the stated workload and timing limits [[14]](REFERENCES.md#ref-14).
-
-No finite numerical architecture can promise indefinite exact trajectory
-agreement for every circuit. Physically unstable systems amplify real
-perturbations, chaotic systems separate nearby trajectories, uncertain device
-models limit correspondence to hardware, and finite precision remains finite.
-BAB-CS instead makes a narrower and testable promise: within its supported
-topologies, it will expose and bound its internal error model, refresh authority
-independently, transfer control when evidence degrades, and fail explicitly
-rather than silently continue outside declared limits.
+The Method Observatory and Bound Coverage Atlas are therefore essential. They
+show fixed-step, fixed-accuracy, and fixed-work behavior across resistor-
+capacitor, resistor-inductor, resistor-inductor-capacitor, inductor-capacitor,
+diode, and switched cases. Negative results, weak coverage, fallback causes, and
+rejections remain part of the evidence rather than being removed from the
+story.

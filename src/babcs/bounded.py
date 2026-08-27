@@ -16,6 +16,7 @@ from .candidates import (
 from .integrators import (
     ImplicitSettings,
     IntegrationError,
+    energy_balance_metrics,
     implicit_step,
     integrate_reference_window_with_stats,
 )
@@ -24,6 +25,7 @@ from .model import Circuit, CircuitEvaluation, CircuitSolveError
 
 
 DEFERRED_NATIVE_JACOBIAN_MINIMUM_SIZE = 64
+MINIMUM_EVENT_ANCHOR_SUBSTEPS = 8
 
 
 @dataclass(frozen=True)
@@ -159,6 +161,7 @@ class BABCSHistory:
     safety_reanchors: int = 0
     implicit_fallbacks: int = 0
     rejected_steps: int = 0
+    event_restart: bool = False
 
 
 @dataclass(frozen=True)
@@ -210,6 +213,7 @@ class StepMetrics:
     replay_refinement_substeps: int = 0
     replay_refinement_retries: int = 0
     replay_embedded_error: float = 0.0
+    pre_anchor_dynamic_state: tuple[float, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -682,6 +686,7 @@ class BoundedAdamsBashforthIntegrator:
             accepted_steps=history.accepted_steps + 1,
             steps_since_anchor=history.steps_since_anchor + 1,
             implicit_fallbacks=history.implicit_fallbacks + int(fallback),
+            event_restart=False,
         )
         metrics = StepMetrics(
             method=method,
@@ -731,6 +736,15 @@ class BoundedAdamsBashforthIntegrator:
             dynamic_reference_checkpoint=dynamic_reference_checkpoint,
         )
         return StepResult(new_state, new_history, metrics)
+
+    def step_to_event(
+        self,
+        circuit: Circuit,
+        state: SimulationState,
+        history: BABCSHistory,
+        step: float,
+    ) -> StepResult:
+        return self._implicit_authority_step(circuit, state, history, step)
 
     def _implicit_authority_step(
         self,
@@ -792,6 +806,7 @@ class BoundedAdamsBashforthIntegrator:
             accepted_steps=history.accepted_steps + 1,
             steps_since_anchor=history.steps_since_anchor + 1,
             implicit_fallbacks=history.implicit_fallbacks + 1,
+            event_restart=False,
         )
         metrics = StepMetrics(
             method=new_state.method,
@@ -824,10 +839,15 @@ class BoundedAdamsBashforthIntegrator:
         history: BABCSHistory,
         step: float,
     ) -> StepResult:
+        startup_method = (
+            self.config.reference_method
+            if history.event_restart
+            else self.config.startup_method
+        )
         try:
             result = implicit_step(
                 circuit,
-                self.config.startup_method,
+                startup_method,
                 state.evaluation,
                 step,
                 settings=self.config.implicit_settings,
@@ -873,6 +893,7 @@ class BoundedAdamsBashforthIntegrator:
             accepted_steps=history.accepted_steps + 1,
             steps_since_anchor=history.steps_since_anchor + 1,
             implicit_fallbacks=history.implicit_fallbacks + 1,
+            event_restart=False,
         )
         metrics = StepMetrics(
             method=new_state.method,
@@ -902,9 +923,11 @@ class BoundedAdamsBashforthIntegrator:
         self,
         circuit: Circuit,
         result: StepResult,
+        *,
+        force: bool = False,
     ) -> StepResult:
         history = result.history
-        if history.steps_since_anchor < self.config.anchor_interval_steps:
+        if not force and history.steps_since_anchor < self.config.anchor_interval_steps:
             return result
         anchor = history.anchor_evaluation
         current = result.state.evaluation
@@ -918,9 +941,14 @@ class BoundedAdamsBashforthIntegrator:
         target_times = sorted(set(target_times))
         window = current.time - anchor.time
         reference_method = self.config.reference_method.lower().replace("-", "_")
-        replay_refinement_substeps = self._anchor_refinement_substeps(circuit)
+        replay_refinement_substeps = (
+            max(self.config.anchor_substeps, MINIMUM_EVENT_ANCHOR_SUBSTEPS)
+            if force
+            else self._anchor_refinement_substeps(circuit)
+        )
         adaptive_replay = (
-            self.config.adaptive_anchor_refinement
+            not force
+            and self.config.adaptive_anchor_refinement
             and self.config.minimum_anchor_substeps < self.config.anchor_substeps
             and (
                 (
@@ -962,6 +990,9 @@ class BoundedAdamsBashforthIntegrator:
                     error_relative_tolerance=(
                         self.config.relative_tolerance if adaptive_replay else None
                     ),
+                    energy_absolute_tolerance=self.config.energy_absolute_tolerance,
+                    energy_relative_tolerance=self.config.energy_relative_tolerance,
+                    exact_target_projection=force,
                 )
             except (CircuitSolveError, IntegrationError) as error:
                 raise StepRejected(
@@ -1008,6 +1039,38 @@ class BoundedAdamsBashforthIntegrator:
                 max(result.state.accepted_step * 0.5, self.config.minimum_step),
             )
         safety_reanchor = anchor_error > self.config.anchor_reference_cap
+        energy_balance_error = replay.cumulative_energy_balance_error
+        energy_injection_ratio = replay.maximum_energy_injection_ratio
+        algebraic_residual = anchored_current.algebraic.residual_norm
+        full_residual = circuit.full_residual_norm(anchored_current)
+        if not all(
+            math.isfinite(value)
+            for value in (
+                energy_balance_error,
+                energy_injection_ratio,
+                algebraic_residual,
+                full_residual,
+            )
+        ):
+            raise StepRejected(
+                "non-finite independent re-anchor metric",
+                max(result.state.accepted_step * 0.5, self.config.minimum_step),
+            )
+        if energy_injection_ratio > self.config.energy_injection_cap:
+            raise StepRejected(
+                f"independent re-anchor energy cap exceeded: {energy_injection_ratio:.6g}",
+                max(result.state.accepted_step * 0.5, self.config.minimum_step),
+            )
+        if algebraic_residual > self.config.algebraic_residual_cap:
+            raise StepRejected(
+                f"independent re-anchor algebraic residual cap exceeded: {algebraic_residual:.6g}",
+                max(result.state.accepted_step * 0.5, self.config.minimum_step),
+            )
+        if full_residual > self.config.full_residual_cap:
+            raise StepRejected(
+                f"independent re-anchor full residual cap exceeded: {full_residual:.6g}",
+                max(result.state.accepted_step * 0.5, self.config.minimum_step),
+            )
         previous_evaluation = None
         previous_step = None
         if len(reference_states) == 2:
@@ -1035,8 +1098,10 @@ class BoundedAdamsBashforthIntegrator:
             result.metrics,
             method=new_state.method,
             corrected_reference_error=0.0,
-            algebraic_residual=anchored_current.algebraic.residual_norm,
-            full_residual=circuit.full_residual_norm(anchored_current),
+            algebraic_residual=algebraic_residual,
+            full_residual=full_residual,
+            energy_balance_error=energy_balance_error,
+            energy_injection_ratio=energy_injection_ratio,
             estimated_bound=0.0,
             residual_ratio=0.0,
             local_defect=0.0,
@@ -1051,6 +1116,7 @@ class BoundedAdamsBashforthIntegrator:
             replay_refinement_substeps=replay_refinement_substeps,
             replay_refinement_retries=replay_refinement_retries,
             replay_embedded_error=replay.maximum_embedded_error,
+            pre_anchor_dynamic_state=current.dynamic_state,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -1059,15 +1125,14 @@ class BoundedAdamsBashforthIntegrator:
         state: SimulationState,
         history: BABCSHistory,
     ) -> BABCSHistory:
+        del state
         return replace(
             history,
             previous_evaluation=None,
             previous_step=None,
             previous_jacobian_norm=None,
             estimated_bound=0.0,
-            generation=history.generation + 1,
-            steps_since_anchor=0,
-            anchor_evaluation=state.evaluation,
+            event_restart=True,
         )
 
     def record_rejection(self, history: BABCSHistory) -> BABCSHistory:
@@ -1115,19 +1180,13 @@ class BoundedAdamsBashforthIntegrator:
         candidate: CircuitEvaluation,
         step: float,
     ) -> tuple[float, float]:
-        source_work = 0.5 * step * (current.source_power + candidate.source_power)
-        dissipated_work = 0.5 * step * (current.dissipated_power + candidate.dissipated_power)
-        energy_change = candidate.stored_energy - current.stored_energy
-        balance_error = energy_change - (source_work - dissipated_work)
-        scale = self.config.energy_absolute_tolerance + self.config.energy_relative_tolerance * max(
-            abs(current.stored_energy),
-            abs(candidate.stored_energy),
-            abs(source_work),
-            abs(dissipated_work),
+        return energy_balance_metrics(
+            current,
+            candidate,
+            step,
             self.config.energy_absolute_tolerance,
+            self.config.energy_relative_tolerance,
         )
-        injection_ratio = max(0.0, balance_error) / scale
-        return balance_error, injection_ratio
 
 
 BoundedIntegrator = BoundedAdamsBashforthIntegrator

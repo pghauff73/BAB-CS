@@ -46,8 +46,9 @@ If `q <= q_max < 1` and `delta <= delta_max`, then
 B_n <= q_max^n B_0 + delta_max / (1 - q_max).
 ```
 
-The recorded estimate is reset after independent re-anchoring, events, and
-history resets.
+The recorded estimate is reset after independent re-anchoring and multistep
+history resets. Event processing first performs an independent replay refresh;
+the subsequent history reset does not create a second authority generation.
 
 ## Independent Anchor
 
@@ -82,8 +83,14 @@ restarts from the trusted anchor with a finer subdivision predicted from the
 cubic local-error model. The subdivision is capped at `anchor_substeps`; that
 cap is the previous fixed-resolution authority, so estimator failure falls back
 to the prior design rather than accepting an unqualified coarser replay.
-Non-finite replay evidence still rejects the step. Known event boundaries reset
-the anchor history and are never crossed by adaptive replay.
+Non-finite replay evidence still rejects the step. Known event boundaries force
+an independent replay from the trusted anchor to the exact event time with at
+least eight refinement subdivisions. This forced replay does not use adaptive
+subdivision reduction. Replay-native energy evidence and the final anchored
+algebraic/full residuals are checked before the event state is accepted. Only
+after that replacement does the simulator clear multistep history; the trusted
+anchor and generation remain those established by the replay. The next step
+uses the configured reference method for implicit startup.
 
 ## Passivity Defect
 
@@ -107,3 +114,19 @@ damping remains visible.
   trajectory agreement guaranteed by this mechanism.
 - The finite-difference Jacobian norm is a conservative stiffness indicator,
   not a complete absolute-stability analysis.
+
+## Empirical Coverage Interpretation
+
+The Bound Coverage Atlas compares two different quantities without conflating
+them. `actual_authority_error` measures distance from the declared analytic or
+refined-replay authority. `authority_epoch_drift_error` measures accumulated
+drift since the latest independent anchor. The recursive internal bound is
+compared with epoch drift only on eligible non-anchor, non-event, finite,
+positive-bound samples.
+
+The reported empirical coverage ratio is therefore a measured property of the
+declared cases, configurations, source state, and authority. It is not a formal
+enclosure theorem, does not convert the reference method into exact physical
+truth, and does not justify extrapolation to unmeasured circuits. Anchor
+deviation, phase, and energy remain separate evidence because none is a
+substitute for the others.

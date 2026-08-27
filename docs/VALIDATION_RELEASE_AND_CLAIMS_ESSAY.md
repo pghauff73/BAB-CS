@@ -1,236 +1,241 @@
-# Validation, Comparison, Release, and Claim Discipline
+# Validation, Release, and Claim Discipline in BAB-CS
 
-## Test Hierarchy
+## Why Does Validation Need Layers?
 
-BAB-CS treats validation as a hierarchy of evidence rather than a single test
-command. Formula tests establish local implementation facts. Analytic circuit
-solutions establish convergence on selected linear models. Refined replay
-provides an independent numerical authority for supported nonlinear cases.
-Long-horizon tests expose phase, energy, and recursive-bound behavior.
-Cross-implementation runs compare explicit semantic mappings with ngspice.
-Packaging tests establish that installed code is the code that was examined
-[[15]](REFERENCES.md#ref-15) [[18]](REFERENCES.md#ref-18). No one layer is
-allowed to imply all the others.
+Bounded-Authority-Based-Circuit-Simulation (`BAB-CS`) treats validation as a
+hierarchy of questions rather than one pass/fail label. A unit test can show that
+one formula behaves as expected. A comparison can show that one declared case
+agrees with an independent result. A package check can show that the installable
+artifact reproduces the source evidence. A human release decision can approve
+one exact set of artifacts. These are related, but they are not interchangeable.
 
-The current test-method and module counts are generated into
-`qualification-summary.json` from Python syntax rather than maintained in this
-essay [[32]](REFERENCES.md#ref-32). Coverage includes circuit construction,
-projection, waveform breakpoints, dense and sparse linear algebra, implicit
-methods, all bounded candidates, error recurrence, rollout modes, events,
-failure gates, nonlinear devices, analytic accuracy, long-horizon behavior,
-comparison generation, external mapping, deterministic wheel construction, and
-release-evidence verification. The root-finding tests cover scalar bounded and
-interval Newton, bisection, secant, Ridders, adversarial Newton cycling,
-point- and interval-derivative fallback, outward-widened contraction, sign
-recovery, enclosure reporting, and deterministic root-finder comparison output.
-Qualification still depends on the required tiers running successfully in the
-intended environment.
+For a novice, **validation** means collecting evidence that a declared behavior
+matches a declared expectation. It does not mean proving that every future use
+is correct. **Qualification** means running a specified evidence process for a
+specific source and environment. **Certification** is an independent formal
+approval process; BAB-CS does not claim certification.
 
-A default source-tree validation run on August 27, 2026 passed the complete
-discovered suite with two expected opt-in long-tier skips. This validates that
-source snapshot's default surface, including bounded root finding. It does not
-qualify the long, very-long, clean-wheel, optional-backend, or release-evidence
-tiers.
+## How Does the Evidence Ladder Build Confidence?
 
-A local source-tree validation run on August 25, 2026 used SciPy 1.18.0 and
-SuiteSparse KLU 2.3.6 with both `BABCS_LONG_TESTS=1` and
-`BABCS_VERY_LONG_TESTS=1`. All 229 tests passed in 56.596 seconds with zero
-skips. That fully tiered evidence predates the current root-finding and
-qualification-summary surface and must not be cited as qualification of it. It
-establishes that the earlier circuit
-surface was updated against a live green source tree; it does not replace the
-clean-environment,
-installed-wheel, exact-artifact, workflow, and human-review requirements of
-release qualification.
+Treat evidence as a ladder. Each rung answers a larger question, but a convincing
+higher-level plot cannot replace a lower-level check.
 
-Two candidate wheel builds were byte-identical with SHA-256
-`761462fd7c451d33a111162e8a55a225920e0646ac72544a542db592ee3dde82`.
-A clean dependency-free installation passed all 229 tests in 53.080 seconds with
-57 expected optional-backend skips. Installing SciPy 1.18.1 and NumPy 2.5.2 into
-the same environment exposed SuiteSparse KLU 2.3.6 and passed all 229 tests in
-53.433 seconds with zero skips. Both environments passed `pip check`. These are
-candidate checks, not exact-tag release evidence.
+1. **Formula test — was one calculation implemented correctly?** A small test
+   checks a coefficient, matrix operation, component equation, or failure rule
+   in isolation.
+2. **Circuit test — do the parts cooperate in a complete simulation path?** A
+   circuit-level test exercises proposal, projection, reference comparison,
+   acceptance, fallback, rejection, events, and reporting together.
+3. **Analytic or refined authority — is the accepted trajectory close to an
+   independently justified result?** An analytic solution is a known formula. A
+   refined authority is a more carefully recomputed numerical result.
+4. **External comparison — does a separately implemented simulator agree on the
+   same translated engineering case?** This checks for shared behavior without
+   treating the external tool as unquestionable truth.
+5. **Source-versus-wheel equivalence — does the installable package reproduce the
+   checked-out source evidence?** A wheel is the installable Python package file
+   delivered to users.
+6. **Exact-hash human approval — should this precise source and artifact set be
+   published?** A cryptographic hash is a digital fingerprint that identifies
+   exact bytes. Automation prepares this evidence; a person retains release
+   authority.
 
-Direct numerical tests begin with exact formulas and invariants. Variable-step
-AB2 coefficients are checked independently. Backward Euler, trapezoidal, and
-BDF2 startup, variable-step defect, history behavior, topology gating, replay-
-work reduction, and fixed-eight authority distance are exercised. Candidate aliases, orders,
-embedded defects, amplification models, correction gains, and fast-path
-checkpoints are tested. Circuit tests verify state sign conventions, unknown
-ordering, residual construction, dense/sparse structural equivalence, and
-fail-closed singularity behavior.
+The ladder prevents a common mistake: turning “one test passed” into “the product
+is ready.” Each step records both what has been demonstrated and what remains
+outside the claim.
 
-Accuracy tests use closed-form RC, RL, RLC, and driven-RC solutions where the
-project can define the authority without another simulator. The comparison
-support code samples every method on common times and reports final-state,
-maximum-waveform, RMS, and scaled state error. Observed order is calculated
-from declared timestep sequences rather than inferred from one run
-[[15]](REFERENCES.md#ref-15) [[29]](REFERENCES.md#ref-29). A method that fails a
-target remains a failure; the target is not relaxed after seeing results.
+## What Does Each Test Layer Prove?
 
-Oscillators are evaluated with separate amplitude, phase, period, and energy
-metrics. This separation matters because a numerical solution can conserve an
-energy-like quantity while drifting in phase, or damp amplitude while keeping
-period approximately correct. The long LC case therefore does not reduce
-quality to one scalar error or to the internal bound alone.
+The repository uses several layers of automated tests.
 
-Nonlinear diode and switched cases use refined implicit replay as their
-authority. The authority method, maximum replay step, state indices, and common
-sample times are declared in the benchmark manifest
-[[22]](REFERENCES.md#ref-22). Nonlinear tests also force constrained iteration
-budgets and recovery across events so that nonconvergence becomes an explicit
-failure rather than an unnoticed waveform discrepancy.
+### Formula and Component Tests
 
-The hard-gate tests inject isolated failures. They distinguish algebraic from
-full residual violations, projection failure from reference failure, energy
-rejection from stiffness fallback, replay failure from ordinary step rejection,
-and minimum-step exhaustion from rejection-budget exhaustion
-[[32]](REFERENCES.md#ref-32). These tests are essential because a simulator can
-look accurate on nominal cases while committing partial state during an error
-path.
+Small tests check variable-step Adams-Bashforth order two (`AB2`) coefficients,
+implicit-method startup, backward differentiation formula order two (`BDF2`)
+history, waveform breakpoints, component validation, matrix operations, and
+failure messages. These tests isolate one behavior so a regression can be
+located precisely.
 
-Long-horizon qualification is opt-in so normal development remains practical.
-The scheduled tier enables extended cases, and the release tier additionally
-enables the very-long cases. These tests examine ten-, hundred-, and thousand-
-period behavior, periodic re-anchors, bound resets, phase evolution, and
-passivity diagnostics [[18]](REFERENCES.md#ref-18)
-[[33]](REFERENCES.md#ref-33). A skipped opt-in tier is not counted as a pass for
-release qualification.
+### Circuit and Controller Tests
 
-## Numerical and External Comparisons
+Integration tests run complete circuit paths. They cover projection, candidate
+and reference pairing, correction, recursive bounds, nonlinear convergence,
+passivity, event alignment, replay, fallback, rejection, and work counters.
+**Passivity** means that a passive declared circuit may not create net energy
+from nothing. A **fallback** transfers authority to a safer method. A
+**rejection** refuses the current attempt and normally retries with a smaller
+timestep.
 
-The canonical comparison manifest contains eight case families: RC and RL
-steps, underdamped and overdamped RLC, driven RC, long LC, diode clipping, and
-switched RC [[22]](REFERENCES.md#ref-22). Across those cases it names fifteen
-method configurations, including pure implicit authorities, shadow and active
-AB2, bounded explicit and implicit candidates, embedded fast paths, and a
-test-only raw AB2 control. Not every method is meaningful for every case, so the
-manifest declares the applicable subset explicitly.
+### Analytic and Refined-Authority Tests
 
-The comparison protocol establishes an authority hierarchy. Analytic solutions
-are preferred when available. Independent refined replay is next. External
-simulators provide cross-implementation evidence when device semantics can be
-mapped without alteration. BAB-CS implicit authorities support method
-comparison, while a same-step local reference is used for runtime gating rather
-than described as independent accumulated-trajectory truth
-[[15]](REFERENCES.md#ref-15).
+Some resistor-capacitor (`RC`), resistor-inductor (`RL`), and resonant circuits
+have known analytic solutions, meaning formulas can calculate the expected
+trajectory directly. Other cases use refined implicit replay, which recomputes
+the same interval with smaller trusted steps. Analytic truth and refined replay
+are kept as different evidence types because they have different assumptions.
 
-Three comparison views prevent one-sided conclusions. Fixed-timestep results
-show behavior under equal temporal discretization. Fixed-accuracy analysis
-selects the least deterministic work that reaches a declared target. Fixed-work
-analysis selects the most accurate result within a declared operation budget.
-Wall-clock timing is emitted to a separate report, because hardware, runtime,
-cache, and operating-system noise should not change the numerical qualification
-record [[15]](REFERENCES.md#ref-15) [[29]](REFERENCES.md#ref-29).
+### Long-Horizon and Optional-Backend Tests
 
-Bound evidence is reported in components. Candidate/reference deviation,
-embedded error, corrected/reference deviation, recursive bound, pre-reset bound,
-dynamic checkpoints, anchor deviation, residual ratios, and anchor-to-bound
-ratios remain distinct. The empirical relationship between anchor deviations
-and pre-reset bounds is characterization evidence, not a formal coverage proof
-[[13]](REFERENCES.md#ref-13) [[15]](REFERENCES.md#ref-15).
+Long-horizon tests inspect accumulated phase, energy, authority age, and replay
+behavior. Optional-backend tests exercise SciPy and SuiteSparse KLU. SciPy is a
+Python scientific-computing library. KLU is a sparse matrix solver specialized
+for circuit-like equation systems. A skipped optional test is recorded as a
+missing qualification tier, not silently treated as a pass.
 
-External ngspice comparison has a narrower purpose. The tool generates a
-netlist from a BAB-CS case, runs the selected ngspice executable, parses the raw
-waveform, and compares common states [[30]](REFERENCES.md#ref-30). Four cases are
-included in automated evidence: RC, RL, diode clipping, and switched RC. The
-tool records the generated netlist, raw data, simulator log, version, and report
-so the mapping can be reviewed rather than treated as an opaque oracle.
+### Fail-Closed Tests
 
-Semantic mismatch fails closed. For example, a diode configuration whose
-thermal-voltage semantics cannot be represented by the supported ngspice
-mapping is rejected rather than approximated silently
-[[16]](REFERENCES.md#ref-16). Switch controls receive explicit generated sources,
-and initial capacitor and inductor conditions are preserved. This discipline is
-why the external evidence can support the mapped cases without becoming a
-claim that BAB-CS duplicates all ngspice devices or algorithms
-[[8]](REFERENCES.md#ref-8).
+**Fail closed** means refusing to produce an accepted result when required
+evidence is missing or invalid. Tests deliberately trigger nonfinite values,
+singular equations, unsupported topologies, failed nonlinear iteration,
+excessive residuals, invalid multistep history, passivity violations, and replay
+failure. These tests are essential because an error message is part of the
+simulator’s safety boundary.
 
-## CI and Release Qualification
+## Which Question Does Each Numerical Comparison Answer?
 
-Normal continuous integration runs on the supported Python version matrix,
-compiles source and tools, executes the regression suite, compares repeated
-example outputs byte-for-byte, performs a deterministic comparison smoke test,
-builds and installs a wheel, and runs an optional SciPy/KLU sparse qualification
-job [[33]](REFERENCES.md#ref-33). Actions are pinned to exact revisions so changes
-in third-party workflow code do not enter qualification unnoticed.
+The canonical comparison matrix covers linear, nonlinear, switched, and
+long-horizon cases. It includes raw methods, bounded candidates, reference
+methods, active BAB-CS, and shadow BAB-CS. **Shadow mode** runs candidate logic
+and records diagnostics while the trusted reference retains accepted-state
+authority. This supports staged adoption of a new method without allowing it to
+change the official trajectory immediately [[15]](REFERENCES.md#ref-15).
 
-The scheduled workflow extends this with long-horizon tests, the full numerical
-matrix, timing evidence, and all four ngspice mappings. Numerical JSON, CSV, SVG,
-timing, logs, and checksums are uploaded as artifacts
-[[33]](REFERENCES.md#ref-33). Scheduled evidence is useful for regression
-detection, but it does not by itself approve a release because it may run on a
-moving branch and has no human decision tied to a frozen artifact.
+Reports provide three views:
 
-Release qualification is designed around exact identity. The package’s
-canonical metadata defines distribution name, package name, version, Python
-requirement, sparse extra, wheel tag, and console entry point. The build backend,
-runtime version, project metadata, tests, and evidence tool are required to
-agree [[20]](REFERENCES.md#ref-20). The wheel follows the standard Python binary
-distribution format [[10]](REFERENCES.md#ref-10).
+- **fixed-step**, where methods receive the same nominal timestep;
+- **fixed-accuracy**, where rows are selected against a declared error target;
+  and
+- **fixed-work**, where methods are compared under a deterministic operation
+  budget.
 
-The release workflow records the complete source SHA, candidate or tag identity,
-Python, operating system, pip, SciPy, SuiteSparse KLU, ngspice, workflow event,
-workflow ref, and workflow run. It compiles source, runs dependency-free and
-SciPy/KLU source suites,
-generates source comparisons, produces external evidence, builds the wheel
-twice, and compares the wheel bytes. It then installs the retained wheel into a
-fresh environment and repeats the required suites and comparisons
-[[19]](REFERENCES.md#ref-19) [[31]](REFERENCES.md#ref-31)
-[[33]](REFERENCES.md#ref-33).
+These views answer different engineering questions. Fixed-step isolates method
+behavior at a common resolution. Fixed-accuracy asks what work is required to
+reach a target. Fixed-work asks what result can be achieved for a controlled
+algorithmic cost. No one view proves universal superiority.
 
-Source and installed-wheel numerical reports are compared byte-for-byte in
-JSON, CSV, and SVG forms. This is stronger than importing the installed package
-and observing one smoke result: it requires the packaged implementation to
-reproduce the complete declared numerical evidence. Wheel inspection also
-checks filename, metadata, entry point, members, timestamps, and modes
-[[20]](REFERENCES.md#ref-20) [[31]](REFERENCES.md#ref-31).
+## What Can External Comparison Show?
 
-The evidence bundle has a canonical required-file profile. A deterministic
-manifest records file roles, sizes, hashes, source and package identity,
-environment data, test summaries, and comparison summaries. Verification
-rejects missing, duplicate, modified, unexpected, nonfinite, failed, or
-identity-mismatched evidence. A sorted checksum file binds the bundle’s public
-contents without including itself recursively [[31]](REFERENCES.md#ref-31).
+BAB-CS maps four cases to ngspice: RC step, RL step, diode clip, and switched RC.
+ngspice is an open-source implementation in the SPICE family; SPICE means
+*Simulation Program with Integrated Circuit Emphasis*. The comparison requires a
+documented semantic translation: topology, source waveform, switch schedule,
+initial state, output quantity, sample grid, and comparison norm must represent
+the same engineering case [[16]](REFERENCES.md#ref-16).
 
-Automation deliberately stops before publication. The release workflow has
-read-only repository contents permission and uploads qualification artifacts;
-it does not create a GitHub release. Human approval must identify one exact
-source SHA, `v1.1.0` tag, wheel SHA-256, manifest SHA-256, workflow run, and
-reviewed evidence set [[19]](REFERENCES.md#ref-19)
+ngspice provides independent evidence, not unquestionable truth or BAB-CS
+accepted-state authority. Agreement can increase confidence in a mapped case.
+Disagreement directs the engineer to inspect modeling semantics, tolerances,
+event handling, interpolation, and numerical behavior. Two plots do not provide
+validation when the underlying models are not equivalent.
+
+## How Does Deterministic Evidence Support Review?
+
+BAB-CS produces machine-readable JavaScript Object Notation (`JSON`) and
+comma-separated-value (`CSV`) reports, plus Scalable Vector Graphics (`SVG`)
+figures. JSON records structured data, CSV records tables, and SVG records vector
+graphics. Deterministic generation means that the same declared source,
+configuration, and environment reproduces the same required artifact bytes where
+the format is defined as deterministic.
+
+Work counts are kept separate from timing. Timing is local characterization and
+can vary with the machine. Deterministic work counts identify how many candidate,
+reference, projection, Jacobian, algebraic, and replay operations occurred. A
+performance claim must name its workload, backend, hardware, software, warmup,
+repetition policy, and comparator [[17]](REFERENCES.md#ref-17).
+
+## Does the Installed Wheel Match the Source?
+
+A Python **wheel** is an installable package file. Source-versus-wheel
+equivalence compares the checked-out source with an isolated installation of the
+built wheel. The release process does more than import the wheel and run one
+example. It rebuilds evidence from the installed artifact and compares required
+JSON, CSV, and SVG outputs with the source results [[20]](REFERENCES.md#ref-20)
+[[31]](REFERENCES.md#ref-31).
+
+Wheel inspection also checks the filename, metadata, command-line entry point,
+included files, timestamps, and file modes. Building twice and comparing bytes
+tests **reproducible packaging**, meaning the build process creates the same
+artifact from the same frozen inputs.
+
+## What Can Continuous Integration Prove?
+
+Continuous integration (`CI`) is automated testing triggered by repository
+events. The pull-request workflow runs the dependency-free suite, static
+compilation checks, generation checks, package installation, and an optional
+SciPy/KLU tier. Third-party workflow actions are pinned to exact revisions so
+their code cannot change unnoticed [[33]](REFERENCES.md#ref-33).
+
+Scheduled workflows add long-horizon tests, the complete numerical matrix,
+timing evidence, and all mapped ngspice cases. They upload reports, figures,
+logs, and checksums. Scheduled evidence is useful for regression detection, but
+it may run on a moving branch. It does not approve a release.
+
+## How Do Exact Hashes Identify Artifacts?
+
+A cryptographic hash is a fixed-length fingerprint of digital content. BAB-CS
+uses Secure Hash Algorithm 256-bit (`SHA-256`) values to identify source and
+artifacts. If one byte changes, the fingerprint should change. A deterministic
+manifest records file roles, sizes, hashes, source identity, package identity,
+environment data, test summaries, and comparison summaries.
+
+The verifier rejects missing, duplicate, modified, unexpected, nonfinite,
+failed, or identity-mismatched evidence. A sorted checksum file binds the public
+contents of the evidence bundle without attempting to include its own checksum
+recursively [[31]](REFERENCES.md#ref-31).
+
+## Why Do Humans Retain Release Authority?
+
+Four words describe different stages and must not be blurred:
+
+- **validation** collects evidence that a declared behavior meets a declared
+  expectation;
+- **qualification** runs a named validation process for an exact source,
+  environment, and artifact set;
+- **certification** is an independent formal approval against an external
+  standard, which BAB-CS does not claim; and
+- **publication** makes an approved tag, package, release, or evidence bundle
+  available to others.
+
+Automation deliberately stops before publication. A successful workflow may
+show that a candidate satisfied the declared mechanical checks. It cannot decide
+that the scientific interpretation, engineering scope, release notes, and claim
+boundary are acceptable.
+
+Release approval must identify one exact source commit, the intended version
+tag, the wheel SHA-256 value, the manifest SHA-256 value, the workflow run, and
+the reviewed evidence set [[19]](REFERENCES.md#ref-19)
 [[21]](REFERENCES.md#ref-21). A branch name, short hash, mutable artifact link,
-or successful status badge is insufficient release authority.
+green status badge, or previous tag is not enough.
 
-The repository currently encodes package version `1.1.0`, but the draft release
-document explicitly states that the final release source has not been selected
-or approved [[21]](REFERENCES.md#ref-21). The existing `v1.0.0` tag is therefore
-not evidence that the `1.1.0` candidate has been published. Qualification
-infrastructure may be complete while candidate execution, semantic review,
-tagging, release publication, public checksum verification, and fresh public
-installation remain pending.
+The repository may encode version `1.1.0` and contain complete qualification
+infrastructure while the actual `1.1.0` release remains unapproved. The states
+must stay separate:
 
-Performance claims follow the same discipline. The performance audit names
-workloads, sizes, backends, environments, warmups, repetitions, comparators, and
-retained or rejected candidates [[17]](REFERENCES.md#ref-17). Timing does not
-serve as a correctness gate. A local reduction is not generalized to other
-hardware or circuits, and incremental optimization percentages are not added as
-though they were independent factors.
+1. implementation exists;
+2. local tests pass;
+3. exact-commit qualification runs;
+4. evidence is reviewed;
+5. a human approves exact hashes;
+6. the tag and release are published; and
+7. the public artifact is downloaded and independently checked.
 
-## Claim Boundary
+## Where Does the Claim Stop?
 
-The strongest current claims are therefore structural. BAB-CS has a bounded
-multi-method controller; projection and periodic independent replay are
-implemented; fail-closed gates are directly tested; deterministic comparison
-and packaging tools exist; and a release evidence pipeline can bind source,
-wheel, environment, tests, and reports. Claims that remain outside the evidence
-include production-SPICE replacement, universal speed superiority, formal
-exact-trajectory enclosures, arbitrary device coverage, and automatic release
-approval.
+Current evidence supports these structural claims:
 
-This claim discipline is part of the research contribution. Numerical software
-often collapses “the test passed,” “the method was accurate on one case,” “the
-wheel built,” and “the release is scientifically justified” into one informal
-status. BAB-CS keeps those statements separate and records the evidence needed
-for each. That separation makes negative results, skipped tiers, semantic
-mappings, and human authority visible rather than converting them into implied
-success.
+- BAB-CS supervises multiple explicit and implicit candidate methods;
+- projection and independent replay are implemented;
+- failure gates and cause reporting are tested;
+- deterministic comparison and packaging tools exist; and
+- a release-evidence pipeline can bind source, wheel, environment, tests, and
+  reports.
+
+Current evidence does not support claims of production-SPICE replacement,
+universal speed superiority, arbitrary device coverage, formal enclosure of the
+unknown exact physical trajectory, hardware safety approval, or automatic
+release authority.
+
+This separation is part of the project’s value. “A test passed,” “one case was
+accurate,” “the package built,” and “the release is justified” are different
+statements. BAB-CS records the evidence and authority required for each instead
+of compressing them into one informal success label.

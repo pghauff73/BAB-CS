@@ -1,0 +1,104 @@
+{
+  "experiment": {
+    "title": "DC-link RLC startup and interruption",
+    "classification": "reduced-order numerical experiment, not a production device model",
+    "purpose": "Observe connection startup, RLC overshoot, scheduled interruption, freewheel decay, event authority, and stored-energy accounting.",
+    "omitted_effects": [
+      "contactor arc and fault physics",
+      "semiconductor switching loss",
+      "magnetic saturation",
+      "capacitor ESR and ESL",
+      "distributed wiring parasitics",
+      "thermal behavior",
+      "protection and control logic"
+    ]
+  },
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VDC",
+      "positive": "vdc",
+      "negative": "0",
+      "waveform": 5.0
+    },
+    {
+      "type": "switch",
+      "name": "S_CONNECT",
+      "positive": "vdc",
+      "negative": "input",
+      "control": {"type": "pulse", "low": 0.0, "high": 1.0, "delay": 2e-5, "rise": 0.0, "width": 0.0002, "fall": 0.0, "period": 0.0},
+      "threshold": 0.5,
+      "on_resistance": 0.2,
+      "off_resistance": 1000000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_SERIES",
+      "positive": "input",
+      "negative": "prelink",
+      "resistance": 2.0
+    },
+    {
+      "type": "diode",
+      "name": "D_FREE",
+      "positive": "0",
+      "negative": "prelink",
+      "saturation_current": 1e-12,
+      "thermal_voltage": 0.02585
+    },
+    {
+      "type": "resistor",
+      "name": "R_PRELINK_BLEED",
+      "positive": "prelink",
+      "negative": "0",
+      "resistance": 20.0
+    },
+    {
+      "type": "inductor",
+      "name": "L_LINK",
+      "positive": "prelink",
+      "negative": "dc_link",
+      "inductance": 0.001,
+      "initial_current": 0.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C_LINK",
+      "positive": "dc_link",
+      "negative": "0",
+      "capacitance": 0.0001,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_LOAD",
+      "positive": "dc_link",
+      "negative": "0",
+      "resistance": 20.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.0005,
+    "nominal_step": 2e-6
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "ab2",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 1,
+    "predictor_reference_cap": 1000000.0,
+    "anchor_reference_cap": 1000000.0,
+    "energy_injection_cap": 1000000.0,
+    "stiffness_limit": 1000000.0,
+    "anchor_interval_steps": 16,
+    "algebraic_residual_cap": 1e-6,
+    "full_residual_cap": 1e-6,
+    "implicit_settings": {
+      "absolute_tolerance": 1e-7,
+      "relative_tolerance": 1e-7,
+      "max_iterations": 40,
+      "minimum_damping": 6.103515625e-5
+    }
+  }
+}

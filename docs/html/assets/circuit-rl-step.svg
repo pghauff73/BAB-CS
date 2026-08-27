@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 650">
+  <title id="title">RL step circuit</title>
+  <desc id="description">A voltage step drives current through a resistor and inductor. Generated from benchmarks/cases/rl_step.json, SHA-256 409e82b4b5b32f85c2f32a4bcf2a6d5ceea450ebd5421291005dce6f77f29bcf.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="650" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="64" y="58" text-anchor="start">RL step circuit</text>
+  <text class="sans subtitle" x="64" y="96" text-anchor="start">A voltage step drives current through a resistor and inductor.</text>
+  <rect class="card" x="52" y="132" width="1096" height="364" rx="22" filter="url(#shadow)"/>
+  <g><path class="wire" d="M180 220 L180 278"/><circle class="symbol" cx="180" cy="320" r="42"/><text class="sans label" x="180" y="308" text-anchor="middle">+</text><text class="sans label" x="180" y="344" text-anchor="middle">−</text><path class="wire" d="M180 362 L180 420"/><text class="sans label" x="122" y="314" text-anchor="end">V1</text><text class="sans value" x="122" y="339" text-anchor="end">1 V</text><path class="wire" d="M180 220 L320 220"/><path class="wire" d="M320 220 L342 220"/><path class="wire" d="M342 220 L366.5 207 L391 233 L415.5 207 L440 233 L464.5 207 L489 233 L513.5 207 L538 220"/><path class="wire" d="M538 220 L560 220"/><text class="sans label" x="440" y="192" text-anchor="middle">R1</text><text class="sans value" x="440" y="258" text-anchor="middle">10 Ω</text><path class="wire" d="M560 220 L650 220"/><circle class="node" cx="650" cy="220" r="5"/><text class="sans micro" x="650" y="205" text-anchor="middle">out</text><g transform="translate(650 220) rotate(90)"><path class="wire" d="M0 0 L22 0"/><path class="wire" d="M22 0 a19.5 19.5 0 0 1 39 0 a19.5 19.5 0 0 1 39 0 a19.5 19.5 0 0 1 39 0 a19.5 19.5 0 0 1 39 0"/><path class="wire" d="M178 0 L200 0"/><text class="sans label" x="100" y="-30" text-anchor="middle"></text><text class="sans value" x="100" y="40" text-anchor="middle"></text></g><text class="sans label" x="688" y="312" text-anchor="start">L1</text><text class="sans value" x="688" y="337" text-anchor="start">1 mH</text><path class="wire" d="M180 420 L760 420"/><path class="wire" d="M470 396 L470 420"/><path class="ground" d="M452 420 H488 M458 428 H482 M464 436 H476"/><path class="wire" marker-end="url(#arrow)" d="M720 275 V350"/><text class="sans label" x="744" y="320" text-anchor="start">i(L1)</text><text class="sans section" x="856" y="248" text-anchor="start">Accepted state</text><text class="sans label" x="856" y="280" text-anchor="start">i(L1)</text><text class="sans value" x="856" y="311" text-anchor="start">Current rises toward 0.1 A</text></g>
+
+  <text class="mono micro" x="70" y="616">SOURCE benchmarks/cases/rl_step.json · INPUT SHA-256 409e82b4b5b32f85</text>
+</svg>

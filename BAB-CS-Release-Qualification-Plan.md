@@ -188,7 +188,7 @@ The qualification workflow now resolves exact source/tag/version identity,
 installs SciPy and `ngspice`, records environment and GitHub run provenance,
 compiles all Python sources, runs dependency-free and SciPy long/very-long
 suites, generates numerical and timing reports, verifies the full comparison
-matrix, executes all four external mappings, builds the wheel twice, inspects
+matrix, executes all 20 manifest-owned external mappings, builds the wheel twice, inspects
 the retained wheel, qualifies it in a clean environment, compares source and
 installed artifacts byte-for-byte, and creates and re-verifies a deterministic
 evidence manifest.
@@ -229,7 +229,7 @@ release commit has already been qualified.
 | `RQ-017` | Source/installed equivalence | Paired JSON, CSV, SVG, and hashes | Deterministic numerical artifacts are byte-identical |
 | `RQ-018` | Comparison completeness | Comparison report summary | Every manifest case/method/control result completes or records an approved fail-closed outcome |
 | `RQ-019` | Threshold review | Diff, reviewer record, report deltas | Every changed threshold or expected baseline has a written rationale and human approval |
-| `RQ-020` | External mapping | Four ngspice case bundles | Netlists, mappings, tool version, logs, and waveforms reviewed for all four cases |
+| `RQ-020` | External mapping | Twenty manifest-owned ngspice case bundles plus suite summary | Netlists, mappings, tool version, logs, waveforms, canonical state order, and reduced-order boundaries reviewed for all 20 cases |
 | `RQ-021` | Performance claim scope | Timing report and release wording | Claims name workload, size, backend, environment, statistic, and comparator |
 | `RQ-022` | Provenance completeness | `RELEASE_MANIFEST.json` and `SHA256SUMS` | Every release/evidence file has path, size, SHA-256, role, and source commit |
 | `RQ-023` | CI identity | GitHub run URL, event, ref, SHA, conclusion | Tag workflow ran on exact tag/SHA and every required job succeeded |
@@ -414,17 +414,13 @@ Record the tool version:
 ngspice --version | tee artifacts/release/NGSPICE_VERSION
 ```
 
-Run every supported mapping:
+Run every manifest-owned mapping:
 
 ```bash
-for case in rc_step rl_step diode_clip switched_rc; do
-  PYTHONPATH=src python tools/compare_external.py \
-    "benchmarks/cases/${case}.json" \
-    --output "artifacts/release/ngspice-${case}.json" \
-    --netlist-output "artifacts/release/ngspice-${case}.cir" \
-    --raw-output "artifacts/release/ngspice-${case}.dat" \
-    --log-output "artifacts/release/ngspice-${case}.log"
-done
+PYTHONPATH=src python tools/run_external_suite.py \
+  benchmarks/external/manifest.json \
+  --output-root artifacts/release \
+  --filename-prefix ngspice-
 ```
 
 Review each case for:
@@ -789,7 +785,7 @@ Source tests: <COUNT>, <RESULT>
 Installed tests: <COUNT>, <RESULT>
 Installed SciPy tests: <COUNT>, <RESULT>
 Comparison results: <COUNT>, <RESULT>
-External cases: rc_step, rl_step, diode_clip, switched_rc
+External cases: 20 cases owned by benchmarks/external/manifest.json
 
 Requirements proven: <COUNT>/26
 Contradicted: <COUNT>
@@ -826,7 +822,7 @@ Approval record: <REFERENCE>
 - [ ] Candidate, bound, failure, nonlinear, and long-horizon coverage is present.
 - [ ] Numerical comparison matrix is complete.
 - [ ] Changed thresholds and baselines have human review.
-- [ ] All four ngspice mappings are reviewed.
+- [ ] All 20 ngspice mappings and the suite summary are reviewed.
 
 ### Artifact integrity
 

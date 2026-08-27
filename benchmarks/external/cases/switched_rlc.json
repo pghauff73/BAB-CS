@@ -1,0 +1,104 @@
+{
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "V1",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 3.0
+    },
+    {
+      "type": "switch",
+      "name": "S1",
+      "positive": "vin",
+      "negative": "drive",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.00003,
+        "rise": 0.0,
+        "width": 0.00012,
+        "fall": 0.0,
+        "period": 0.0003
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.05,
+      "off_resistance": 1000000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "drive",
+      "negative": "series",
+      "resistance": 5.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_DRIVE_BLEED",
+      "positive": "drive",
+      "negative": "0",
+      "resistance": 10000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_SERIES_BLEED",
+      "positive": "series",
+      "negative": "0",
+      "resistance": 10000.0
+    },
+    {
+      "type": "inductor",
+      "name": "L1",
+      "positive": "series",
+      "negative": "tank",
+      "inductance": 0.0005,
+      "initial_current": 0.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "tank",
+      "negative": "0",
+      "capacitance": 0.00002,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_LOAD",
+      "positive": "tank",
+      "negative": "0",
+      "resistance": 50.0
+    },
+    {
+      "type": "diode",
+      "name": "D_FREE",
+      "positive": "0",
+      "negative": "series",
+      "saturation_current": 1e-12,
+      "thermal_voltage": 0.02585
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.0006,
+    "nominal_step": 0.000002
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "rk23",
+    "reference_method": "trapezoidal",
+    "predictor_reference_cap": 1000000000.0,
+    "embedded_error_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16,
+    "implicit_settings": {
+      "absolute_tolerance": 1e-8,
+      "relative_tolerance": 1e-8,
+      "max_iterations": 60,
+      "minimum_damping": 0.00006103515625
+    }
+  }
+}

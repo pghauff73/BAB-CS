@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 804">
+  <title id="title">Switched RC simulation result</title>
+  <desc id="description">Exact pulse boundaries align the accepted capacitor voltage with repeated discharge intervals. Result generated from benchmarks/cases/switched_rc.json, SHA-256 6980909a519ca6087111c3005add11997c7ae482c4cbbd987f8e513898d16195.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="804" rx="28" fill="#f5f8fb"/>
+<text class="sans title" x="64" y="58" text-anchor="start">Switched RC simulation result</text>
+<text class="sans subtitle" x="64" y="96" text-anchor="start">Exact pulse boundaries align the accepted capacitor voltage with repeated discharge intervals.</text>
+<text class="sans section" x="64" y="124" text-anchor="start">ACCEPTED BAB-CS SIMULATION POINTS</text>
+  <rect class="card" x="52" y="132" width="1096" height="278" rx="18"/>
+<text class="sans label" x="112" y="156" text-anchor="start">Capacitor voltage v(C1)</text>
+<text class="sans micro" x="1138" y="156" text-anchor="end">V</text>
+  <path class="grid" d="M112 380 H1138"/>
+<text class="sans micro" x="99" y="384" text-anchor="end">-0.02272</text>
+  <path class="grid" d="M112 325 H1138"/>
+<text class="sans micro" x="99" y="329" text-anchor="end">0.05121</text>
+  <path class="grid" d="M112 270 H1138"/>
+<text class="sans micro" x="99" y="274" text-anchor="end">0.1251</text>
+  <path class="grid" d="M112 215 H1138"/>
+<text class="sans micro" x="99" y="219" text-anchor="end">0.1991</text>
+  <path class="grid" d="M112 160 H1138"/>
+<text class="sans micro" x="99" y="164" text-anchor="end">0.273</text>
+  <path class="grid" d="M112 160 V380"/>
+<text class="sans micro" x="112" y="402" text-anchor="middle">0</text>
+  <path class="grid" d="M317.2 160 V380"/>
+<text class="sans micro" x="317.2" y="402" text-anchor="middle">180</text>
+  <path class="grid" d="M522.4 160 V380"/>
+<text class="sans micro" x="522.4" y="402" text-anchor="middle">360</text>
+  <path class="grid" d="M727.6 160 V380"/>
+<text class="sans micro" x="727.6" y="402" text-anchor="middle">540</text>
+  <path class="grid" d="M932.8 160 V380"/>
+<text class="sans micro" x="932.8" y="402" text-anchor="middle">720</text>
+  <path class="grid" d="M1138 160 V380"/>
+<text class="sans micro" x="1138" y="402" text-anchor="middle">900</text>
+<text class="sans small" x="625" y="423" text-anchor="middle">time (µs)</text>
+  <path class="event" d="M226.000 160 V380"/>
+  <path class="event" d="M340.000 160 V380"/>
+  <path class="event" d="M682.000 160 V380"/>
+  <path class="event" d="M796.000 160 V380"/>
+  <path class="plot" stroke="#0d7185" d="M112.000 363.098 L134.800 348.511 L157.600 334.070 L180.400 319.916 L203.200 306.042 L226.000 300.161 L248.800 356.009 L271.600 346.733 L294.400 358.714 L317.200 353.317 L340.000 354.811 L362.800 340.243 L385.600 325.967 L408.400 311.973 L431.200 298.256 L454.000 284.811 L476.800 271.632 L499.600 258.714 L522.400 246.052 L545.200 233.640 L568.000 221.474 L590.800 209.549 L613.600 197.860 L636.400 186.403 L659.200 175.172 L682.000 186.228 L704.800 356.576 L727.600 328.283 L750.400 364.828 L773.200 348.363 L796.000 355.726 L818.800 348.440 L841.600 331.080 L864.400 317.007 L887.200 303.191 L910.000 289.648 L932.800 276.373 L955.600 263.361 L978.400 250.607 L1001.200 238.105 L1024.000 225.851 L1046.800 213.839 L1069.600 202.065 L1092.400 190.524 L1115.200 179.212 L1138.000 187.438"/>
+  <path d="M112 178 H140" stroke="#0d7185" stroke-width="4"/>
+<text class="sans small" x="148" y="183" text-anchor="start">accepted v(C1)</text>
+  <rect class="card" x="52" y="416" width="1096" height="278" rx="18"/>
+<text class="sans label" x="112" y="440" text-anchor="start">Switch command</text>
+<text class="sans micro" x="1138" y="440" text-anchor="end">command</text>
+  <path class="grid" d="M112 664 H1138"/>
+<text class="sans micro" x="99" y="668" text-anchor="end">-0.08</text>
+  <path class="grid" d="M112 609 H1138"/>
+<text class="sans micro" x="99" y="613" text-anchor="end">0.21</text>
+  <path class="grid" d="M112 554 H1138"/>
+<text class="sans micro" x="99" y="558" text-anchor="end">0.5</text>
+  <path class="grid" d="M112 499 H1138"/>
+<text class="sans micro" x="99" y="503" text-anchor="end">0.79</text>
+  <path class="grid" d="M112 444 H1138"/>
+<text class="sans micro" x="99" y="448" text-anchor="end">1.08</text>
+  <path class="grid" d="M112 444 V664"/>
+<text class="sans micro" x="112" y="686" text-anchor="middle">0</text>
+  <path class="grid" d="M317.2 444 V664"/>
+<text class="sans micro" x="317.2" y="686" text-anchor="middle">180</text>
+  <path class="grid" d="M522.4 444 V664"/>
+<text class="sans micro" x="522.4" y="686" text-anchor="middle">360</text>
+  <path class="grid" d="M727.6 444 V664"/>
+<text class="sans micro" x="727.6" y="686" text-anchor="middle">540</text>
+  <path class="grid" d="M932.8 444 V664"/>
+<text class="sans micro" x="932.8" y="686" text-anchor="middle">720</text>
+  <path class="grid" d="M1138 444 V664"/>
+<text class="sans micro" x="1138" y="686" text-anchor="middle">900</text>
+<text class="sans small" x="625" y="707" text-anchor="middle">time (µs)</text>
+  <path class="event" d="M226.000 444 V664"/>
+  <path class="event" d="M340.000 444 V664"/>
+  <path class="event" d="M682.000 444 V664"/>
+  <path class="event" d="M796.000 444 V664"/>
+  <path class="plot" stroke="#0d7185" d="M112.000 648.828 L134.800 648.828 L157.600 648.828 L180.400 648.828 L203.200 648.828 L226.000 459.172 L248.800 459.172 L271.600 459.172 L294.400 459.172 L317.200 459.172 L340.000 648.828 L362.800 648.828 L385.600 648.828 L408.400 648.828 L431.200 648.828 L454.000 648.828 L476.800 648.828 L499.600 648.828 L522.400 648.828 L545.200 648.828 L568.000 648.828 L590.800 648.828 L613.600 648.828 L636.400 648.828 L659.200 648.828 L682.000 459.172 L704.800 459.172 L727.600 459.172 L750.400 459.172 L773.200 459.172 L796.000 459.172 L818.800 648.828 L841.600 648.828 L864.400 648.828 L887.200 648.828 L910.000 648.828 L932.800 648.828 L955.600 648.828 L978.400 648.828 L1001.200 648.828 L1024.000 648.828 L1046.800 648.828 L1069.600 648.828 L1092.400 648.828 L1115.200 648.828 L1138.000 459.172"/>
+  <path d="M112 462 H140" stroke="#0d7185" stroke-width="4"/>
+<text class="sans small" x="148" y="467" text-anchor="start">S1 control</text>
+  <text class="mono micro" x="64" y="750">SOURCE benchmarks/cases/switched_rc.json · INPUT SHA-256 6980909a519ca608 · METHOD ab2 · NOMINAL STEP 2e-05 s · ACCEPTED POINTS 46</text>
+<text class="sans micro" x="64" y="776" text-anchor="start">orange rules = accepted event boundaries</text>
+</svg>

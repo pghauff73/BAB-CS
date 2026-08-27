@@ -23,8 +23,9 @@ if str(REPOSITORY_ROOT) not in sys.path:
 from babcs import BABCSConfig, BoundedAdamsBashforthIntegrator, Simulator
 from babcs.io import load_case, summary_data
 from tests.support.analytic import driven_rc_voltage, parallel_rlc_state, rc_voltage, rl_current
-from tests.support.metrics import error_metrics, estimated_period, interpolate_trace, observed_order
+from tests.support.metrics import error_metrics, estimated_period, interpolate_trace
 from tests.support.raw_ab2 import RawAB2Point, integrate_raw_ab2
+from tools.experiment_records import analyze_experiment_records, decorate_comparison_record
 
 
 SCHEMA_VERSION = 1
@@ -44,6 +45,13 @@ SUPPORTED_METHODS = {
     "bounded_ab2_fast",
     "bounded_heun_fast",
     "bounded_rk23_fast",
+    "candidate_explicit_euler",
+    "candidate_heun",
+    "candidate_rk23",
+    "candidate_ab2",
+    "candidate_backward_euler",
+    "candidate_trapezoidal",
+    "candidate_bdf2",
 }
 IMPLICIT_METHODS = {"backward_euler", "trapezoidal", "bdf2"}
 BOUNDED_CANDIDATES = {
@@ -56,8 +64,16 @@ BOUNDED_CANDIDATES = {
     "bounded_ab2_fast": ("ab2", "trapezoidal", 4),
     "bounded_heun_fast": ("heun", "trapezoidal", 4),
     "bounded_rk23_fast": ("rk23", "trapezoidal", 4),
+    "candidate_explicit_euler": ("explicit_euler", "trapezoidal", 1),
+    "candidate_heun": ("heun", "trapezoidal", 1),
+    "candidate_rk23": ("rk23", "trapezoidal", 1),
+    "candidate_ab2": ("ab2", "trapezoidal", 1),
+    "candidate_backward_euler": ("backward_euler", "trapezoidal", 1),
+    "candidate_trapezoidal": ("trapezoidal", "bdf2", 1),
+    "candidate_bdf2": ("bdf2", "trapezoidal", 1),
 }
 SOURCE_HASH_EXCLUDED_PATHS = {
+    "docs/OBSERVATORY_ATLAS_SANDBOX_LAB_IMPLEMENTATION_AUDIT.md",
     "docs/PERFORMANCE_OPTIMIZATION_AUDIT.md",
     "docs/TESTS_AND_COMPARISONS_AUDIT.md",
 }
@@ -143,7 +159,7 @@ def execute_manifest(
             "reference-relative diagnostics, not unconditional exact-trajectory proofs."
         ),
         "results": numerical_results,
-        "analyses": _analysis_data(
+        "analyses": analyze_experiment_records(
             numerical_results,
             accuracy_targets=[float(value) for value in manifest.get("accuracy_targets", [])],
             work_budgets=[int(value) for value in manifest.get("work_budgets", [])],
@@ -397,7 +413,11 @@ def _execute_case(
     timing_results: list[dict[str, Any]] = []
 
     for method in methods:
-        method_intervals: list[int | None] = intervals if method in {"active", "shadow"} else [None]
+        method_intervals: list[int | None] = (
+            intervals
+            if method in {"active", "shadow"} or method.startswith("candidate_")
+            else [None]
+        )
         for anchor_interval in method_intervals:
             for nominal_step in steps:
                 durations: list[float] = []
@@ -435,7 +455,7 @@ def _execute_case(
                     sample_times,
                     authority_values,
                 )
-                numerical_results.append(result)
+                numerical_results.append(decorate_comparison_record(result))
                 if timing_repeats:
                     timing_results.append(
                         {
@@ -841,95 +861,6 @@ def _oscillator_data(
         "measured_period": measured_period,
         "relative_period_error": abs(measured_period - expected_period) / expected_period,
         "relative_energy_span": (max(energies) - min(energies)) / energies[0],
-    }
-
-
-def _analysis_data(
-    results: list[dict[str, Any]],
-    *,
-    accuracy_targets: list[float],
-    work_budgets: list[int],
-) -> dict[str, Any]:
-    grouped: dict[tuple[str, str, int | None], list[dict[str, Any]]] = defaultdict(list)
-    for result in results:
-        grouped[(result["case_id"], result["method"], result["anchor_interval"])].append(result)
-
-    convergence = []
-    fixed_accuracy = []
-    fixed_work = []
-    for (case_id, method, anchor_interval), group in sorted(grouped.items()):
-        ordered = sorted(group, key=lambda item: item["nominal_step"], reverse=True)
-        orders = []
-        for coarse, fine in zip(ordered, ordered[1:]):
-            coarse_error = coarse["accuracy"]["maximum_absolute_error"]
-            fine_error = fine["accuracy"]["maximum_absolute_error"]
-            ratio = coarse["nominal_step"] / fine["nominal_step"]
-            if coarse_error > 0.0 and fine_error > 0.0 and ratio > 1.0:
-                orders.append(
-                    {
-                        "coarse_step": coarse["nominal_step"],
-                        "fine_step": fine["nominal_step"],
-                        "observed_order": observed_order(coarse_error, fine_error, ratio),
-                    }
-                )
-        convergence.append(
-            {
-                "case_id": case_id,
-                "method": method,
-                "anchor_interval": anchor_interval,
-                "orders": orders,
-            }
-        )
-        for target in accuracy_targets:
-            eligible = [
-                result
-                for result in group
-                if result["accuracy"]["maximum_absolute_error"] <= target
-            ]
-            selected = min(
-                eligible,
-                key=lambda item: item["work"]["deterministic_work_units"],
-                default=None,
-            )
-            fixed_accuracy.append(
-                {
-                    "case_id": case_id,
-                    "method": method,
-                    "anchor_interval": anchor_interval,
-                    "accuracy_target": target,
-                    "selected_nominal_step": None if selected is None else selected["nominal_step"],
-                    "deterministic_work_units": (
-                        None if selected is None else selected["work"]["deterministic_work_units"]
-                    ),
-                }
-            )
-        for budget in work_budgets:
-            eligible = [
-                result
-                for result in group
-                if result["work"]["deterministic_work_units"] <= budget
-            ]
-            selected = min(
-                eligible,
-                key=lambda item: item["accuracy"]["maximum_absolute_error"],
-                default=None,
-            )
-            fixed_work.append(
-                {
-                    "case_id": case_id,
-                    "method": method,
-                    "anchor_interval": anchor_interval,
-                    "work_budget": budget,
-                    "selected_nominal_step": None if selected is None else selected["nominal_step"],
-                    "maximum_absolute_error": (
-                        None if selected is None else selected["accuracy"]["maximum_absolute_error"]
-                    ),
-                }
-            )
-    return {
-        "convergence": convergence,
-        "fixed_accuracy": fixed_accuracy,
-        "fixed_work": fixed_work,
     }
 
 

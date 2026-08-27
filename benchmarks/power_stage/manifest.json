@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "sample_count": 120,
+  "accuracy_targets": [0.1, 0.01, 0.001],
+  "work_budgets": [1000, 5000, 20000, 100000],
+  "cases": [
+    {
+      "id": "buck_like_reduced_order",
+      "input": "../../examples/power_stage/buck_like_reduced_order.json",
+      "state_indices": [0, 1],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.000002, 0.000001, 0.0000005],
+      "anchor_intervals": [16],
+      "expected_event_count": 8,
+      "authority": {
+        "type": "refined_replay",
+        "method": "trapezoidal",
+        "maximum_step": 1.25e-7
+      }
+    },
+    {
+      "id": "h_bridge_rl_reduced_order",
+      "input": "../../examples/power_stage/h_bridge_rl_reduced_order.json",
+      "state_indices": [0],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_rk23",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.000002, 0.000001, 0.0000005],
+      "anchor_intervals": [16],
+      "expected_event_count": 8,
+      "authority": {
+        "type": "refined_replay",
+        "method": "trapezoidal",
+        "maximum_step": 2.5e-7
+      }
+    },
+    {
+      "id": "dc_link_rlc_reduced_order",
+      "input": "../../examples/power_stage/dc_link_rlc_reduced_order.json",
+      "state_indices": [0, 1],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.000004, 0.000002, 0.000001],
+      "anchor_intervals": [16],
+      "expected_event_count": 2,
+      "authority": {
+        "type": "refined_replay",
+        "method": "trapezoidal",
+        "maximum_step": 2.5e-7
+      }
+    }
+  ]
+}

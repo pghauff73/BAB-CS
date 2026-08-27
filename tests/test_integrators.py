@@ -22,6 +22,23 @@ def rc_circuit() -> Circuit:
 
 
 class ImplicitIntegratorTests(unittest.TestCase):
+    def test_reference_replay_advances_when_maximum_step_is_below_one_second_scaled_roundoff(self) -> None:
+        circuit = Circuit()
+        initial_time = 2.8e-4
+        target_time = initial_time + 1.0e-12
+        initial = circuit.evaluate(initial_time, ())
+
+        replay = integrate_reference_window_with_stats(
+            circuit,
+            initial,
+            [target_time],
+            1.0e-15,
+            exact_target_projection=True,
+        )
+
+        self.assertGreater(replay.steps, 900)
+        self.assertEqual(replay.evaluations[-1].time, target_time)
+
     @unittest.skipUnless(scipy_sparse_available(), "optional scipy backend unavailable")
     def test_failed_sparse_chord_retries_exact_coupled_update(self) -> None:
         elements = []

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 650">
+  <title id="title">Tutorial 8 empirical bound-coverage graph</title>
+  <desc id="description">Bars compare the maximum authority-epoch drift error with the recursive internal bound, alongside eligible and covered sample counts.</desc>
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b7185"/><stop offset="1" stop-color="#174e63"/></linearGradient>
+    <linearGradient id="warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e1883b"/><stop offset="1" stop-color="#a6501d"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.13"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#4c7283"/></marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .title { fill:#10243a; font-size:29px; font-weight:820; letter-spacing:-0.02em; }
+      .subtitle { fill:#60758a; font-size:15px; }
+      .label { fill:#10243a; font-size:16px; font-weight:760; }
+      .small { fill:#5e7388; font-size:13px; }
+      .micro { fill:#74879a; font-size:10.5px; font-weight:720; letter-spacing:0.045em; }
+      .box { fill:#fff; stroke:#d2dee8; stroke-width:1.5; }
+      .soft { fill:#ebf6f8; stroke:#add3dd; stroke-width:1.5; }
+      .warm { fill:#fff2e6; stroke:#edbd8f; stroke-width:1.5; }
+      .line { fill:none; stroke:#4c7283; stroke-width:2.2; marker-end:url(#arrow); }
+      .grid { stroke:#d9e4ec; stroke-width:1; }
+    </style>
+  </defs>
+  <rect width="1200" height="650" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="60" y="66">Tutorial 8 · Empirical coverage is measured, not assumed</text>
+  <text class="sans subtitle" x="60" y="100">The authority-epoch drift error is compared with the recursive internal bound only on eligible samples.</text>
+  <rect class="box" x="60" y="145" width="680" height="390" rx="18"/>
+  <rect class="soft" x="780" y="145" width="360" height="390" rx="18"/>
+  <path class="grid" d="M130 470 H670"/>
+  <rect x="235" y="205.00" width="130" height="265.00" rx="12" fill="#d9782d"/>
+  <rect x="455" y="455.20" width="130" height="14.80" rx="12" fill="#0b7185"/>
+  <text class="sans label" x="300" y="505" text-anchor="middle">actual drift error</text>
+  <text class="sans label" x="520" y="505" text-anchor="middle">recursive bound</text>
+  <text class="sans micro" x="300" y="190.00" text-anchor="middle">1.151e+04</text>
+  <text class="sans micro" x="520" y="440.20" text-anchor="middle">643</text>
+  <text class="sans micro" x="960" y="205" text-anchor="middle">ELIGIBLE SAMPLES</text>
+  <text class="sans" x="960" y="285" fill="#10243a" font-size="58" font-weight="850" text-anchor="middle">17</text>
+  <text class="sans micro" x="960" y="345" text-anchor="middle">COVERED SAMPLES</text>
+  <text class="sans" x="960" y="425" fill="#d9782d" font-size="58" font-weight="850" text-anchor="middle">0</text>
+  <text class="sans small" x="600" y="585" text-anchor="middle">A low measured ratio is diagnostic evidence that the current internal model is not a formal enclosure.</text>
+</svg>

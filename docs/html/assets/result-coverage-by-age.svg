@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 680">
+  <title id="title">Bound Coverage Atlas: empirical coverage by authority age</title>
+  <desc id="description">Lossless LC eligible samples grouped by the number of accepted steps since independent replay authority was refreshed.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="680" rx="28" fill="#f5f8fb"/>
+<text class="sans title" x="64" y="58" text-anchor="start">Bound Coverage Atlas: empirical coverage by authority age</text>
+<text class="sans subtitle" x="64" y="96" text-anchor="start">Lossless LC eligible samples grouped by the number of accepted steps since independent replay authority was refreshed.</text>
+  <rect class="card" x="52" y="134" width="1096" height="442" rx="20"/>
+  <path class="grid" d="M135 545 H1120"/>
+<text class="sans micro" x="121" y="549" text-anchor="end">0</text>
+  <path class="grid" d="M135 467.6 H1120"/>
+<text class="sans micro" x="121" y="471.6" text-anchor="end">0.2</text>
+  <path class="grid" d="M135 390.2 H1120"/>
+<text class="sans micro" x="121" y="394.2" text-anchor="end">0.4</text>
+  <path class="grid" d="M135 312.8 H1120"/>
+<text class="sans micro" x="121" y="316.8" text-anchor="end">0.6</text>
+  <path class="grid" d="M135 235.4 H1120"/>
+<text class="sans micro" x="121" y="239.4" text-anchor="end">0.8</text>
+  <path class="grid" d="M135 158 H1120"/>
+<text class="sans micro" x="121" y="162" text-anchor="end">1</text>
+  <rect x="198.125" y="540.676" width="120.000" height="4.324" rx="10" fill="#0d7185"/>
+<text class="sans small" x="258.125" y="573" text-anchor="middle">0-3</text>
+<text class="sans label" x="258.125" y="527.676" text-anchor="middle">0.0112</text>
+<text class="sans micro" x="258.125" y="601" text-anchor="middle">n=179</text>
+  <rect x="444.375" y="528.875" width="120.000" height="16.125" rx="10" fill="#d9782d"/>
+<text class="sans small" x="504.375" y="573" text-anchor="middle">4-7</text>
+<text class="sans label" x="504.375" y="515.875" text-anchor="middle">0.0417</text>
+<text class="sans micro" x="504.375" y="601" text-anchor="middle">n=240</text>
+  <rect x="690.625" y="436.962" width="120.000" height="108.038" rx="10" fill="#6856a8"/>
+<text class="sans small" x="750.625" y="573" text-anchor="middle">8-15</text>
+<text class="sans label" x="750.625" y="423.962" text-anchor="middle">0.279</text>
+<text class="sans micro" x="750.625" y="601" text-anchor="middle">n=480</text>
+  <rect x="936.875" y="478.887" width="120.000" height="66.112" rx="10" fill="#2f8f68"/>
+<text class="sans small" x="996.875" y="573" text-anchor="middle">16+</text>
+<text class="sans label" x="996.875" y="465.887" text-anchor="middle">0.171</text>
+<text class="sans micro" x="996.875" y="601" text-anchor="middle">n=240</text>
+<text class="sans small" x="38" y="351.5" text-anchor="middle" transform="rotate(-90 38 351.5)">empirical coverage fraction</text>
+<text class="sans small" x="64" y="630" text-anchor="start">Representative lc_long accepted samples · coverage excludes anchors, events, zero bounds, and non-finite values.</text>
+</svg>

@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 778">
+  <title id="title">Damped RLC simulation result</title>
+  <desc id="description">Voltage and current oscillate while the declared resistor dissipates stored energy. Result generated from benchmarks/cases/rlc_damped.json, SHA-256 3d4ddaf9257d97db8ba8945b01e12207feb1639b362a4583a0d58f253c11cadb.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="778" rx="28" fill="#f5f8fb"/>
+<text class="sans title" x="64" y="58" text-anchor="start">Damped RLC simulation result</text>
+<text class="sans subtitle" x="64" y="96" text-anchor="start">Voltage and current oscillate while the declared resistor dissipates stored energy.</text>
+<text class="sans section" x="64" y="124" text-anchor="start">ACCEPTED BAB-CS SIMULATION POINTS</text>
+  <rect class="card" x="52" y="132" width="1096" height="278" rx="18"/>
+<text class="sans label" x="112" y="156" text-anchor="start">Capacitor voltage v(C1)</text>
+<text class="sans micro" x="1138" y="156" text-anchor="end">V</text>
+  <path class="grid" d="M112 380 H1138"/>
+<text class="sans micro" x="99" y="384" text-anchor="end">-0.7664</text>
+  <path class="grid" d="M112 325 H1138"/>
+<text class="sans micro" x="99" y="329" text-anchor="end">-0.2921</text>
+  <path class="grid" d="M112 270 H1138"/>
+<text class="sans micro" x="99" y="274" text-anchor="end">0.1822</text>
+  <path class="grid" d="M112 215 H1138"/>
+<text class="sans micro" x="99" y="219" text-anchor="end">0.6565</text>
+  <path class="grid" d="M112 160 H1138"/>
+<text class="sans micro" x="99" y="164" text-anchor="end">1.131</text>
+  <path class="grid" d="M112 160 V380"/>
+<text class="sans micro" x="112" y="402" text-anchor="middle">0</text>
+  <path class="grid" d="M317.2 160 V380"/>
+<text class="sans micro" x="317.2" y="402" text-anchor="middle">100</text>
+  <path class="grid" d="M522.4 160 V380"/>
+<text class="sans micro" x="522.4" y="402" text-anchor="middle">200</text>
+  <path class="grid" d="M727.6 160 V380"/>
+<text class="sans micro" x="727.6" y="402" text-anchor="middle">300</text>
+  <path class="grid" d="M932.8 160 V380"/>
+<text class="sans micro" x="932.8" y="402" text-anchor="middle">400</text>
+  <path class="grid" d="M1138 160 V380"/>
+<text class="sans micro" x="1138" y="402" text-anchor="middle">500</text>
+<text class="sans small" x="625" y="423" text-anchor="middle">time (µs)</text>
+  <path class="plot" stroke="#0d7185" d="M112.000 175.172 L120.208 181.322 L128.416 188.188 L136.624 196.400 L144.832 205.772 L153.040 216.113 L161.248 227.223 L169.456 238.899 L177.664 250.935 L185.872 263.129 L194.080 275.284 L202.288 287.211 L210.496 298.733 L218.704 309.686 L226.912 319.919 L235.120 329.302 L243.328 337.720 L251.536 345.080 L259.744 351.308 L267.952 356.350 L276.160 360.775 L284.368 363.348 L292.576 364.689 L300.784 364.828 L308.992 363.807 L317.200 361.690 L325.408 358.551 L333.616 354.480 L341.824 349.577 L350.032 343.952 L358.240 337.720 L366.448 331.003 L374.656 323.925 L382.864 316.610 L391.072 309.183 L399.280 301.765 L407.488 294.470 L415.696 287.408 L423.904 280.680 L432.112 274.380 L440.320 268.553 L448.528 263.349 L456.736 258.783 L464.944 254.902 L473.152 251.739 L481.360 249.317 L489.568 247.643 L497.776 246.716 L505.984 246.519 L514.192 247.029 L522.400 248.208 L530.608 250.013 L538.816 252.390 L547.024 255.281 L555.232 258.619 L563.440 262.336 L571.648 266.357 L579.856 270.609 L588.064 275.015 L596.272 279.502 L604.480 284.038 L612.688 288.463 L620.896 292.757 L629.104 296.857 L637.312 300.707 L645.520 304.256 L653.728 307.461 L661.936 310.285 L670.144 312.699 L678.352 314.682 L686.560 316.218 L694.768 317.301 L702.976 317.932 L711.184 318.120 L719.392 317.877 L727.600 317.226 L735.808 316.192 L744.016 314.806 L752.224 313.104 L760.432 311.125 L768.640 308.878 L776.848 306.472 L785.056 303.920 L793.264 301.267 L801.472 298.560 L809.680 295.842 L817.888 293.157 L826.096 290.545 L834.304 288.045 L842.512 285.690 L850.720 283.513 L858.928 281.540 L867.136 279.794 L875.344 278.294 L883.552 277.054 L891.760 276.082 L899.968 275.384 L908.176 274.959 L916.384 274.804 L924.592 274.911 L932.800 275.281 L941.008 275.873 L949.216 276.680 L957.424 277.682 L965.632 278.855 L973.840 280.175 L982.048 281.614 L990.256 283.145 L998.464 284.742 L1006.672 286.376 L1014.880 288.020 L1023.088 289.649 L1031.296 291.238 L1039.504 292.762 L1047.712 294.201 L1055.920 295.536 L1064.128 296.750 L1072.336 297.828 L1080.544 298.759 L1088.752 299.534 L1096.960 300.147 L1105.168 300.594 L1113.376 300.875 L1121.584 300.992 L1129.792 300.951 L1138.000 300.758"/>
+  <path d="M112 178 H140" stroke="#0d7185" stroke-width="4"/>
+<text class="sans small" x="148" y="183" text-anchor="start">accepted v(C1)</text>
+  <rect class="card" x="52" y="416" width="1096" height="278" rx="18"/>
+<text class="sans label" x="112" y="440" text-anchor="start">Inductor current i(L1)</text>
+<text class="sans micro" x="1138" y="440" text-anchor="end">A</text>
+  <path class="grid" d="M112 664 H1138"/>
+<text class="sans micro" x="99" y="668" text-anchor="end">-0.01845</text>
+  <path class="grid" d="M112 609 H1138"/>
+<text class="sans micro" x="99" y="613" text-anchor="end">-0.006782</text>
+  <path class="grid" d="M112 554 H1138"/>
+<text class="sans micro" x="99" y="558" text-anchor="end">0.00489</text>
+  <path class="grid" d="M112 499 H1138"/>
+<text class="sans micro" x="99" y="503" text-anchor="end">0.01656</text>
+  <path class="grid" d="M112 444 H1138"/>
+<text class="sans micro" x="99" y="448" text-anchor="end">0.02824</text>
+  <path class="grid" d="M112 444 V664"/>
+<text class="sans micro" x="112" y="686" text-anchor="middle">0</text>
+  <path class="grid" d="M317.2 444 V664"/>
+<text class="sans micro" x="317.2" y="686" text-anchor="middle">100</text>
+  <path class="grid" d="M522.4 444 V664"/>
+<text class="sans micro" x="522.4" y="686" text-anchor="middle">200</text>
+  <path class="grid" d="M727.6 444 V664"/>
+<text class="sans micro" x="727.6" y="686" text-anchor="middle">300</text>
+  <path class="grid" d="M932.8 444 V664"/>
+<text class="sans micro" x="932.8" y="686" text-anchor="middle">400</text>
+  <path class="grid" d="M1138 444 V664"/>
+<text class="sans micro" x="1138" y="686" text-anchor="middle">500</text>
+<text class="sans small" x="625" y="707" text-anchor="middle">time (µs)</text>
+  <path class="plot" stroke="#0d7185" d="M112.000 577.043 L120.208 559.195 L128.416 541.899 L136.624 525.824 L144.832 511.180 L153.040 498.139 L161.248 486.843 L169.456 477.399 L177.664 469.885 L185.872 464.341 L194.080 460.777 L202.288 459.172 L210.496 459.474 L218.704 461.604 L226.912 465.457 L235.120 470.905 L243.328 477.800 L251.536 485.978 L259.744 495.262 L267.952 505.461 L276.160 516.323 L284.368 527.861 L292.576 539.718 L300.784 551.694 L308.992 563.599 L317.200 575.248 L325.408 586.470 L333.616 597.105 L341.824 607.010 L350.032 616.058 L358.240 624.143 L366.448 631.173 L374.656 637.082 L382.864 641.821 L391.072 645.360 L399.280 647.692 L407.488 648.828 L415.696 648.795 L423.904 647.642 L432.112 645.429 L440.320 642.158 L448.528 638.062 L456.736 633.171 L464.944 627.593 L473.152 621.443 L481.360 614.838 L489.568 607.901 L497.776 600.752 L505.984 593.512 L514.192 586.297 L522.400 579.220 L530.608 572.386 L538.816 565.892 L547.024 559.826 L555.232 554.268 L563.440 549.283 L571.648 544.927 L579.856 541.244 L588.064 538.266 L596.272 536.010 L604.480 534.502 L612.688 533.710 L620.896 533.626 L629.104 534.225 L637.312 535.470 L645.520 537.318 L653.728 539.714 L661.936 542.601 L670.144 545.914 L678.352 549.584 L686.560 553.540 L694.768 557.710 L702.976 562.018 L711.184 566.393 L719.392 570.764 L727.600 575.062 L735.808 579.222 L744.016 583.186 L752.224 586.899 L760.432 590.312 L768.640 593.399 L776.848 596.090 L785.056 598.378 L793.264 600.242 L801.472 601.671 L809.680 602.658 L817.888 603.205 L826.096 603.322 L834.304 603.024 L842.512 602.330 L850.720 601.268 L858.928 599.868 L867.136 598.166 L875.344 596.201 L883.552 594.012 L891.760 591.643 L899.968 589.139 L908.176 586.543 L916.384 583.900 L924.592 581.254 L932.800 578.621 L941.008 576.091 L949.216 573.676 L957.424 571.407 L965.632 569.316 L973.840 567.427 L982.048 565.762 L990.256 564.339 L998.464 563.171 L1006.672 562.265 L1014.880 561.626 L1023.088 561.254 L1031.296 561.142 L1039.504 561.284 L1047.712 561.667 L1055.920 562.276 L1064.128 563.092 L1072.336 564.094 L1080.544 565.259 L1088.752 566.564 L1096.960 568.000 L1105.168 569.503 L1113.376 571.066 L1121.584 572.660 L1129.792 574.261 L1138.000 575.843"/>
+  <path d="M112 462 H140" stroke="#0d7185" stroke-width="4"/>
+<text class="sans small" x="148" y="467" text-anchor="start">accepted i(L1)</text>
+  <text class="mono micro" x="64" y="750">SOURCE benchmarks/cases/rlc_damped.json · INPUT SHA-256 3d4ddaf9257d97db · METHOD ab2 · NOMINAL STEP 4e-06 s · ACCEPTED POINTS 126</text>
+</svg>

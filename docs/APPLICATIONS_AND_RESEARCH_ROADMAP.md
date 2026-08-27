@@ -1,269 +1,253 @@
-# Applications and Research Roadmap for Bounded-Authority-Based-Circuit-Simulation
+# Engineering Applications and Research Roadmap for BAB-CS
 
-## Current Applications
+## Plain-Language Scope
 
-BAB-CS is immediately applicable as a research simulator for small transient
-circuits whose capacitor voltages and inductor currents determine a unique
-algebraic operating state. The present device library supports passive RLC
-networks, independent sources, diodes, and time-controlled resistive switches
-[[11]](REFERENCES.md#ref-11) [[25]](REFERENCES.md#ref-25). Within that boundary,
-the project can study accuracy, stability, drift, event handling, nonlinear
-convergence, and the computational cost of bounded candidate methods.
+Bounded-Authority-Based-Circuit-Simulation (`BAB-CS`) is best used when an
+engineering team needs to understand not only *what waveform appeared*, but also
+*why each numerical step was trusted*. A candidate method proposes the next
+capacitor voltages and inductor currents. Independent circuit solves, reference
+methods, correction, gates, and replay decide whether that proposal becomes the
+accepted state.
 
-The first application area is numerical-method comparison. Because explicit
-Euler, Heun, RK23, AB2, backward Euler, trapezoidal, and BDF2 share one
-controller, researchers can change the candidate while retaining the same
-projection, reference, correction, replay, residual, energy, and diagnostic
-rules [[14]](REFERENCES.md#ref-14). This controls more variables than comparing
-independent solver programs whose event, tolerance, and output policies differ.
+The current simulator is deliberately a **reduced-order** environment. A
+reduced-order model is a simplified model that retains the behavior needed for a
+specific question while leaving out detail that does not belong to that study.
+This makes BAB-CS useful for numerical qualification, early engineering
+screening, and reproducible research. It does not make the present examples
+production semiconductor, magnetic, thermal, electromagnetic, protection, or
+safety models [[11]](REFERENCES.md#ref-11)
+[[25]](REFERENCES.md#ref-25).
 
-The second area is long-horizon oscillator research. LC and lightly damped RLC
-circuits expose the distinction between energy drift, amplitude drift, phase
-drift, and residual consistency. BAB-CS records these quantities separately and
-periodically replays from trusted anchors [[15]](REFERENCES.md#ref-15). This
-makes it useful for studying how multistep history, correction strength, anchor
-spacing, and replay refinement affect cumulative phase behavior.
+## Engineering Projects Suited to BAB-CS
 
-The third area is nonlinear transient experimentation. Diode clipping and
-recovery cases exercise Newton convergence, projection, line search, event
-interaction, and reference promotion. The current nonlinear scope is narrow,
-but it is sufficient to compare every-step reference control with embedded
-fast paths and guarded nonlinear prediction [[17]](REFERENCES.md#ref-17)
-[[18]](REFERENCES.md#ref-18). The project is especially useful when the research
-question concerns numerical authority rather than a broad device library.
+### 1. Buck-Converter Schedule Screening
 
-The fourth area is switched-system analysis with known schedules. Pulse and
-piecewise-linear breakpoints are reached exactly, and multistep history is reset
-at accepted events [[28]](REFERENCES.md#ref-28). This supports controlled
-experiments with sampled switching, pulsed RC networks, and predetermined
-converter-like waveforms. It does not yet support general state-triggered
-switching or arbitrary threshold root finding, so production power-electronics
-claims would be premature.
+A buck converter reduces a direct-current voltage by switching energy through
+an inductor and capacitor. BAB-CS can study a simplified scheduled converter to
+check event alignment, inductor-current continuity, output ripple, diode
+conduction, stored energy, fallback, and replay. The useful result is not only a
+voltage trace; it is a record of which candidate method proposed each state and
+which independent authority accepted it.
 
-The fifth area is runtime assurance. Shadow mode executes candidate logic and
-diagnostics while preserving implicit reference authority. A new method can
-therefore be observed under realistic circuit steps before it is allowed to
-change the accepted state [[12]](REFERENCES.md#ref-12). This pattern is useful
-for staged numerical deployment: disabled establishes a reference baseline,
-shadow collects evidence, and active grants bounded authority only after the
-candidate’s behavior is understood.
+Use this project before detailed semiconductor loss, magnetic saturation,
+electromagnetic-interference, and thermal studies. The sandbox example is a
+**reduced-order numerical experiment, not a production device model**.
 
-The sixth area is deterministic benchmarking. BAB-CS counts candidate,
-reference, projection, Jacobian, algebraic, and replay work independently of
-wall time [[15]](REFERENCES.md#ref-15). Researchers can ask whether an embedded
-method saves reference solves, whether a sparse optimization reduces
-factorization setup, or whether replay initialization reduces Newton work
-without letting machine load decide the result.
+### 2. H-Bridge Dead Time and Load Reversal
 
-The seventh area is sparse-solver research for repeated circuit structures.
-The optional backend compiles CSC topology, reuses bounded workspaces, batches
-sensitivities, reuses KLU symbolic/numeric state for qualified large batched
-systems, and compares dense and sparse crossover behavior
-[[17]](REFERENCES.md#ref-17) [[27]](REFERENCES.md#ref-27)
-[[35]](REFERENCES.md#ref-35). This provides a compact environment for testing
-ordering policy, state residency, block factorization, cache diagnostics, and
-safe backend fallback before attempting the same ideas in a full production
-simulator.
+An H-bridge is a four-switch arrangement that can apply positive or negative
+voltage to a load. **Dead time** is a short interval in which opposing switches
+are both off to avoid a direct supply short. The scheduled H-bridge experiment
+uses a resistor-inductor (`RL`) load and can expose polarity changes, current
+continuity, exact event arrival, history resets, rejected steps, and replay work.
 
-The eighth area is reproducible scientific packaging. The project can build a
-deterministic wheel, inspect its metadata and members, qualify the installed
-artifact, compare source and installed numerical reports byte-for-byte, and bind
-the evidence with a deterministic manifest and checksums
-[[20]](REFERENCES.md#ref-20) [[31]](REFERENCES.md#ref-31). This makes BAB-CS a
-case study in treating a numerical release as an evidence object rather than
-only a version number.
+This is suitable for testing numerical handling of a declared switching
+schedule. It does not model body diodes, gate-driver timing uncertainty,
+shoot-through, motor mechanics, device parasitics, or hardware faults.
 
-The ninth area is education. The codebase is small enough for students to trace
-modified nodal equations, explicit and implicit integration, Newton iteration,
-projection, event resets, passivity, sparse factorization, and release evidence
-within one repository. Historical SPICE and MNA sources provide the circuit-
-simulation background [[1]](REFERENCES.md#ref-1)
-[[2]](REFERENCES.md#ref-2), while Dahlquist and Bogacki–Shampine provide the
-numerical-method context [[3]](REFERENCES.md#ref-3)
-[[4]](REFERENCES.md#ref-4).
+### 3. Direct-Current-Link Startup and Interruption
 
-The tenth area is regression-oracle design. BAB-CS explicitly ranks analytic
-solutions, refined replay, external comparison, internal implicit authority,
-and local step reference [[15]](REFERENCES.md#ref-15). That hierarchy can inform
-other scientific software: a local corrector should not be labeled independent
-truth, and an external simulator should not be used without checking semantic
-mapping.
+A direct-current link, often called a DC link, is the energy-storage path between
+parts of a power system. The BAB-CS example uses a simplified resistor-inductor-
+capacitor (`RLC`) circuit with a declared path for continuing current after an
+interruption. It supports studies of startup inrush, stored energy, interruption
+timing, decay, phase, and candidate robustness.
 
-## Transfer Possibilities
+Use it to qualify the numerical experiment and the commanded event schedule.
+Do not use it as a contactor, battery, fuse, insulation, arc, fault-current, or
+hardware-safety model.
 
-Beyond circuit simulation, the architecture may apply to semiexplicit
-differential-algebraic systems with a solvable algebraic manifold. A candidate
-ODE-like method could advance differential coordinates, a projection could
-restore constraints, an implicit method could provide reference authority, and
-periodic replay could refresh the accumulated trajectory. Projection research
-in constrained systems supports the general relevance of this pattern
-[[6]](REFERENCES.md#ref-6). BAB-CS does not yet implement these other domains,
-so this is a research transfer hypothesis rather than a current feature.
+### 4. Diode-Clamped Interface Transient
 
-Constrained mechanical systems are one possible extension. Positions or
-momenta could form the differential state while holonomic constraints define
-an algebraic manifold. A bounded candidate would need a domain-appropriate
-projection, energy and momentum diagnostics, and an independent replay method.
-The present circuit energy gate could not simply be copied; its source,
-dissipation, and storage terms are circuit-specific.
+A diode clamp limits a voltage by conducting strongly after the voltage crosses
+its operating region. The idealized Shockley diode in BAB-CS supplies a compact
+nonlinear case. **Nonlinear** means that output is not proportional to input and
+the circuit equations require iteration.
 
-Power-system differential-algebraic models are another possible extension.
-Generator dynamics, controls, and network algebraic equations share a
-differential/algebraic structure, but practical power models introduce scale,
-index, discontinuity, and stiffness requirements beyond the present code. A
-transfer would require sparse symbolic reuse, robust event localization,
-domain-specific residual scaling, and much broader model qualification before
-the controller could claim operational value.
+This project can compare candidate methods, Newton convergence, residuals,
+timestep refinement, safer-method fallback, and mapped ngspice results. A
+**residual** is the remaining mismatch in the circuit equations. Production work
+requiring manufacturer models, package parasitics, temperature corners, or
+electrostatic-discharge signoff belongs in a specialist SPICE workflow. SPICE
+means *Simulation Program with Integrated Circuit Emphasis*.
 
-Electrochemical, thermal-electrical, and multiphysics reduced models may also
-benefit from bounded candidate/reference separation. These systems often have
-slow states coupled to algebraic constraints or fast local solves. An embedded
-RK or multistep candidate could propose the slow evolution while an implicit
-reference and periodic replay limit accumulated error. The central design rule
-would remain: the reference must be sufficiently independent to justify its
-authority.
+### 5. Resonant Phase and Energy Retention
 
-Real-time and hardware-in-the-loop simulation is an attractive but demanding
-future application. BAB-CS fast paths show how reference work can be scheduled
-or promoted dynamically, which is relevant to a fixed compute budget. However,
-the current Python implementation, variable rejection work, and mandatory
-replay do not provide hard real-time guarantees. A real-time version would need
-worst-case execution analysis, bounded allocation, deterministic sparse
-factorization, deadline-aware fallback, and explicit treatment of missed
-deadlines as numerical failures.
+An inductor-capacitor (`LC`) circuit exchanges energy between a magnetic field
+and an electric field. It is useful for separating **phase drift**, the numerical
+shift in oscillation timing, from **energy drift**, numerical gain or loss of
+stored energy not caused by the declared model.
 
-Digital-twin monitoring is another plausible direction. Shadow mode could run
-one or more candidate methods beside an authoritative model, while bound,
-residual, energy, and anchor deviations become health signals. This could help
-distinguish integrator degradation from model mismatch. The current project
-does not include parameter estimation, sensor assimilation, or uncertainty
-quantification, so a digital-twin claim would require substantial additional
-work.
+BAB-CS reports phase, energy, state error, recursive bound, anchor deviation,
+and time since independent authority refresh separately. This makes it suitable
+for long-horizon studies where one combined error norm would hide the reason a
+trajectory is unacceptable.
 
-Safety-oriented simulation is a natural conceptual application because BAB-CS
-records why authority changed. Nonfinite values, stiffness, residual failure,
-energy injection, projection failure, reference failure, and replay failure
-remain separate outcomes [[12]](REFERENCES.md#ref-12). Yet this transparency is
-not equivalent to safety certification. Certification would require a defined
-hazard model, requirements traceability, independent verification, toolchain
-qualification, and domain-specific evidence outside the current project.
+### 6. Numerical-Method Selection
 
-The error-bounding controller can also serve as a method-screening framework.
-New embedded Runge–Kutta pairs, stabilized explicit methods, Rosenbrock-like
-candidates, exponential integrators, or predictor stages from production
-simulators could be evaluated if they expose a projectable endpoint and a
-defensible defect or amplification estimate. The controller should not be
-attached mechanically: each method requires a candidate-specific stability
-model, work accounting, history policy, and independent reference pairing.
+The Method Observatory runs all seven candidate methods under the same authority
+controller. A team can compare:
 
-Bounded Adams–Bashforth is most compelling when derivative reuse matters and
-the circuit remains in a smooth nonstiff region for several steps. Bounded RK23
-is compelling when a stronger embedded estimate justifies its projected stages.
-Heun offers a lower-stage second-order alternative. Implicit candidates are
-most useful as controlled comparisons or when their different damping and
-stability properties are themselves the subject of study
-[[14]](REFERENCES.md#ref-14). No one candidate is expected to dominate every
-topology and tolerance.
+- fixed-step behavior, where every method receives the same nominal timestep;
+- fixed-accuracy behavior, where rows are selected against a declared target;
+  and
+- fixed-work behavior, where rows are compared under a deterministic operation
+  budget.
 
-## Research Timeline
+This supports selecting a method for a simplified simulation component or early
+digital-twin prototype. A **digital twin** is software intended to represent and
+possibly track a physical system. A successful reduced-order method study does
+not by itself validate an operational digital twin.
 
-The project’s research timeline begins with a completed foundation phase. That
-phase established the semiexplicit circuit model, variable-step AB2,
-projection, implicit startup and reference methods, contractive correction,
-recursive bound reporting, periodic replay, event resets, passivity monitoring,
-rollout modes, deterministic diagnostics, and fail-closed topology handling
-[[12]](REFERENCES.md#ref-12). The completion audit records the original
-requirement mapping [[34]](REFERENCES.md#ref-34).
+### 7. Solver and Packaging Regression Qualification
 
-The second completed phase generalized the controller. Explicit Euler, Heun,
-RK23, backward Euler, trapezoidal, and BDF2 candidates were attached to the
-same authority architecture. Embedded fast paths, dynamic reference promotion,
-evidence-controlled adaptive replay refinement, and candidate-specific
-amplification models were added [[14]](REFERENCES.md#ref-14). This phase
-established that “bounded
-Adams–Bashforth” could become a bounded multi-method design.
+A **regression** is an unintended change in behavior after source, dependency,
+solver, or packaging work. BAB-CS can determine whether a change altered
+trajectories, residuals, fallback causes, work counts, deterministic reports, or
+accepted authority.
 
-The third completed phase expanded evidence. Analytic support, raw AB2 research
-controls, deterministic comparison outputs, fixed-step/fixed-accuracy/fixed-
-work analyses, nonlinear refined replay, long-horizon cases, oscillator metrics,
-and ngspice mappings were implemented [[15]](REFERENCES.md#ref-15)
-[[16]](REFERENCES.md#ref-16). The test and comparison audit records the
-qualification work packages [[18]](REFERENCES.md#ref-18).
+The release tooling compares the source checkout with an isolated installation
+of the built Python wheel. A **wheel** is an installable Python package file.
+Source-versus-wheel equivalence checks that the packaged implementation
+reproduces the declared source evidence rather than merely importing
+successfully [[20]](REFERENCES.md#ref-20)
+[[31]](REFERENCES.md#ref-31).
 
-The fourth completed phase optimized execution. It reduced repeated Jacobian,
-projection, replay, nonlinear, and linear-algebra work; introduced optional
-sparse execution; compiled topology and CSC stamps; reused workspaces; batched
-sensitivities; added bounded KLU symbolic/numeric reuse, guarded chord and Schur
-predictors; and retained only changes that survived end-to-end measurement and regression checks
-[[17]](REFERENCES.md#ref-17).
+### 8. Teaching and Reproducibility
 
-The fifth completed infrastructure phase built release qualification. Canonical
-metadata, deterministic wheel construction, exact source and environment
-recording, source/installed equivalence, complete evidence manifests, checksum
-verification, and pinned CI workflows are implemented
-[[20]](REFERENCES.md#ref-20) [[33]](REFERENCES.md#ref-33). The scientific and
-human release decision remains intentionally outside that infrastructure.
+The Teaching and Reproducibility Lab connects modified nodal analysis (`MNA`),
+a standard way to turn circuits into equations, with measured convergence,
+phase versus energy, shadow authority, deterministic packaging, and isolated
+wheel checks. **Convergence** describes how error decreases when the timestep is
+refined. **Shadow authority** means a candidate runs and records evidence while
+a trusted reference still owns the accepted state.
 
-The immediate next phase should complete the governed `v1.1.0` release process.
-One clean source commit must be frozen, the full dependency-free and SciPy/KLU
-qualification tiers must run, the comparison and ngspice evidence must be
-reviewed, two wheel builds must match, the installed wheel must reproduce source
-reports, and a human approver must name the exact hashes before tagging or
-publication [[19]](REFERENCES.md#ref-19) [[21]](REFERENCES.md#ref-21).
+The lab is suitable for numerical methods, circuit simulation, software
+qualification, and reproducible research courses. It is not a substitute for
+production device-design or safety-validation training.
 
-The next performance phase should prioritize compiled nonlinear device assembly
-and cache observability. Direct profiling found the immutable tuple-to-NumPy KLU
-copy substantially smaller than Python U-pivot scanning, sparse norm construction,
-and nonlinear stamping; the first two are now vectorized and the native boundary
-reuses stable pointers, accepts private generated scalar values, and returns a
-reusable factorization from the combined first solve. A
-broad NumPy diode batch is rejected at the current 32-channel crossover because
-it is slower there and changes floating-operation ordering at larger sizes. The
-next prototype should instead test a much larger evidence-gated nonlinear batch
-while preserving live parameter mutation, limiting, deterministic nonfinite
-behavior, and generic fallback.
-Cache hit, miss, eviction, refactor, and fallback metrics should be added before
-cache policy becomes configurable or automatic KLU adoption broadens.
-The implemented ULP-aware two-step evidence window, compiled built-in breakpoint
-schedules, bounded sparse-kernel source and hot-topology caches, duplicate built-
-in switch-control sampling, and qualified KLU adapter provide the new baselines;
-the corrected three-step extension remains rejected
-[[17]](REFERENCES.md#ref-17).
+## Choosing BAB-CS or Another Simulator
 
-Mixed C+L trapezoidal replay now has independently controlled subdivision
-adaptivity: a three-derivative defect selects finer complete-window retries and
-falls back to the former fixed refinement ceiling. The next numerical phase
-should generalize method-specific replay evidence, preserve exact event
-boundaries, and add a hard maximum elapsed authority age. Evidence-gated anchor
-scheduling could then decide when refresh is needed without weakening the
-independent replay authority.
+The tools below overlap, but their strongest roles differ. This is a workflow
+map, not a product ranking.
 
-The next modeling phase should add devices and events in a deliberately ordered
-way. State-dependent switch root finding is a higher priority than indiscriminate
-device count because event timing directly affects multistep validity. Controlled
-sources, additional diode semantics, and selected transistor models could
-follow, each with analytic, refined, or external authority cases. Higher-index
-topologies should remain rejected until a mathematically explicit formulation
-and qualification plan exists.
+| Environment | Strongest role | Relationship to BAB-CS | Prefer it when |
+|---|---|---|---|
+| BAB-CS | Inspectable proposal, independent authority, replay, failure causes, deterministic work, and reproducible reduced-order experiments | Primary environment for bounded numerical-method studies | The decision depends on why a timestep passed, changed authority, replayed, or failed |
+| ngspice | Open-source SPICE simulation with device, behavioral, scripting, and mixed-signal capabilities | Current independent comparison implementation for 20 manifest-owned BAB-CS cases | Broader device and analysis coverage or a cross-implementation challenge is needed |
+| LTspice | Interactive schematic capture, SPICE simulation, waveform viewing, and vendor models | Complementary device-design and schematic environment | Engineers need vendor macromodels, rapid schematic exploration, and production-oriented analog investigation |
+| PLECS | Complete power-electronics systems, controls, thermal behavior, code generation, and hardware-in-the-loop work | Natural handoff after a bounded simplified converter study | The project needs system-level converter design, controller deployment, or real-time testing |
+| Simscape Electrical | Electrical systems connected to mechanical, thermal, hydraulic, control, motor, and grid models | Broader multidomain environment | Electrical behavior must interact with other physical domains or a larger virtual plant |
+| Xyce | SPICE-compatible simulation of extremely large circuits on serial and parallel computers | Complementary scale-oriented environment | Circuit scale and parallel execution exceed the intended BAB-CS qualification surface |
 
-The longer-term theory phase should strengthen the relationship between the
-recursive internal bound and observed independent anchor error. This may
-include calibrated local Lipschitz estimates, componentwise or energy-weighted
-norms, probabilistic coverage models, or rigorous enclosures for restricted
-linear circuit classes. Any stronger claim must identify its assumptions and
-must not generalize empirical coverage to arbitrary nonlinear physical error.
+**Hardware-in-the-loop** means testing real controller hardware against a
+simulated plant. **Multidomain** means that several kinds of physics, such as
+electrical and mechanical behavior, are solved together. BAB-CS should hand off
+to these environments when required model fidelity, deployment, or scale grows
+beyond its declared boundary.
 
-The final long-term direction is transfer to other DAE domains or lower-level
-execution environments. Such work should begin only after the circuit version
-has stable authority semantics, release evidence, and replay adaptivity. The
-portable contribution is not the present device list; it is the disciplined
-separation of candidate speed, constraint consistency, local correction,
-independent refresh, diagnostics, and human-controlled claims.
+## Current Research Facilities
 
-The roadmap can therefore be summarized as a progression from bounded
-experimentation to qualified infrastructure, then from qualified infrastructure
-to broader numerical and modeling capability. Each phase has a fail-closed
-gate: no new optimization without end-to-end gain, no new candidate without an
-amplification and history model, no new device without authority cases, no
-adaptive anchor policy without independent replay control, and no release claim
-without exact artifact approval.
+### Method Observatory
+
+The observatory covers resistor-capacitor (`RC`), RL, RLC, LC, diode-clip, and
+switched-RC cases across explicit Euler, Heun, Bogacki-Shampine order 2/3
+(`RK23`), Adams-Bashforth order two (`AB2`), backward Euler, trapezoidal
+integration, and backward differentiation formula order two (`BDF2`). RK23 is a
+Runge-Kutta method with paired second- and third-order estimates. AB2 is an
+explicit two-step predictor. BDF2 is an implicit two-step method.
+
+### Bound Coverage Atlas
+
+The atlas reports actual authority error, recursive internal bound, authority-
+epoch drift, anchor deviation, phase, energy, empirical coverage, fallback, and
+rejection causes. An **authority epoch** is the interval since the current
+independent authority basis was established. **Empirical coverage** is the
+measured fraction of eligible samples for which the internal bound covered the
+observed authority error. It is not a formal enclosure theorem.
+
+### Power-Stage Sandbox
+
+The sandbox contains the three bounded examples described above: buck-like,
+scheduled H-bridge RL, and DC-link RLC. Their classification is fixed:
+**reduced-order numerical experiments, not production device models**.
+
+### Teaching and Reproducibility Lab
+
+The ten exercises cover MNA, fixed-step convergence, phase versus energy,
+shadow authority, deterministic wheel packaging, isolated source-versus-wheel
+equivalence, event alignment, empirical bound coverage, fallback forensics, and
+semantic mapping of 20 ngspice cases. Each exercise includes conservative
+interpretation prompts so students distinguish evidence from a claim.
+
+## Near-Term Roadmap
+
+### Release One Exact Candidate
+
+The immediate release objective is to qualify version `1.1.0` from one clean,
+frozen source commit. The complete dependency-free and optional SciPy/KLU tiers
+must run on that commit. Numerical reports, ngspice comparisons, two wheel
+builds, installed-wheel results, manifests, and checksums must be reviewed. A
+human approver must name the exact source and artifact hashes before tagging or
+publication [[19]](REFERENCES.md#ref-19)
+[[21]](REFERENCES.md#ref-21).
+
+### Strengthen Event Authority
+
+The next modeling priority is state-triggered event location. A state-triggered
+event occurs when a simulated quantity crosses a condition, rather than at a
+time known in advance. Root finding would locate that crossing accurately.
+This work is more important than indiscriminate device count because event timing
+directly affects multistep history and accepted authority.
+
+### Improve Replay Evidence
+
+Replay subdivision is already method-specific for selected capacitor-and-
+inductor and switched BDF2 cases. The next step is to preserve independent event
+refresh, enforce a maximum elapsed authority age, and generalize evidence without
+letting an adaptive schedule silently omit replay.
+
+### Advance Measured Performance
+
+The next performance studies should focus on resident KLU numeric buffers,
+native residual calculation, and cache observability. KLU is a sparse matrix
+solver specialized for circuit-like systems. Cache observability means reporting
+hits, misses, refactors, evictions, and fallbacks so a cache policy can be judged
+rather than assumed [[17]](REFERENCES.md#ref-17)
+[[35]](REFERENCES.md#ref-35).
+
+## Medium-Term Roadmap
+
+Device expansion should be ordered by evidence needs. Controlled sources,
+additional diode behavior, and selected transistor models can follow after
+state-triggered event handling. Every new device should arrive with analytic,
+refined-authority, or external comparison cases. Unsupported higher-index
+differential-algebraic equations should continue to fail closed until a clear
+formulation and qualification plan exists.
+
+The Bound Coverage Atlas should be used to investigate why the recursive bound
+covers some cases and misses others. Possible research includes local Lipschitz
+estimates, which bound how strongly derivatives change; componentwise bounds,
+which treat state variables separately; energy-weighted norms; probabilistic
+coverage models; and rigorous enclosures for restricted linear circuit classes.
+Any stronger claim must state its assumptions and may not generalize measured
+coverage to arbitrary nonlinear physical error.
+
+## Long-Term Roadmap
+
+Once circuit authority semantics, event behavior, and release evidence are
+stable, the architecture may transfer to other differential-algebraic domains.
+The portable contribution is not the present device list. It is the separation
+of fast proposal, constraint consistency, independent correction, replay,
+diagnostics, deterministic artifacts, and human-controlled claims.
+
+Future work should preserve the same fail-closed gates:
+
+- no new candidate without an amplification and history model;
+- no new device without authority cases;
+- no adaptive anchor policy without independent replay control;
+- no optimization without end-to-end gain and numerical equivalence; and
+- no release claim without exact artifact review and human approval.
+
+This roadmap keeps BAB-CS focused on its critical engineering value: making the
+reason for numerical trust as reviewable as the waveform itself.

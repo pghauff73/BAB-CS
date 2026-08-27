@@ -1,0 +1,68 @@
+{
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "V1",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": {
+        "type": "sine",
+        "offset": 0.0,
+        "amplitude": 2.0,
+        "frequency": 1000.0
+      }
+    },
+    {
+      "type": "resistor",
+      "name": "R_SOURCE",
+      "positive": "vin",
+      "negative": "anode",
+      "resistance": 200.0
+    },
+    {
+      "type": "diode",
+      "name": "D1",
+      "positive": "anode",
+      "negative": "out",
+      "saturation_current": 1e-12,
+      "thermal_voltage": 0.02585
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out",
+      "negative": "0",
+      "capacitance": 0.000001,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R_LOAD",
+      "positive": "out",
+      "negative": "0",
+      "resistance": 2000.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.002,
+    "nominal_step": 0.000002
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "rk23",
+    "reference_method": "trapezoidal",
+    "predictor_reference_cap": 1000000000.0,
+    "embedded_error_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 20,
+    "implicit_settings": {
+      "absolute_tolerance": 1e-8,
+      "relative_tolerance": 1e-8,
+      "max_iterations": 60,
+      "minimum_damping": 0.00006103515625
+    }
+  }
+}

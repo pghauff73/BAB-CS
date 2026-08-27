@@ -1,0 +1,486 @@
+{
+  "case_count": 20,
+  "cases": [
+    {
+      "case_sha256": "5431d8f89b06afdc20558725a5415ff176e411b7802796744925faee708a2d73",
+      "category": "first_order_linear",
+      "engineering_question": "Does the mapped capacitor charging transient preserve the declared resistance, capacitance, source, and initial state?",
+      "id": "rc_step",
+      "input": "../cases/rc_step.json",
+      "mapped_features": [
+        "constant_voltage",
+        "resistor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.005129168232323206,
+      "maximum_rms_absolute_error": 0.003346401252914274,
+      "maximum_scaled_error": 78877723.06673723,
+      "netlist_sha256": "a6d1f07519751a5c19afc49c7f241d09da7bb463181c09264be250ad10018260",
+      "reduced_order": false,
+      "sample_count": 24,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "RC step response"
+    },
+    {
+      "case_sha256": "fa83a9b04e75831a94232d05a611a0221fec1f9be420f5bc078700931f9405f3",
+      "category": "first_order_linear",
+      "engineering_question": "Does an initially charged capacitor discharge consistently through the mapped resistor without an independent source?",
+      "id": "rc_discharge",
+      "input": "cases/rc_discharge.json",
+      "mapped_features": [
+        "initial_capacitor_voltage",
+        "resistor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.0014134357468059688,
+      "maximum_rms_absolute_error": 0.0005889973913554271,
+      "maximum_scaled_error": 1924220.2787475833,
+      "netlist_sha256": "843926b107421b5f196557de5b722704459a131c98e2c8b47e34f181acc95dc7",
+      "reduced_order": false,
+      "sample_count": 72,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "RC stored-energy discharge"
+    },
+    {
+      "case_sha256": "d721bb58a013dd1306a91a50ce3480b0eaf65dfccb6b4533a7173f530ded0017",
+      "category": "first_order_linear",
+      "engineering_question": "Do both implementations reproduce the declared sinusoidal forcing, attenuation, and phase-lag trend?",
+      "id": "driven_rc",
+      "input": "../cases/driven_rc.json",
+      "mapped_features": [
+        "sine_voltage",
+        "resistor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.001440152597517664,
+      "maximum_rms_absolute_error": 0.000611823698698551,
+      "maximum_scaled_error": 399429291.4133091,
+      "netlist_sha256": "9a6707a19cd6bc97b397739eac1c1cc4276d813d6873475aa5dc329f81c77b17",
+      "reduced_order": false,
+      "sample_count": 115,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "Sinusoidally driven RC filter"
+    },
+    {
+      "case_sha256": "5c324b5034dbdf1a45d27215c0dcbc95694a50f3f07a731c6caf8900656f333f",
+      "category": "first_order_linear",
+      "engineering_question": "Does a piecewise-linear current command create the same resistor-capacitor state trajectory and event times?",
+      "id": "current_driven_rc",
+      "input": "cases/current_driven_rc.json",
+      "mapped_features": [
+        "pwl_current",
+        "resistor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 6.536503274767735e-05,
+      "maximum_rms_absolute_error": 3.2776060941444924e-05,
+      "maximum_scaled_error": 55179978.17490152,
+      "netlist_sha256": "45ac38756427472d11156f304945c724c2c3c2b543007655f032e3d2adafd766",
+      "reduced_order": false,
+      "sample_count": 124,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "PWL current-driven RC network"
+    },
+    {
+      "case_sha256": "409e82b4b5b32f85c2f32a4bcf2a6d5ceea450ebd5421291005dce6f77f29bcf",
+      "category": "first_order_linear",
+      "engineering_question": "Does the mapped inductor current rise consistently under the declared voltage and resistance?",
+      "id": "rl_step",
+      "input": "../cases/rl_step.json",
+      "mapped_features": [
+        "constant_voltage",
+        "resistor",
+        "inductor"
+      ],
+      "maximum_absolute_error": 0.000512916823232323,
+      "maximum_rms_absolute_error": 0.00033464012529142994,
+      "maximum_scaled_error": 56769381.842858806,
+      "netlist_sha256": "fcedf21e1dfd02529e44170b278aad867d3b840a3a9ef0bd603a864d896c9454",
+      "reduced_order": false,
+      "sample_count": 24,
+      "state_names": [
+        "i(L1)"
+      ],
+      "title": "RL current buildup"
+    },
+    {
+      "case_sha256": "ed64e8f21ab18b6d08bb2062d1f44f5f06d72bf04f7785f2adf4f49e34924910",
+      "category": "first_order_linear",
+      "engineering_question": "Does a nonzero initial inductor current decay consistently through the mapped resistor?",
+      "id": "rl_decay",
+      "input": "cases/rl_decay.json",
+      "mapped_features": [
+        "initial_inductor_current",
+        "resistor",
+        "inductor"
+      ],
+      "maximum_absolute_error": 0.00014146597091121982,
+      "maximum_rms_absolute_error": 4.601771772803963e-05,
+      "maximum_scaled_error": 1836366.4116445782,
+      "netlist_sha256": "f591d556ca7a5f6a7c26ed884e189837ff1c9da127d7e5d386eb643871d3b205",
+      "reduced_order": false,
+      "sample_count": 111,
+      "state_names": [
+        "i(L1)"
+      ],
+      "title": "RL stored-current decay"
+    },
+    {
+      "case_sha256": "5af8aea635c93ea38f93300800eaf10ce9303300711349b453dd50ce7d42bd70",
+      "category": "resonant_and_rlc",
+      "engineering_question": "How closely do mapped lossless trajectories agree when phase and energy drift accumulate over many steps?",
+      "id": "lc_long",
+      "input": "../cases/lc_long.json",
+      "mapped_features": [
+        "initial_capacitor_voltage",
+        "capacitor",
+        "inductor"
+      ],
+      "maximum_absolute_error": 0.013130326422457698,
+      "maximum_rms_absolute_error": 0.005475327347957648,
+      "maximum_scaled_error": 769534786.2604157,
+      "netlist_sha256": "49d4cd3fd7564ce7f6d53fbc60969f2a985255dfcc0d062aa1f857d797ad6ec1",
+      "reduced_order": false,
+      "sample_count": 1211,
+      "state_names": [
+        "v(C1)",
+        "i(L1)"
+      ],
+      "title": "Lossless LC oscillation"
+    },
+    {
+      "case_sha256": "4a172991519ec14360e798c36958ada167c5d23f122656e4e199cb35f4075159",
+      "category": "resonant_and_rlc",
+      "engineering_question": "Does the mapping preserve simultaneous initial capacitor voltage and inductor current?",
+      "id": "lc_offset",
+      "input": "cases/lc_offset.json",
+      "mapped_features": [
+        "initial_capacitor_voltage",
+        "initial_inductor_current",
+        "capacitor",
+        "inductor"
+      ],
+      "maximum_absolute_error": 0.001101557552985015,
+      "maximum_rms_absolute_error": 0.00048623547719068655,
+      "maximum_scaled_error": 293703441.0675695,
+      "netlist_sha256": "d78f1459ee2533d4a43bf15ccc1d68f0756791a823a6ca6e502fa7efece90ac1",
+      "reduced_order": false,
+      "sample_count": 611,
+      "state_names": [
+        "v(C1)",
+        "i(L1)"
+      ],
+      "title": "LC mixed initial-condition oscillation"
+    },
+    {
+      "case_sha256": "3d4ddaf9257d97db8ba8945b01e12207feb1639b362a4583a0d58f253c11cadb",
+      "category": "resonant_and_rlc",
+      "engineering_question": "Do the implementations agree on oscillatory decay when resistance removes stored energy?",
+      "id": "rlc_damped",
+      "input": "../cases/rlc_damped.json",
+      "mapped_features": [
+        "initial_capacitor_voltage",
+        "resistor",
+        "inductor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.007176345256574512,
+      "maximum_rms_absolute_error": 0.0022849129475191704,
+      "maximum_scaled_error": 723874867.2109219,
+      "netlist_sha256": "3a9b7aa9ca2dfb3766d1aea0283ae64d3cdec067225743af332ceba27b31b330",
+      "reduced_order": false,
+      "sample_count": 136,
+      "state_names": [
+        "v(C1)",
+        "i(L1)"
+      ],
+      "title": "Underdamped parallel RLC decay"
+    },
+    {
+      "case_sha256": "b13b9c1f0fac22369779036bba1f27ef4f4f571fa9b6082bb21bcc9561c82831",
+      "category": "resonant_and_rlc",
+      "engineering_question": "Do both solvers preserve the non-oscillatory overdamped regime?",
+      "id": "rlc_overdamped",
+      "input": "../cases/rlc_overdamped.json",
+      "mapped_features": [
+        "initial_capacitor_voltage",
+        "resistor",
+        "inductor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.01591110785622618,
+      "maximum_rms_absolute_error": 0.00387319012337964,
+      "maximum_scaled_error": 255188028.31287953,
+      "netlist_sha256": "0067c7eb759dcb45acdafef52562de5d5d90babb7410171e25a3349042941ced",
+      "reduced_order": false,
+      "sample_count": 111,
+      "state_names": [
+        "v(C1)",
+        "i(L1)"
+      ],
+      "title": "Overdamped parallel RLC decay"
+    },
+    {
+      "case_sha256": "df644ccf8ccc43c748c06c52e867021acced808256f6e0c792f5f7262a427698",
+      "category": "resonant_and_rlc",
+      "engineering_question": "Does sinusoidal forcing produce consistent inductor-current and capacitor-voltage states in a loaded RLC network?",
+      "id": "rlc_driven",
+      "input": "cases/rlc_driven.json",
+      "mapped_features": [
+        "sine_voltage",
+        "resistor",
+        "inductor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.00020125793767961087,
+      "maximum_rms_absolute_error": 0.00011724872569275529,
+      "maximum_scaled_error": 29379966.876864098,
+      "netlist_sha256": "4b9af3207b41d5dc20b763cd72912450cf92ae7e8073a0a5d09e54d35166781e",
+      "reduced_order": false,
+      "sample_count": 418,
+      "state_names": [
+        "v(C1)",
+        "i(L1)"
+      ],
+      "title": "Driven series RLC network"
+    },
+    {
+      "case_sha256": "7e0bd8068d5931b1bfa6d0cd0e47c8b6d4398fea847063db06bcfe6ca13907a4",
+      "category": "nonlinear_diode",
+      "engineering_question": "Does the Shockley-diode mapping reproduce the same nonlinear clipping trend?",
+      "id": "diode_clip",
+      "input": "../cases/diode_clip.json",
+      "mapped_features": [
+        "sine_voltage",
+        "resistor",
+        "capacitor",
+        "diode"
+      ],
+      "maximum_absolute_error": 0.0031177968773050506,
+      "maximum_rms_absolute_error": 0.0005379440652499948,
+      "maximum_scaled_error": 539346976.1634315,
+      "netlist_sha256": "c6345bc832949d6467612313a8c3ff28e77f3d046d298acb89c16ad961853045",
+      "reduced_order": false,
+      "sample_count": 265,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "Diode clipper"
+    },
+    {
+      "case_sha256": "b4a5ad478733fbdf2f0183145ed1d59e1d6ae6feb610643f5d5611b83f5a25a0",
+      "category": "nonlinear_diode",
+      "engineering_question": "Do both nonlinear solvers reproduce charging pulses and load discharge in a reduced rectifier?",
+      "id": "diode_rectifier",
+      "input": "cases/diode_rectifier.json",
+      "mapped_features": [
+        "sine_voltage",
+        "resistor",
+        "capacitor",
+        "diode"
+      ],
+      "maximum_absolute_error": 0.000258255008402708,
+      "maximum_rms_absolute_error": 0.0002026944918118274,
+      "maximum_scaled_error": 1988689.0532978338,
+      "netlist_sha256": "2446727672ded228dc9f9745d6951704b3d56577e2fa8b22176a839f8d30ea4a",
+      "reduced_order": false,
+      "sample_count": 1011,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "Capacitor-loaded diode rectifier"
+    },
+    {
+      "case_sha256": "aba0f510622e501e627e03547945fcd8209e9abf6cf47b4d473b660fe6e86cc1",
+      "category": "nonlinear_diode",
+      "engineering_question": "Does a piecewise-linear bias reversal produce consistent clamp and recovery behavior?",
+      "id": "diode_bias_recovery",
+      "input": "cases/diode_bias_recovery.json",
+      "mapped_features": [
+        "pwl_voltage",
+        "resistor",
+        "capacitor",
+        "diode"
+      ],
+      "maximum_absolute_error": 0.0018060735306290043,
+      "maximum_rms_absolute_error": 0.00031152329235558225,
+      "maximum_scaled_error": 50241846.6539874,
+      "netlist_sha256": "837127bb65b07811bec9fbdfe23e1bee6254b9f62a5f879de55dca31e862bd1b",
+      "reduced_order": false,
+      "sample_count": 523,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "Diode bias-transition clamp"
+    },
+    {
+      "case_sha256": "6980909a519ca6087111c3005add11997c7ae482c4cbbd987f8e513898d16195",
+      "category": "scheduled_switching",
+      "engineering_question": "Are switch transitions aligned and mapped with the same on and off resistances?",
+      "id": "switched_rc",
+      "input": "../cases/switched_rc.json",
+      "mapped_features": [
+        "constant_voltage",
+        "pulse_control",
+        "switch",
+        "resistor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.11593356837261994,
+      "maximum_rms_absolute_error": 0.03396248264852336,
+      "maximum_scaled_error": 898893509.0149173,
+      "netlist_sha256": "2d76c7d623bc6684af0317db3c099c085bb78a99927ddd5fcf2f199800512ef4",
+      "reduced_order": false,
+      "sample_count": 96,
+      "state_names": [
+        "v(C1)"
+      ],
+      "title": "Scheduled switched RC network"
+    },
+    {
+      "case_sha256": "e3ac916995dde15870fe379a04cd96cc35db49d3f8166a98ce232dd2f5d9b70d",
+      "category": "scheduled_switching",
+      "engineering_question": "Do the mapped switch and freewheel path preserve inductor-current continuity across scheduled events?",
+      "id": "switched_rl",
+      "input": "cases/switched_rl.json",
+      "mapped_features": [
+        "constant_voltage",
+        "pulse_control",
+        "switch",
+        "diode",
+        "resistor",
+        "inductor"
+      ],
+      "maximum_absolute_error": 0.009039463430335237,
+      "maximum_rms_absolute_error": 0.006639984445535505,
+      "maximum_scaled_error": 748957559.3275477,
+      "netlist_sha256": "ed85d0f5c81d9d69c61fe4c8ce0e45091c0e5da9b33df10802a621725856a327",
+      "reduced_order": false,
+      "sample_count": 300,
+      "state_names": [
+        "i(L1)"
+      ],
+      "title": "Scheduled switched RL network"
+    },
+    {
+      "case_sha256": "8dd2e4e44b2cd33ceaf3bb3b34d59ea9b0e61386e56b0948e5e8bbfff1fa2352",
+      "category": "scheduled_switching",
+      "engineering_question": "Do both implementations reproduce event-driven energy transfer between an inductor and capacitor?",
+      "id": "switched_rlc",
+      "input": "cases/switched_rlc.json",
+      "mapped_features": [
+        "constant_voltage",
+        "pulse_control",
+        "switch",
+        "diode",
+        "resistor",
+        "inductor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.025442652271918664,
+      "maximum_rms_absolute_error": 0.016758263125078453,
+      "maximum_scaled_error": 951589879.5943455,
+      "netlist_sha256": "a7dfb9101c58ec01664c9d4fbefe7615b50da4fba194b679412c05ea82c8f2c8",
+      "reduced_order": false,
+      "sample_count": 372,
+      "state_names": [
+        "v(C1)",
+        "i(L1)"
+      ],
+      "title": "Scheduled switched RLC network"
+    },
+    {
+      "case_sha256": "09281a85110d4d45d8e21871e462833e1067c32a9bf06f78f044127c6ca87b4a",
+      "category": "reduced_order_power_stage",
+      "engineering_question": "Does the semantic mapping preserve the scheduled switch, freewheel diode, inductor, capacitor, and load response?",
+      "id": "buck_like_reduced_order",
+      "input": "../../examples/power_stage/buck_like_reduced_order.json",
+      "mapped_features": [
+        "constant_voltage",
+        "pulse_control",
+        "switch",
+        "scaled_diode_thermal_voltage",
+        "inductor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.005574226840899449,
+      "maximum_rms_absolute_error": 0.002757367274673971,
+      "maximum_scaled_error": 397980697.48554057,
+      "netlist_sha256": "7ea12897bbaeac3816b1199e442552e2df919972ed40182cf9a37605ad5d8652",
+      "reduced_order": true,
+      "sample_count": 411,
+      "state_names": [
+        "v(C_OUT)",
+        "i(L_OUT)"
+      ],
+      "title": "Simplified buck-like converter"
+    },
+    {
+      "case_sha256": "fb3d4143d2a4009ae54ccb66d9b659de3eeba3fd39b056395cf88eaebe61d77c",
+      "category": "reduced_order_power_stage",
+      "engineering_question": "Do four scheduled switches produce a consistent bipolar RL-load current trajectory?",
+      "id": "h_bridge_rl_reduced_order",
+      "input": "../../examples/power_stage/h_bridge_rl_reduced_order.json",
+      "mapped_features": [
+        "constant_voltage",
+        "four_switch_schedule",
+        "resistor",
+        "inductor"
+      ],
+      "maximum_absolute_error": 3.730147981349861,
+      "maximum_rms_absolute_error": 0.2301650528020603,
+      "maximum_scaled_error": 1804088443.546077,
+      "netlist_sha256": "00755f8bff4a5d793afb94d0ce3268c89d539f9d574998fbda7bfa6ca03663ca",
+      "reduced_order": true,
+      "sample_count": 450,
+      "state_names": [
+        "i(L_LOAD)"
+      ],
+      "title": "Scheduled H-bridge RL load"
+    },
+    {
+      "case_sha256": "f60ba5b539f3932b61f2e556c65b7cf730814bcb0b21ec73c439511dae2a088a",
+      "category": "reduced_order_power_stage",
+      "engineering_question": "Does the mapping preserve startup, interruption, freewheel behavior, and link-energy transients?",
+      "id": "dc_link_rlc_reduced_order",
+      "input": "../../examples/power_stage/dc_link_rlc_reduced_order.json",
+      "mapped_features": [
+        "constant_voltage",
+        "pulse_control",
+        "switch",
+        "diode",
+        "resistor",
+        "inductor",
+        "capacitor"
+      ],
+      "maximum_absolute_error": 0.018367492321976098,
+      "maximum_rms_absolute_error": 0.007524135254831679,
+      "maximum_scaled_error": 729534222.6744893,
+      "netlist_sha256": "3565157b08b5e8739da9690eafc59a6b4e7bf342c7858b71a801296c4f4a7dc9",
+      "reduced_order": true,
+      "sample_count": 281,
+      "state_names": [
+        "v(C_LINK)",
+        "i(L_LINK)"
+      ],
+      "title": "DC-link RLC startup and interruption"
+    }
+  ],
+  "claim_boundary": "Mapped cross-implementation evidence does not make ngspice an oracle or turn reduced-order cases into production device models.",
+  "external_tool": {
+    "name": "ngspice",
+    "version": "ngspice-46 : Circuit level simulation program"
+  },
+  "manifest": "benchmarks/external/manifest.json",
+  "manifest_sha256": "a7938743be86e0d236fe468136fa76c24045df4e4783bdcd888865e8da679748",
+  "mode": "active",
+  "schema_version": 1
+}

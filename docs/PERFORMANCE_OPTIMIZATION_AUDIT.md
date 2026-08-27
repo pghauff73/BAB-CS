@@ -938,6 +938,13 @@ boundaries were unchanged. Maximum adaptive-versus-fixed-four state deltas were
 channels. Fixed four remained closer to fixed eight, so the result is a bounded
 performance trade rather than a claim of increased reference accuracy.
 
+**Current semantic correction:** the table and replay counts above remain
+historical evidence for exact commit `9a804a3`. The current source forces
+independent replay at event boundaries before multistep history reset, so event
+resets can no longer suppress authority work. The historical timing and replay
+counts shall not be promoted as current release evidence without a fresh frozen-
+source benchmark.
+
 ### Current cumulative scaling
 
 A fresh cumulative comparison used five warmups and 15 paired runs in each of

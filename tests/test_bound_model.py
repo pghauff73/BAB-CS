@@ -309,8 +309,8 @@ class BoundModelTests(unittest.TestCase):
         adaptive_metrics = [point.metrics for point in adaptive.points if point.metrics]
         fixed_four_metrics = [point.metrics for point in fixed_four.points if point.metrics]
 
-        self.assertEqual(sum(metric.replay_steps for metric in adaptive_metrics), 263)
-        self.assertEqual(sum(metric.replay_steps for metric in fixed_four_metrics), 390)
+        self.assertEqual(sum(metric.replay_steps for metric in adaptive_metrics), 1_029)
+        self.assertEqual(sum(metric.replay_steps for metric in fixed_four_metrics), 1_156)
         self.assertEqual(
             sum(metric.replay_refinement_retries for metric in adaptive_metrics),
             1,

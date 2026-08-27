@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 680">
+  <title id="title">Bound Coverage Atlas: rejection and fallback causes</title>
+  <desc id="description">Classified causes observed in the scheduled H-bridge reduced-order numerical experiment.</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.11"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#0d7185"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, monospace; }
+      .title { fill: #10243a; font-size: 30px; font-weight: 820; letter-spacing: -0.025em; }
+      .subtitle { fill: #607386; font-size: 15px; }
+      .section { fill: #0a5870; font-size: 12px; font-weight: 820; letter-spacing: 0.1em; }
+      .label { fill: #10243a; font-size: 15px; font-weight: 760; }
+      .value { fill: #607386; font-size: 13px; }
+      .small { fill: #607386; font-size: 12px; }
+      .micro { fill: #718397; font-size: 10.5px; font-weight: 680; letter-spacing: 0.04em; }
+      .wire { fill: none; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .symbol { fill: #ffffff; stroke: #27485a; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .node { fill: #0d7185; }
+      .ground { fill: none; stroke: #27485a; stroke-width: 2.5; stroke-linecap: round; }
+      .event { stroke: #d9782d; stroke-width: 1.5; stroke-dasharray: 6 6; }
+      .axis { stroke: #9aabba; stroke-width: 1.2; }
+      .grid { stroke: #dce5ec; stroke-width: 1; }
+      .plot { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+      .card { fill: #ffffff; stroke: #d5e0e9; stroke-width: 1.5; }
+      .soft { fill: #edf6f8; stroke: #b8d6df; stroke-width: 1.5; }
+      .warm { fill: #fff3e7; stroke: #e4bd98; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <rect width="1200" height="680" rx="28" fill="#f5f8fb"/>
+<text class="sans title" x="64" y="58" text-anchor="start">Bound Coverage Atlas: rejection and fallback causes</text>
+<text class="sans subtitle" x="64" y="96" text-anchor="start">Classified causes observed in the scheduled H-bridge reduced-order numerical experiment.</text>
+  <rect class="card" x="52" y="134" width="1096" height="442" rx="20"/>
+  <path class="grid" d="M135 545 H1120"/>
+<text class="sans micro" x="121" y="549" text-anchor="end">0</text>
+  <path class="grid" d="M135 467.6 H1120"/>
+<text class="sans micro" x="121" y="471.6" text-anchor="end">1.6</text>
+  <path class="grid" d="M135 390.2 H1120"/>
+<text class="sans micro" x="121" y="394.2" text-anchor="end">3.2</text>
+  <path class="grid" d="M135 312.8 H1120"/>
+<text class="sans micro" x="121" y="316.8" text-anchor="end">4.8</text>
+  <path class="grid" d="M135 235.4 H1120"/>
+<text class="sans micro" x="121" y="239.4" text-anchor="end">6.4</text>
+  <path class="grid" d="M135 158 H1120"/>
+<text class="sans micro" x="121" y="162" text-anchor="end">8</text>
+  <rect x="321.250" y="158.000" width="120.000" height="387.000" rx="10" fill="#0d7185"/>
+<text class="sans small" x="381.25" y="573" text-anchor="middle">candidate nonconvergence</text>
+<text class="sans label" x="381.25" y="145" text-anchor="middle">8</text>
+<text class="sans micro" x="381.25" y="601" text-anchor="middle">n=8</text>
+  <rect x="813.750" y="496.625" width="120.000" height="48.375" rx="10" fill="#d9782d"/>
+<text class="sans small" x="873.75" y="573" text-anchor="middle">reference nonconvergence</text>
+<text class="sans label" x="873.75" y="483.625" text-anchor="middle">1</text>
+<text class="sans micro" x="873.75" y="601" text-anchor="middle">n=1</text>
+<text class="sans small" x="38" y="351.5" text-anchor="middle" transform="rotate(-90 38 351.5)">observed cause count</text>
+<text class="sans small" x="64" y="630" text-anchor="start">Exact raw rejection messages remain in numerical evidence; this view groups them by the canonical reason taxonomy.</text>
+</svg>

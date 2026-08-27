@@ -1,0 +1,170 @@
+{
+  "schema_version": 1,
+  "sample_count": 100,
+  "accuracy_targets": [0.01, 0.001, 0.0001],
+  "work_budgets": [100, 500, 2000, 10000],
+  "candidate_methods": [
+    "candidate_explicit_euler",
+    "candidate_heun",
+    "candidate_rk23",
+    "candidate_ab2",
+    "candidate_backward_euler",
+    "candidate_trapezoidal",
+    "candidate_bdf2"
+  ],
+  "cases": [
+    {
+      "id": "rc_step",
+      "input": "../cases/rc_step.json",
+      "state_indices": [0],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.0001, 0.00005, 0.000025],
+      "anchor_intervals": [16],
+      "authority": {
+        "type": "analytic",
+        "model": "rc",
+        "parameters": {
+          "resistance": 1000.0,
+          "capacitance": 1e-6,
+          "source_voltage": 1.0,
+          "initial_voltage": 0.0
+        }
+      }
+    },
+    {
+      "id": "rl_step",
+      "input": "../cases/rl_step.json",
+      "state_indices": [0],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.00001, 0.000005, 0.0000025],
+      "anchor_intervals": [16],
+      "authority": {
+        "type": "analytic",
+        "model": "rl",
+        "parameters": {
+          "resistance": 10.0,
+          "inductance": 0.001,
+          "source_voltage": 1.0,
+          "initial_current": 0.0
+        }
+      }
+    },
+    {
+      "id": "rlc_damped",
+      "input": "../cases/rlc_damped.json",
+      "state_indices": [0, 1],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.000004, 0.000002, 0.000001],
+      "anchor_intervals": [20],
+      "authority": {
+        "type": "analytic",
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": 100.0,
+          "capacitance": 1e-6,
+          "inductance": 0.001,
+          "initial_voltage": 1.0,
+          "initial_current": 0.0
+        }
+      }
+    },
+    {
+      "id": "lc_long",
+      "input": "../cases/lc_long.json",
+      "state_indices": [0, 1],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [1.6557647109660166e-6, 8.278823554830083e-7, 4.1394117774150415e-7],
+      "anchor_intervals": [20],
+      "oscillator": {
+        "period": 0.000198691765315922,
+        "capacitance": 1e-6,
+        "inductance": 0.001
+      },
+      "authority": {
+        "type": "analytic",
+        "model": "parallel_rlc",
+        "parameters": {
+          "resistance": "inf",
+          "capacitance": 1e-6,
+          "inductance": 0.001,
+          "initial_voltage": 1.0,
+          "initial_current": 0.0
+        }
+      }
+    },
+    {
+      "id": "diode_clip",
+      "input": "../cases/diode_clip.json",
+      "state_indices": [0],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.000004, 0.000002, 0.000001],
+      "anchor_intervals": [50],
+      "authority": {
+        "type": "refined_replay",
+        "method": "trapezoidal",
+        "maximum_step": 1.25e-7
+      }
+    },
+    {
+      "id": "switched_rc",
+      "input": "../cases/switched_rc.json",
+      "state_indices": [0],
+      "methods": [
+        "candidate_explicit_euler",
+        "candidate_heun",
+        "candidate_rk23",
+        "candidate_ab2",
+        "candidate_backward_euler",
+        "candidate_trapezoidal",
+        "candidate_bdf2"
+      ],
+      "nominal_steps": [0.00002, 0.00001, 0.000005],
+      "anchor_intervals": [50],
+      "authority": {
+        "type": "refined_replay",
+        "method": "trapezoidal",
+        "maximum_step": 6.25e-7
+      }
+    }
+  ]
+}

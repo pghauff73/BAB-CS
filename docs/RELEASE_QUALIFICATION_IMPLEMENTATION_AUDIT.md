@@ -55,7 +55,7 @@ The implementation boundary is deliberate:
 - compiles production, tool, test, and backend sources;
 - runs dependency-free and SciPy/KLU long/very-long source suites;
 - generates numerical and timing evidence and inspects the full matrix;
-- runs all four external mappings;
+- runs all 20 manifest-owned external mappings;
 - builds the wheel twice and compares exact bytes;
 - inspects and retains one exact wheel;
 - performs dependency-free and SciPy/KLU installed-wheel qualification;
@@ -113,7 +113,7 @@ states what is still required for an actual `v1.1.0` decision.
 | `RQ-017` | Implemented | `compare-artifacts` requires byte equality for source/installed JSON, CSV, and SVG and records `artifact-comparison.json` | Pending final paired artifacts |
 | `RQ-018` | Implemented | `inspect-comparison` derives every expected case/method/step/anchor key from `benchmarks/manifest.json`, rejects omissions/duplicates, and checks analysis sections | Pending final `comparison-inspection.json` and semantic report review |
 | `RQ-019` | Evidence support implemented; approval cannot be automated | Deterministic reports, source diff, retained thresholds, hashes, and manifest support review | Pending human rationale and approval for every changed threshold or baseline |
-| `RQ-020` | Evidence generation implemented; semantic review remains human | Workflow produces JSON, netlist, raw waveform, and log bundles for all four cases and records `ngspice` version | Pending exact-commit execution and human mapping/waveform review |
+| `RQ-020` | Evidence generation implemented; semantic review remains human | Workflow produces JSON, netlist, raw waveform, and log bundles for all 20 manifest-owned cases, retains a suite summary, preserves canonical state order, and records `ngspice` version | Pending exact-commit execution and human mapping/waveform review |
 | `RQ-021` | Implemented with claim-review gate | Separate `source-timing.json`, recorded environment, scoped wording in `RELEASE.md`, and no timing correctness gate | Pending final timing report and human confirmation that each published claim names workload, size, backend, environment, statistic, and comparator |
 | `RQ-022` | Implemented | Canonical required-file profile; deterministic manifest records path, role, size, hash, package/source identity, environment, workflow, tests, and comparisons; manifest hash and checksums bind control files | Pending final complete bundle and independent verification |
 | `RQ-023` | Implemented; tag execution pending | Workflow records run ID, URL, event, ref, and exact checked-out SHA; manifest requires and verifies them | Pending successful tag-triggered run for exact `v1.1.0` commit |

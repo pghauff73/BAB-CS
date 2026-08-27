@@ -4,7 +4,7 @@ import math
 import unittest
 from dataclasses import replace
 
-from babcs import BABCSConfig, BoundedAdamsBashforthIntegrator
+from babcs import BABCSConfig, BoundedAdamsBashforthIntegrator, Circuit, Simulator
 from babcs.bounded import variable_step_ab2_predict
 from babcs.integrators import ImplicitSettings
 from tests.support.circuits import rc_charge_circuit
@@ -64,6 +64,30 @@ class IntegratorBoundaryTests(unittest.TestCase):
             variable_step_ab2_predict((1.0,), (1.0,), (1.0,), 0.0, 0.1)
         with self.assertRaises(ValueError):
             variable_step_ab2_predict((1.0,), (1.0, 2.0), (1.0,), 0.1, 0.1)
+
+    def test_simulator_rejects_non_finite_time_controls(self) -> None:
+        circuit = Circuit()
+        for values in (
+            {"stop_time": math.nan, "nominal_step": 1.0},
+            {"stop_time": 1.0, "nominal_step": math.nan},
+            {"stop_time": 1.0, "nominal_step": math.inf},
+        ):
+            with self.subTest(values=values), self.assertRaisesRegex(ValueError, "finite"):
+                Simulator().run(circuit, **values)
+
+    def test_simulator_advances_one_representable_large_time_step(self) -> None:
+        start_time = 1.0e16
+        stop_time = math.nextafter(start_time, math.inf)
+
+        result = Simulator().run(
+            Circuit(),
+            stop_time,
+            stop_time - start_time,
+            start_time=start_time,
+        )
+
+        self.assertEqual(len(result.points), 2)
+        self.assertEqual(result.points[-1].time, stop_time)
 
     def test_exact_step_ratio_boundaries_use_ab(self) -> None:
         for ratio in (0.5, 2.0):

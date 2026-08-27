@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title description" viewBox="0 0 1200 650">
+  <title id="title">Tutorial 9 fallback-forensics graph</title>
+  <desc id="description">Horizontal bars show rejected steps, implicit fallbacks, event resets, and periodic reanchors for the reduced-order H-bridge exercise.</desc>
+  <defs>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0b7185"/><stop offset="1" stop-color="#174e63"/></linearGradient>
+    <linearGradient id="warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e1883b"/><stop offset="1" stop-color="#a6501d"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="7" stdDeviation="9" flood-color="#10243a" flood-opacity="0.13"/></filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#4c7283"/></marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .title { fill:#10243a; font-size:29px; font-weight:820; letter-spacing:-0.02em; }
+      .subtitle { fill:#60758a; font-size:15px; }
+      .label { fill:#10243a; font-size:16px; font-weight:760; }
+      .small { fill:#5e7388; font-size:13px; }
+      .micro { fill:#74879a; font-size:10.5px; font-weight:720; letter-spacing:0.045em; }
+      .box { fill:#fff; stroke:#d2dee8; stroke-width:1.5; }
+      .soft { fill:#ebf6f8; stroke:#add3dd; stroke-width:1.5; }
+      .warm { fill:#fff2e6; stroke:#edbd8f; stroke-width:1.5; }
+      .line { fill:none; stroke:#4c7283; stroke-width:2.2; marker-end:url(#arrow); }
+      .grid { stroke:#d9e4ec; stroke-width:1; }
+    </style>
+  </defs>
+<rect width="1200" height="650" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="60" y="66">Tutorial 9 · Rejection and fallback forensics</text>
+  <text class="sans subtitle" x="60" y="100">Rejected proposals remain evidence; the accepted reduced-order H-bridge trajectory continues under bounded authority.</text>
+  <rect class="box" x="60" y="145" width="1080" height="390" rx="18"/>
+  <text class="sans label" x="95" y="220">rejected steps</text>
+  <rect x="315" y="195" width="760" height="42" rx="10" fill="#e4edf3"/>
+  <rect x="315" y="195" width="562.50" height="42" rx="10" fill="#d9782d"/>
+  <text class="sans label" x="1095" y="222" text-anchor="end">9</text>
+  <text class="sans label" x="95" y="298">implicit fallbacks</text>
+  <rect x="315" y="273" width="760" height="42" rx="10" fill="#e4edf3"/>
+  <rect x="315" y="273" width="500.00" height="42" rx="10" fill="#0b7185"/>
+  <text class="sans label" x="1095" y="300" text-anchor="end">8</text>
+  <text class="sans label" x="95" y="376">event resets</text>
+  <rect x="315" y="351" width="760" height="42" rx="10" fill="#e4edf3"/>
+  <rect x="315" y="351" width="500.00" height="42" rx="10" fill="#6856a8"/>
+  <text class="sans label" x="1095" y="378" text-anchor="end">8</text>
+  <text class="sans label" x="95" y="454">periodic reanchors</text>
+  <rect x="315" y="429" width="760" height="42" rx="10" fill="#e4edf3"/>
+  <rect x="315" y="429" width="750.00" height="42" rx="10" fill="#2f8f68"/>
+  <text class="sans label" x="1095" y="456" text-anchor="end">12</text>
+  <text class="sans small" x="80" y="575">Observed rejection causes: embedded candidate cap exceeded: 8, reference solve failed: 1.</text>
+  <text class="sans micro" x="1120" y="575" text-anchor="end">REDUCED-ORDER NUMERICAL EXPERIMENT · NOT A PRODUCTION DEVICE MODEL</text>
+</svg>
