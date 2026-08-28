@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "claim_boundary": "Runtime evidence characterizes one recorded machine and software snapshot. It is not a universal speed or correctness claim, and ngspice is not treated as an exact physical oracle.",
+  "babcs_linear_backend": "dense",
+  "accuracy_mode": "fixed_config",
+  "babcs_backend_profiles": {
+    "dense": {
+      "dependency_profile": "core-only",
+      "description": "Deterministic dependency-free baseline using BAB-CS dense linear algebra."
+    },
+    "scipy": {
+      "dependency_profile": "sparse",
+      "requires": ["numpy", "scipy"],
+      "description": "Explicit SciPy sparse profile with dependency versions and paths retained in the environment evidence."
+    },
+    "hybrid": {
+      "dependency_profile": "hybrid-sparse",
+      "requires": ["numpy", "scipy"],
+      "sparse_minimum_declared_mna_unknowns": 18,
+      "description": "Per-case hybrid profile that uses dense algebra below 18 declared MNA unknowns and explicit SciPy sparse algebra at or above the reviewed crossover."
+    }
+  },
+  "babcs_profiles": {
+    "active_heun_deferred4_smooth": {
+      "description": "Active bounded Heun candidate for smooth linear and coupled-linear transients, with an implicit trapezoidal reference at least every four accepted steps and periodic replay every 16 accepted steps.",
+      "config": {
+        "rollout_mode": "active",
+        "candidate_method": "heun",
+        "reference_method": "trapezoidal",
+        "reference_interval_steps": 4,
+        "predictor_reference_cap": 1000000000.0,
+        "anchor_reference_cap": 1000000000.0,
+        "energy_injection_cap": 1000000000.0,
+        "stiffness_limit": 1000000000.0,
+        "anchor_interval_steps": 16
+      }
+    },
+    "active_ab2_deferred4_events": {
+      "description": "Active bounded Adams-Bashforth second-order candidate for scheduled switching, with event boundaries handled by implicit authority and a reference interval of four accepted non-event steps.",
+      "config": {
+        "rollout_mode": "active",
+        "candidate_method": "ab2",
+        "reference_method": "trapezoidal",
+        "reference_interval_steps": 4,
+        "predictor_reference_cap": 1000000000.0,
+        "anchor_reference_cap": 1000000000.0,
+        "energy_injection_cap": 1000000000.0,
+        "stiffness_limit": 1000000000.0,
+        "anchor_interval_steps": 16
+      }
+    },
+    "active_ab2_reference1_nonlinear": {
+      "description": "Conservative active bounded Adams-Bashforth second-order candidate with a trapezoidal reference every accepted step for nonlinear diode cases whose independent authority is not yet converged.",
+      "config": {
+        "rollout_mode": "active",
+        "candidate_method": "ab2",
+        "reference_method": "trapezoidal",
+        "reference_interval_steps": 1,
+        "predictor_reference_cap": 1000000000.0,
+        "anchor_reference_cap": 1000000000.0,
+        "energy_injection_cap": 1000000000.0,
+        "stiffness_limit": 1000000000.0,
+        "anchor_interval_steps": 16
+      }
+    }
+  },
+  "common_grid_samples": 201,
+  "accuracy": {
+    "absolute_tolerance": 1e-08,
+    "relative_tolerance": 0.0001,
+    "target_scaled_error": 1.0
+  },
+  "fixed_accuracy": {
+    "step_divisors": [1, 2, 4, 8, 16, 32, 64, 128, 256],
+    "family_step_divisors": {
+      "switched_rc_bank": [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
+    },
+    "stop_at_first_qualifying": true,
+    "maximum_estimated_calibration_points": 500000,
+    "maximum_estimated_calibration_trace_values": 1000000,
+    "maximum_estimated_authority_trace_values": 4000000,
+    "authority_refinement_factor": 1024,
+    "authority_convergence_scaled_error_cap": 0.25,
+    "selection": "first_qualifying_ascending_step_divisor",
+    "description": "Each tool independently selects the first qualifying maximum timestep in an ascending power-of-two refinement sweep and records its native solver work. Refined numerical authorities must be four times finer than their family's finest candidate timestep and must agree with a half-refined authority within the declared convergence cap."
+  },
+  "profiles": {
+    "quick": {
+      "sizes": [1, 4, 16],
+      "external_cases": ["rc_step", "diode_clip"],
+      "warmups": 1,
+      "repeats": 3,
+      "rounds": 1
+    },
+    "development": {
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "external_cases": "all",
+      "warmups": 3,
+      "repeats": 11,
+      "rounds": 1
+    },
+    "publication": {
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "external_cases": "all",
+      "warmups": 5,
+      "repeats": 15,
+      "rounds": 3
+    }
+  },
+  "families": [
+    {
+      "id": "rc_bank",
+      "babcs_profile": "active_heun_deferred4_smooth",
+      "title": "Repeated resistor-capacitor charging bank",
+      "behavior": "Identical independently loaded resistor-capacitor channels share one ideal step source, preserving each channel time constant as the channel count grows.",
+      "size_parameter": "channels",
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "authority": {"type": "analytic_rc"},
+      "simulation": {"start_time": 0.0, "stop_time": 0.003, "nominal_step": 5e-05},
+      "parameters": {"source_voltage": 1.0, "resistance": 1000.0, "capacitance": 1e-06, "initial_voltage": 0.0},
+      "mapped_features": ["constant_voltage", "resistor", "capacitor"]
+    },
+    {
+      "id": "coupled_rc_ring",
+      "babcs_profile": "active_heun_deferred4_smooth",
+      "title": "Grounded nearest-neighbor coupled resistor-capacitor network",
+      "behavior": "Capacitor nodes are coupled through fixed nearest-neighbor resistors, each node has a fixed shunt path, and only the first node is directly driven. The shunts keep the modal time-constant envelope bounded while increasing size adds genuine coupled modes.",
+      "size_parameter": "coupled_nodes",
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "authority": {"type": "refined_trapezoidal", "refinement_factor": 8},
+      "simulation": {"start_time": 0.0, "stop_time": 0.006, "nominal_step": 5e-05},
+      "parameters": {"source_voltage": 1.0, "input_resistance": 500.0, "shunt_resistance": 2000.0, "coupling_resistance": 1000.0, "capacitance": 1e-06, "initial_voltage": 0.0},
+      "mapped_features": ["constant_voltage", "resistor", "capacitor", "nearest_neighbor_coupling"]
+    },
+    {
+      "id": "coupled_rlc_ring",
+      "babcs_profile": "active_heun_deferred4_smooth",
+      "title": "Grounded nearest-neighbor coupled resistor-inductor-capacitor network",
+      "behavior": "Each node carries fixed shunt resistor, capacitor, and inductor branches while fixed nearest-neighbor resistors couple the nodes and only the first node is directly driven. Increasing size adds mixed energy-storage modes without changing component values or the simulation interval. This is a reduced-order numerical scaling experiment, not a production device model.",
+      "size_parameter": "coupled_nodes",
+      "dynamic_states_per_size": 2,
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "authority": {"type": "refined_trapezoidal", "refinement_factor": 8},
+      "simulation": {"start_time": 0.0, "stop_time": 0.004, "nominal_step": 1e-05},
+      "parameters": {"source_voltage": 1.0, "input_resistance": 100.0, "shunt_resistance": 1000.0, "coupling_resistance": 1000.0, "capacitance": 1e-06, "inductance": 0.01, "initial_voltage": 0.0, "initial_current": 0.0},
+      "mapped_features": ["constant_voltage", "resistor", "capacitor", "inductor", "nearest_neighbor_coupling", "mixed_energy_storage"]
+    },
+    {
+      "id": "rl_bank",
+      "babcs_profile": "active_heun_deferred4_smooth",
+      "title": "Repeated resistor-inductor current bank",
+      "behavior": "Identical independently loaded resistor-inductor channels share one ideal step source, preserving each channel time constant as the channel count grows.",
+      "size_parameter": "channels",
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "authority": {"type": "analytic_rl"},
+      "simulation": {"start_time": 0.0, "stop_time": 0.003, "nominal_step": 5e-05},
+      "parameters": {"source_voltage": 1.0, "resistance": 10.0, "inductance": 0.01, "initial_current": 0.0},
+      "mapped_features": ["constant_voltage", "resistor", "inductor"]
+    },
+    {
+      "id": "diode_rc_bank",
+      "babcs_profile": "active_ab2_reference1_nonlinear",
+      "title": "Repeated nonlinear diode resistor-capacitor bank",
+      "behavior": "Identical diode-loaded resistor-capacitor channels share one sine source and retain the same nonlinear excitation as the channel count grows.",
+      "size_parameter": "channels",
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "authority": {"type": "refined_trapezoidal", "refinement_factor": 8},
+      "simulation": {"start_time": 0.0, "stop_time": 0.002, "nominal_step": 2e-05},
+      "parameters": {"amplitude": 1.0, "frequency": 500.0, "resistance": 1000.0, "capacitance": 1e-07, "initial_voltage": 0.0, "saturation_current": 1e-12, "thermal_voltage": 0.02585},
+      "mapped_features": ["sine_voltage", "resistor", "capacitor", "diode"]
+    },
+    {
+      "id": "switched_rc_bank",
+      "babcs_profile": "active_ab2_deferred4_events",
+      "title": "Repeated scheduled switched resistor-capacitor bank",
+      "behavior": "Identical switched resistor-capacitor channels share one step source and one event schedule while retaining independent dynamic states.",
+      "size_parameter": "channels",
+      "sizes": [1, 2, 4, 8, 16, 32, 64],
+      "authority": {"type": "analytic_switched_rc"},
+      "simulation": {"start_time": 0.0, "stop_time": 0.003, "nominal_step": 5e-05},
+      "parameters": {"source_voltage": 1.0, "resistance": 1000.0, "capacitance": 1e-06, "initial_voltage": 0.0, "on_resistance": 0.1, "off_resistance": 10000000.0, "threshold": 0.5, "delay": 0.0005, "width": 0.001, "period": 0.002},
+      "mapped_features": ["constant_voltage", "pulse_control", "switch", "resistor", "capacitor"]
+    }
+  ]
+}

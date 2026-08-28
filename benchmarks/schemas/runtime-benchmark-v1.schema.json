@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/bab-cs/runtime-benchmark-v1.schema.json",
+  "title": "BAB-CS matched ngspice runtime benchmark",
+  "type": "object",
+  "required": ["schema_version", "environment", "configuration", "rows", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "environment": {"type": "object"},
+    "configuration": {
+      "type": "object",
+      "required": ["profile", "warmups", "repeats", "rounds", "common_grid_samples", "babcs_linear_backend", "babcs_backend_policy", "babcs_profiles", "accuracy_mode", "fixed_accuracy"],
+      "properties": {
+        "babcs_linear_backend": {"enum": ["dense", "scipy", "hybrid"]},
+        "accuracy_mode": {"enum": ["fixed_config", "fixed_accuracy"]},
+        "fixed_accuracy": {
+          "oneOf": [
+            {"type": "null"},
+            {
+              "type": "object",
+              "required": [
+                "step_divisors",
+                "family_step_divisors",
+                "stop_at_first_qualifying",
+                "maximum_estimated_calibration_points",
+                "maximum_estimated_calibration_trace_values",
+                "maximum_estimated_authority_trace_values",
+                "authority_refinement_factor",
+                "authority_convergence_scaled_error_cap"
+              ],
+              "properties": {
+                "step_divisors": {"$ref": "#/$defs/positiveSortedDivisors"},
+                "family_step_divisors": {
+                  "type": "object",
+                  "additionalProperties": {"$ref": "#/$defs/positiveSortedDivisors"}
+                },
+                "stop_at_first_qualifying": {"type": "boolean"},
+                "maximum_estimated_calibration_points": {"type": "integer", "minimum": 2},
+                "maximum_estimated_calibration_trace_values": {"type": "integer", "minimum": 2},
+                "maximum_estimated_authority_trace_values": {"type": "integer", "minimum": 2},
+                "authority_refinement_factor": {"type": "integer", "minimum": 1},
+                "authority_convergence_scaled_error_cap": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                }
+              },
+              "additionalProperties": true
+            }
+          ]
+        },
+        "babcs_backend_policy": {
+          "type": "object",
+          "required": ["requested", "sparse_minimum_declared_mna_unknowns"],
+          "properties": {
+            "requested": {"enum": ["dense", "scipy", "hybrid"]},
+            "sparse_minimum_declared_mna_unknowns": {"type": ["integer", "null"], "minimum": 1}
+          },
+          "additionalProperties": false
+        },
+        "babcs_profiles": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": ["description", "config"],
+            "properties": {
+              "description": {"type": "string", "minLength": 1},
+              "config": {"type": "object"}
+            },
+            "additionalProperties": false
+          }
+        }
+      }
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "row_id", "case_id", "inventory", "status", "circuit_size",
+          "simulation", "samples", "runtime", "memory", "points",
+          "solver_work", "accuracy", "speedup_x", "babcs_linear_backend",
+          "babcs_profile", "accuracy_mode", "accuracy_sweep"
+        ],
+        "properties": {
+          "row_id": {"type": "string", "pattern": "^runtime-[a-f0-9]{24}$"},
+          "case_id": {"type": "string", "minLength": 1},
+          "inventory": {"enum": ["semantic_breadth", "size_scaling"]},
+          "status": {"enum": ["success", "failed", "incomplete", "accuracy_unavailable"]},
+          "babcs_linear_backend": {"enum": ["dense", "scipy"]},
+          "babcs_profile": {
+            "type": "object",
+            "required": ["id", "source", "description", "declared_overrides", "effective_configuration"],
+            "properties": {
+              "id": {"type": "string", "minLength": 1},
+              "source": {"enum": ["runtime_manifest", "case_file"]},
+              "description": {"type": "string", "minLength": 1},
+              "declared_overrides": {"type": "object"},
+              "effective_configuration": {"type": "object"}
+            },
+            "additionalProperties": false
+          },
+          "accuracy_mode": {"enum": ["fixed_config", "fixed_accuracy"]},
+          "accuracy_sweep": {"type": ["object", "null"]},
+          "speedup_x": {"type": ["number", "null"], "exclusiveMinimum": 0},
+          "failure_reason": {"type": ["string", "null"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "positiveSortedDivisors": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "integer", "minimum": 1}
+    }
+  }
+}

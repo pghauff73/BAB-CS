@@ -49,6 +49,81 @@ def switched_capacitive_circuit() -> Circuit:
 
 
 class BoundModelTests(unittest.TestCase):
+    @staticmethod
+    def _dual_reference_config(**overrides) -> BABCSConfig:
+        values = {
+            "rollout_mode": "active",
+            "candidate_method": "heun",
+            "reference_method": "trapezoidal",
+            "startup_method": "trapezoidal",
+            "reference_interval_steps": 100,
+            "reference_uncertainty_mode": "dual_resolution",
+            "predictor_reference_cap": 1.0e9,
+            "embedded_error_cap": 1.0e9,
+            "deferred_reference_bound_cap": 1.0,
+            "anchor_reference_cap": 1.0e9,
+            "energy_injection_cap": 1.0e9,
+            "stiffness_limit": 1.0e9,
+            "anchor_interval_steps": 10_000,
+        }
+        values.update(overrides)
+        return BABCSConfig(**values)
+
+    def test_dual_resolution_uncertainty_includes_late_forced_reference(self) -> None:
+        circuit = rc_charge_circuit()
+        integrator = BoundedAdamsBashforthIntegrator(self._dual_reference_config())
+        state, history = integrator.initialize(circuit)
+        first = integrator.step(circuit, state, history, 1.0e-4)
+        second = integrator.step(circuit, first.state, first.history, 1.0e-4)
+
+        self.assertTrue(second.metrics.dynamic_reference_checkpoint)
+        self.assertEqual(second.metrics.reference_solve_count, 3)
+        self.assertEqual(second.metrics.reference_refinement_solve_count, 2)
+        self.assertGreater(second.metrics.reference_discretization_defect, 0.0)
+        expected_uncertainty = (
+            second.metrics.predictor_amplification
+            * first.history.reference_uncertainty
+            + second.metrics.reference_discretization_defect
+        )
+        self.assertAlmostEqual(
+            second.metrics.reference_uncertainty,
+            expected_uncertainty,
+            places=12,
+        )
+        self.assertAlmostEqual(
+            second.metrics.total_estimated_uncertainty,
+            second.metrics.estimated_bound + second.metrics.reference_uncertainty,
+            places=12,
+        )
+
+    def test_dual_resolution_uncertainty_covers_full_authority_and_reanchor(self) -> None:
+        circuit = rc_charge_circuit()
+        integrator = BoundedAdamsBashforthIntegrator(
+            self._dual_reference_config(anchor_interval_steps=2)
+        )
+        state, history = integrator.initialize(circuit)
+        first = integrator.step_to_event(circuit, state, history, 1.0e-4)
+
+        self.assertEqual(first.metrics.reference_solve_count, 3)
+        self.assertEqual(first.metrics.reference_refinement_solve_count, 2)
+        self.assertGreater(first.metrics.reference_discretization_defect, 0.0)
+        self.assertAlmostEqual(
+            first.history.reference_uncertainty,
+            first.metrics.reference_discretization_defect,
+            places=12,
+        )
+
+        second = integrator.step(circuit, first.state, first.history, 1.0e-4)
+        anchored = integrator.reanchor_if_due(circuit, second)
+        self.assertTrue(anchored.metrics.periodic_reanchor)
+        self.assertEqual(anchored.metrics.estimated_bound, 0.0)
+        self.assertGreater(anchored.metrics.reference_uncertainty, 0.0)
+        self.assertAlmostEqual(
+            anchored.metrics.total_estimated_uncertainty,
+            anchored.metrics.reference_uncertainty,
+            places=12,
+        )
+
     def test_emitted_metrics_reproduce_recursive_bound(self) -> None:
         config = BABCSConfig(
             rollout_mode="active",

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "runtime_manifest": "../runtime/manifest.json",
+  "babcs_linear_backend": "hybrid",
+  "global_dual_trajectory": {
+    "refinement_pairs": [
+      {
+        "coarse_refinement_factor": 2,
+        "fine_refinement_factor": 4
+      },
+      {
+        "coarse_refinement_factor": 4,
+        "fine_refinement_factor": 8
+      },
+      {
+        "coarse_refinement_factor": 8,
+        "fine_refinement_factor": 16
+      },
+      {
+        "coarse_refinement_factor": 16,
+        "fine_refinement_factor": 32
+      }
+    ],
+    "safety_factors": [1.0],
+    "order_aware": {
+      "expected_order": 2.0,
+      "minimum_observed_order": 1.0,
+      "maximum_observed_order": 3.0,
+      "discrepancy_floor": 1e-12
+    }
+  },
+  "cases": [
+    {
+      "id": "rc_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "rc_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "rc_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "rl_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "rl_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "rl_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "coupled_rc_ring-n001",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "coupled_rc_ring-n004",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    },
+    {
+      "id": "coupled_rc_ring-n016",
+      "step_divisor": 1,
+      "variant_id": "global_order_aware"
+    }
+  ],
+  "claim_boundary": "The order-aware refinement study is an offline empirical diagnostic. It requires three successive equal-ratio trapezoidal refinements, rejects samples outside the declared observed-order interval or below the discrepancy floor, counts rejected samples as uncovered in effective coverage, and does not alter runtime profiles or claim a formal exact-trajectory enclosure."
+}

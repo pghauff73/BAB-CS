@@ -849,6 +849,10 @@
           <img src="assets/external-comparison.svg" width="1200" height="720" alt="Role comparison among raw candidate methods, BAB-CS active supervision, internal implicit authority, and mapped ngspice simulation">
           <figcaption>Within the current repository, ngspice supplies cross-implementation evidence for equivalent mapped cases. It is not an oracle and never becomes BAB-CS accepted-state authority.</figcaption>
         </figure>
+        <figure class="diagram-frame">
+          <img src="assets/speedup-accuracy-by-size-blueprint.svg" width="1200" height="720" alt="Non-measured blueprint placing BAB-CS speedup versus ngspice beside trajectory accuracy against the same circuit-size ordering">
+          <figcaption>Benchmark chart blueprint only: the left panel makes speedup and the 1× parity boundary obvious; the right panel keeps BAB-CS and ngspice trajectory error visible beside it. Schematic marks are not measurements.</figcaption>
+        </figure>
         <div class="external-case-row" aria-label="Scheduled BAB-CS external comparison cases">
           <span>Current ngspice mapped set</span>${externalCases}
         </div>

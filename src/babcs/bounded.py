@@ -15,6 +15,7 @@ from .candidates import (
 )
 from .integrators import (
     ImplicitSettings,
+    ImplicitStepResult,
     IntegrationError,
     energy_balance_metrics,
     implicit_step,
@@ -60,6 +61,7 @@ class BABCSConfig:
     maximum_rejections: int = 12
     reference_method: str = "trapezoidal"
     startup_method: str = "backward_euler"
+    reference_uncertainty_mode: str = "disabled"
     implicit_settings: ImplicitSettings = ImplicitSettings()
 
     def __post_init__(self) -> None:
@@ -120,6 +122,20 @@ class BABCSConfig:
             raise ValueError("reference_method must be backward_euler, trapezoidal, or bdf2")
         if self.startup_method.lower().replace("-", "_") not in valid_implicit_methods:
             raise ValueError("startup_method must be backward_euler, trapezoidal, or bdf2")
+        if self.reference_uncertainty_mode not in {"disabled", "dual_resolution"}:
+            raise ValueError(
+                "reference_uncertainty_mode must be disabled or dual_resolution"
+            )
+        if self.reference_uncertainty_mode == "dual_resolution" and (
+            self.rollout_mode != "active"
+            or candidate_method != "heun"
+            or reference_method != "trapezoidal"
+            or self.startup_method.lower().replace("-", "_") != "trapezoidal"
+        ):
+            raise ValueError(
+                "dual-resolution reference uncertainty currently requires active Heun "
+                "with trapezoidal reference and startup methods"
+            )
         if (
             self.rollout_mode != "disabled"
             and candidate_method in IMPLICIT_CANDIDATE_METHODS
@@ -157,6 +173,7 @@ class BABCSHistory:
     steps_since_anchor: int
     anchor_evaluation: CircuitEvaluation
     previous_jacobian_norm: float | None = None
+    reference_uncertainty: float = 0.0
     periodic_reanchors: int = 0
     safety_reanchors: int = 0
     implicit_fallbacks: int = 0
@@ -214,6 +231,11 @@ class StepMetrics:
     replay_refinement_retries: int = 0
     replay_embedded_error: float = 0.0
     pre_anchor_dynamic_state: tuple[float, ...] | None = None
+    reference_discretization_defect: float = 0.0
+    reference_uncertainty: float = 0.0
+    pre_reset_reference_uncertainty: float = 0.0
+    total_estimated_uncertainty: float = 0.0
+    reference_refinement_solve_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -356,22 +378,22 @@ class BoundedAdamsBashforthIntegrator:
         reference_result = None
         reference = None
         predictor_error = 0.0
+        reference_discretization_defect = 0.0
+        reference_solve_count = 0
+        reference_refinement_solve_count = 0
         if scheduled_reference:
             try:
-                reference_result = implicit_step(
+                (
+                    reference_result,
+                    reference_discretization_defect,
+                    reference_solve_count,
+                    reference_refinement_solve_count,
+                ) = self._reference_step_with_uncertainty(
                     circuit,
-                    self.config.reference_method,
                     current,
                     step,
-                    previous_state=(
-                        history.previous_evaluation.dynamic_state
-                        if history.previous_evaluation is not None
-                        else None
-                    ),
-                    previous_step=history.previous_step,
-                    initial_guess=candidate.dynamic_state,
-                    initial_evaluation=candidate,
-                    settings=self.config.implicit_settings,
+                    history,
+                    candidate,
                 )
             except (CircuitSolveError, IntegrationError) as error:
                 raise StepRejected(
@@ -443,21 +465,18 @@ class BoundedAdamsBashforthIntegrator:
         )
         if force_reference and reference_result is None:
             try:
-                reference_result = implicit_step(
+                (
+                    reference_result,
+                    reference_discretization_defect,
+                    reference_solve_count,
+                    reference_refinement_solve_count,
+                ) = self._reference_step_with_uncertainty(
                     circuit,
-                    self.config.reference_method,
                     current,
                     step,
-                    previous_state=(
-                        history.previous_evaluation.dynamic_state
-                        if history.previous_evaluation is not None
-                        else None
-                        ),
-                        previous_step=history.previous_step,
-                        initial_guess=candidate.dynamic_state,
-                        initial_evaluation=candidate,
-                        settings=self.config.implicit_settings,
-                    )
+                    history,
+                    candidate,
+                )
             except (CircuitSolveError, IntegrationError) as error:
                 raise StepRejected(
                     f"reference solve failed: {error}",
@@ -475,6 +494,18 @@ class BoundedAdamsBashforthIntegrator:
             ):
                 raise StepRejected(
                     f"predictor-reference cap exceeded: {predictor_error:.6g}",
+                    max(step * 0.5, self.config.minimum_step),
+                )
+
+        reference_uncertainty = 0.0
+        if self.config.reference_uncertainty_mode == "dual_resolution":
+            reference_uncertainty = (
+                predictor_amplification * history.reference_uncertainty
+                + reference_discretization_defect
+            )
+            if not math.isfinite(reference_uncertainty):
+                raise StepRejected(
+                    "non-finite reference uncertainty metric",
                     max(step * 0.5, self.config.minimum_step),
                 )
 
@@ -683,6 +714,7 @@ class BoundedAdamsBashforthIntegrator:
             previous_step=step,
             previous_jacobian_norm=current_jacobian_norm,
             estimated_bound=estimated_bound,
+            reference_uncertainty=reference_uncertainty,
             accepted_steps=history.accepted_steps + 1,
             steps_since_anchor=history.steps_since_anchor + 1,
             implicit_fallbacks=history.implicit_fallbacks + int(fallback),
@@ -712,7 +744,7 @@ class BoundedAdamsBashforthIntegrator:
             projection_iterations=corrected.algebraic.iterations,
             residual_ratio=residual_ratio,
             local_defect=local_defect,
-            reference_solve_count=int(reference_result is not None),
+            reference_solve_count=reference_solve_count,
             reference_circuit_evaluations=(
                 0 if reference_result is None else reference_result.circuit_evaluations
             ),
@@ -734,6 +766,11 @@ class BoundedAdamsBashforthIntegrator:
             candidate_circuit_evaluations=candidate_result.circuit_evaluations,
             candidate_algebraic_iterations=candidate_result.algebraic_iterations,
             dynamic_reference_checkpoint=dynamic_reference_checkpoint,
+            reference_discretization_defect=reference_discretization_defect,
+            reference_uncertainty=reference_uncertainty,
+            pre_reset_reference_uncertainty=reference_uncertainty,
+            total_estimated_uncertainty=estimated_bound + reference_uncertainty,
+            reference_refinement_solve_count=reference_refinement_solve_count,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -746,6 +783,92 @@ class BoundedAdamsBashforthIntegrator:
     ) -> StepResult:
         return self._implicit_authority_step(circuit, state, history, step)
 
+    def _reference_step_with_uncertainty(
+        self,
+        circuit: Circuit,
+        current: CircuitEvaluation,
+        step: float,
+        history: BABCSHistory,
+        candidate: CircuitEvaluation | None,
+    ) -> tuple[ImplicitStepResult, float, int, int]:
+        coarse = implicit_step(
+            circuit,
+            self.config.reference_method,
+            current,
+            step,
+            previous_state=(
+                history.previous_evaluation.dynamic_state
+                if history.previous_evaluation is not None
+                else None
+            ),
+            previous_step=history.previous_step,
+            initial_guess=(None if candidate is None else candidate.dynamic_state),
+            initial_evaluation=candidate,
+            settings=self.config.implicit_settings,
+        )
+        if self.config.reference_uncertainty_mode != "dual_resolution":
+            return coarse, 0.0, 1, 0
+
+        half_step = 0.5 * step
+        if half_step < self.config.minimum_step:
+            raise IntegrationError(
+                "dual-resolution reference refinement is below the configured minimum step"
+            )
+        endpoint_guess = candidate if candidate is not None else coarse.evaluation
+        midpoint_guess = tuple(
+            0.5 * (current_value + endpoint_value)
+            for current_value, endpoint_value in zip(
+                current.dynamic_state,
+                endpoint_guess.dynamic_state,
+                strict=True,
+            )
+        )
+        first_half = implicit_step(
+            circuit,
+            self.config.reference_method,
+            current,
+            half_step,
+            initial_guess=midpoint_guess,
+            initial_algebraic_guess=current.algebraic.unknowns,
+            settings=self.config.implicit_settings,
+        )
+        second_half = implicit_step(
+            circuit,
+            self.config.reference_method,
+            first_half.evaluation,
+            half_step,
+            initial_guess=endpoint_guess.dynamic_state,
+            initial_algebraic_guess=endpoint_guess.algebraic.unknowns,
+            settings=self.config.implicit_settings,
+        )
+        defect = self._scaled_state_error(
+            coarse.evaluation.dynamic_state,
+            second_half.evaluation.dynamic_state,
+        )
+        if not math.isfinite(defect):
+            raise IntegrationError(
+                "dual-resolution reference produced a non-finite discrepancy"
+            )
+        refined = ImplicitStepResult(
+            evaluation=second_half.evaluation,
+            method=second_half.method,
+            iterations=(
+                coarse.iterations + first_half.iterations + second_half.iterations
+            ),
+            residual_norm=second_half.residual_norm,
+            circuit_evaluations=(
+                coarse.circuit_evaluations
+                + first_half.circuit_evaluations
+                + second_half.circuit_evaluations
+            ),
+            algebraic_iterations=(
+                coarse.algebraic_iterations
+                + first_half.algebraic_iterations
+                + second_half.algebraic_iterations
+            ),
+        )
+        return refined, defect, 3, 2
+
     def _implicit_authority_step(
         self,
         circuit: Circuit,
@@ -754,19 +877,36 @@ class BoundedAdamsBashforthIntegrator:
         step: float,
     ) -> StepResult:
         try:
-            result = implicit_step(
-                circuit,
-                self.config.reference_method,
-                state.evaluation,
-                step,
-                previous_state=(
-                    history.previous_evaluation.dynamic_state
-                    if history.previous_evaluation is not None
-                    else None
-                ),
-                previous_step=history.previous_step,
-                settings=self.config.implicit_settings,
-            )
+            if self.config.reference_uncertainty_mode == "dual_resolution":
+                (
+                    result,
+                    reference_discretization_defect,
+                    reference_solve_count,
+                    reference_refinement_solve_count,
+                ) = self._reference_step_with_uncertainty(
+                    circuit,
+                    state.evaluation,
+                    step,
+                    history,
+                    None,
+                )
+            else:
+                result = implicit_step(
+                    circuit,
+                    self.config.reference_method,
+                    state.evaluation,
+                    step,
+                    previous_state=(
+                        history.previous_evaluation.dynamic_state
+                        if history.previous_evaluation is not None
+                        else None
+                    ),
+                    previous_step=history.previous_step,
+                    settings=self.config.implicit_settings,
+                )
+                reference_discretization_defect = 0.0
+                reference_solve_count = 1
+                reference_refinement_solve_count = 0
         except (CircuitSolveError, IntegrationError) as error:
             raise StepRejected(
                 f"implicit authority failed: {error}",
@@ -796,6 +936,9 @@ class BoundedAdamsBashforthIntegrator:
                 f"implicit authority energy cap exceeded: {energy_injection_ratio:.6g}",
                 max(step * 0.5, self.config.minimum_step),
             )
+        reference_uncertainty = (
+            history.reference_uncertainty + reference_discretization_defect
+        )
         new_state = SimulationState(evaluation, step, "implicit_authority")
         new_history = replace(
             history,
@@ -803,6 +946,7 @@ class BoundedAdamsBashforthIntegrator:
             previous_step=step,
             previous_jacobian_norm=None,
             estimated_bound=0.0,
+            reference_uncertainty=reference_uncertainty,
             accepted_steps=history.accepted_steps + 1,
             steps_since_anchor=history.steps_since_anchor + 1,
             implicit_fallbacks=history.implicit_fallbacks + 1,
@@ -826,9 +970,14 @@ class BoundedAdamsBashforthIntegrator:
             certified_contractive=True,
             reference_iterations=result.iterations,
             projection_iterations=evaluation.algebraic.iterations,
-            reference_solve_count=1,
+            reference_solve_count=reference_solve_count,
             reference_circuit_evaluations=result.circuit_evaluations,
             reference_algebraic_iterations=result.algebraic_iterations,
+            reference_discretization_defect=reference_discretization_defect,
+            reference_uncertainty=reference_uncertainty,
+            pre_reset_reference_uncertainty=reference_uncertainty,
+            total_estimated_uncertainty=reference_uncertainty,
+            reference_refinement_solve_count=reference_refinement_solve_count,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -845,13 +994,30 @@ class BoundedAdamsBashforthIntegrator:
             else self.config.startup_method
         )
         try:
-            result = implicit_step(
-                circuit,
-                startup_method,
-                state.evaluation,
-                step,
-                settings=self.config.implicit_settings,
-            )
+            if self.config.reference_uncertainty_mode == "dual_resolution":
+                (
+                    result,
+                    reference_discretization_defect,
+                    reference_solve_count,
+                    reference_refinement_solve_count,
+                ) = self._reference_step_with_uncertainty(
+                    circuit,
+                    state.evaluation,
+                    step,
+                    history,
+                    None,
+                )
+            else:
+                result = implicit_step(
+                    circuit,
+                    startup_method,
+                    state.evaluation,
+                    step,
+                    settings=self.config.implicit_settings,
+                )
+                reference_discretization_defect = 0.0
+                reference_solve_count = 1
+                reference_refinement_solve_count = 0
         except (CircuitSolveError, IntegrationError) as error:
             raise StepRejected(
                 f"implicit startup failed: {error}",
@@ -883,6 +1049,10 @@ class BoundedAdamsBashforthIntegrator:
                 max(step * 0.5, self.config.minimum_step),
             )
 
+        reference_uncertainty = (
+            history.reference_uncertainty + reference_discretization_defect
+        )
+
         new_state = SimulationState(evaluation, step, f"{result.method}_startup")
         new_history = replace(
             history,
@@ -890,6 +1060,7 @@ class BoundedAdamsBashforthIntegrator:
             previous_step=step,
             previous_jacobian_norm=None,
             estimated_bound=0.0,
+            reference_uncertainty=reference_uncertainty,
             accepted_steps=history.accepted_steps + 1,
             steps_since_anchor=history.steps_since_anchor + 1,
             implicit_fallbacks=history.implicit_fallbacks + 1,
@@ -913,9 +1084,14 @@ class BoundedAdamsBashforthIntegrator:
             certified_contractive=True,
             reference_iterations=result.iterations,
             projection_iterations=evaluation.algebraic.iterations,
-            reference_solve_count=1,
+            reference_solve_count=reference_solve_count,
             reference_circuit_evaluations=result.circuit_evaluations,
             reference_algebraic_iterations=result.algebraic_iterations,
+            reference_discretization_defect=reference_discretization_defect,
+            reference_uncertainty=reference_uncertainty,
+            pre_reset_reference_uncertainty=reference_uncertainty,
+            total_estimated_uncertainty=reference_uncertainty,
+            reference_refinement_solve_count=reference_refinement_solve_count,
         )
         return StepResult(new_state, new_history, metrics)
 
@@ -1088,6 +1264,7 @@ class BoundedAdamsBashforthIntegrator:
             previous_step=previous_step,
             previous_jacobian_norm=None,
             estimated_bound=0.0,
+            reference_uncertainty=history.reference_uncertainty,
             generation=history.generation + 1,
             steps_since_anchor=0,
             anchor_evaluation=anchored_current,
@@ -1105,6 +1282,9 @@ class BoundedAdamsBashforthIntegrator:
             estimated_bound=0.0,
             residual_ratio=0.0,
             local_defect=0.0,
+            reference_uncertainty=history.reference_uncertainty,
+            pre_reset_reference_uncertainty=history.reference_uncertainty,
+            total_estimated_uncertainty=history.reference_uncertainty,
             certified_contractive=True,
             periodic_reanchor=True,
             safety_reanchor=safety_reanchor,

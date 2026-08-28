@@ -26,13 +26,25 @@ class ExternalComparisonError(RuntimeError):
     pass
 
 
-def generate_ngspice_netlist(case_data: dict[str, Any]) -> tuple[str, tuple[str, ...]]:
+def generate_ngspice_netlist(
+    case_data: dict[str, Any],
+    *,
+    output_filename: str = "external.dat",
+    include_rusage: bool = False,
+    nominal_step_override: float | None = None,
+) -> tuple[str, tuple[str, ...]]:
     elements = case_data.get("elements")
     simulation = case_data.get("simulation")
     if not isinstance(elements, list) or not isinstance(simulation, dict):
         raise ExternalComparisonError("case requires elements and simulation objects")
     stop_time = float(simulation["stop_time"])
-    nominal_step = float(simulation["nominal_step"])
+    nominal_step = float(
+        simulation["nominal_step"]
+        if nominal_step_override is None
+        else nominal_step_override
+    )
+    if not math.isfinite(nominal_step) or nominal_step <= 0.0:
+        raise ExternalComparisonError("nominal step override must be positive and finite")
     start_time = float(simulation.get("start_time", 0.0))
     if start_time != 0.0:
         raise ExternalComparisonError("external adapter currently requires start_time = 0")
@@ -114,17 +126,22 @@ def generate_ngspice_netlist(case_data: dict[str, Any]) -> tuple[str, tuple[str,
         raise ExternalComparisonError("external comparison requires at least one dynamic state")
     vector_names = [f"bab_state_{index}" for index in range(len(state_expressions))]
     lines.extend(model_lines)
+    transient_commands = [
+        f"tran {_number(nominal_step)} {_number(stop_time)} 0 {_number(nominal_step)} uic"
+    ]
+    if include_rusage:
+        transient_commands.append("rusage all")
     lines.extend(
         [
             ".control",
             "set wr_singlescale",
             "set wr_vecnames",
-            f"tran {_number(nominal_step)} {_number(stop_time)} 0 {_number(nominal_step)} uic",
+            *transient_commands,
             *(
                 f"let {name} = {expression}"
                 for name, expression in zip(vector_names, state_expressions, strict=True)
             ),
-            f"wrdata external.dat {' '.join(vector_names)}",
+            f"wrdata {output_filename} {' '.join(vector_names)}",
             "quit",
             ".endc",
             ".end",

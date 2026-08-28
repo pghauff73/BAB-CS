@@ -1,0 +1,518 @@
+{
+  "linear_backend": "dense",
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VIN",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "vin",
+      "negative": "out1",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out1",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R2",
+      "positive": "vin",
+      "negative": "out2",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C2",
+      "positive": "out2",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R3",
+      "positive": "vin",
+      "negative": "out3",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C3",
+      "positive": "out3",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R4",
+      "positive": "vin",
+      "negative": "out4",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C4",
+      "positive": "out4",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R5",
+      "positive": "vin",
+      "negative": "out5",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C5",
+      "positive": "out5",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R6",
+      "positive": "vin",
+      "negative": "out6",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C6",
+      "positive": "out6",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R7",
+      "positive": "vin",
+      "negative": "out7",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C7",
+      "positive": "out7",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R8",
+      "positive": "vin",
+      "negative": "out8",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C8",
+      "positive": "out8",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R9",
+      "positive": "vin",
+      "negative": "out9",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C9",
+      "positive": "out9",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R10",
+      "positive": "vin",
+      "negative": "out10",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C10",
+      "positive": "out10",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R11",
+      "positive": "vin",
+      "negative": "out11",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C11",
+      "positive": "out11",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R12",
+      "positive": "vin",
+      "negative": "out12",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C12",
+      "positive": "out12",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R13",
+      "positive": "vin",
+      "negative": "out13",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C13",
+      "positive": "out13",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R14",
+      "positive": "vin",
+      "negative": "out14",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C14",
+      "positive": "out14",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R15",
+      "positive": "vin",
+      "negative": "out15",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C15",
+      "positive": "out15",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R16",
+      "positive": "vin",
+      "negative": "out16",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C16",
+      "positive": "out16",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R17",
+      "positive": "vin",
+      "negative": "out17",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C17",
+      "positive": "out17",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R18",
+      "positive": "vin",
+      "negative": "out18",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C18",
+      "positive": "out18",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R19",
+      "positive": "vin",
+      "negative": "out19",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C19",
+      "positive": "out19",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R20",
+      "positive": "vin",
+      "negative": "out20",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C20",
+      "positive": "out20",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R21",
+      "positive": "vin",
+      "negative": "out21",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C21",
+      "positive": "out21",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R22",
+      "positive": "vin",
+      "negative": "out22",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C22",
+      "positive": "out22",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R23",
+      "positive": "vin",
+      "negative": "out23",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C23",
+      "positive": "out23",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R24",
+      "positive": "vin",
+      "negative": "out24",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C24",
+      "positive": "out24",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R25",
+      "positive": "vin",
+      "negative": "out25",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C25",
+      "positive": "out25",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R26",
+      "positive": "vin",
+      "negative": "out26",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C26",
+      "positive": "out26",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R27",
+      "positive": "vin",
+      "negative": "out27",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C27",
+      "positive": "out27",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R28",
+      "positive": "vin",
+      "negative": "out28",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C28",
+      "positive": "out28",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R29",
+      "positive": "vin",
+      "negative": "out29",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C29",
+      "positive": "out29",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R30",
+      "positive": "vin",
+      "negative": "out30",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C30",
+      "positive": "out30",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R31",
+      "positive": "vin",
+      "negative": "out31",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C31",
+      "positive": "out31",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R32",
+      "positive": "vin",
+      "negative": "out32",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C32",
+      "positive": "out32",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.003,
+    "nominal_step": 5e-05
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "heun",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 4,
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  },
+  "runtime_benchmark": {
+    "family_id": "rc_bank",
+    "size": 32,
+    "size_parameter": "channels",
+    "authority": {
+      "type": "analytic_rc"
+    },
+    "babcs_profile_id": "active_heun_deferred4_smooth",
+    "babcs_profile_description": "Active bounded Heun candidate for smooth linear and coupled-linear transients, with an implicit trapezoidal reference at least every four accepted steps and periodic replay every 16 accepted steps."
+  }
+}

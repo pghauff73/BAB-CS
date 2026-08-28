@@ -34,10 +34,29 @@ class IntegratorBoundaryTests(unittest.TestCase):
             {"candidate_method": "rk45"},
             {"reference_method": "explicit_euler"},
             {"startup_method": "explicit_euler"},
+            {"reference_uncertainty_mode": "raw"},
         )
         for values in invalid_values:
             with self.subTest(values=values), self.assertRaises(ValueError):
                 BABCSConfig(**values)
+
+    def test_dual_resolution_reference_uncertainty_rejects_incompatible_profiles(self) -> None:
+        compatible = {
+            "rollout_mode": "active",
+            "candidate_method": "heun",
+            "reference_method": "trapezoidal",
+            "startup_method": "trapezoidal",
+            "reference_uncertainty_mode": "dual_resolution",
+        }
+        incompatible = (
+            {"rollout_mode": "shadow"},
+            {"candidate_method": "ab2"},
+            {"reference_method": "backward_euler"},
+            {"startup_method": "backward_euler"},
+        )
+        for overrides in incompatible:
+            with self.subTest(overrides=overrides), self.assertRaises(ValueError):
+                BABCSConfig(**{**compatible, **overrides})
 
     def test_implicit_settings_reject_invalid_boundaries(self) -> None:
         for values in (
@@ -88,6 +107,57 @@ class IntegratorBoundaryTests(unittest.TestCase):
 
         self.assertEqual(len(result.points), 2)
         self.assertEqual(result.points[-1].time, stop_time)
+
+    def test_output_times_land_without_event_or_history_reset(self) -> None:
+        output_times = (2.5e-5, 6.5e-5, 1.0e-4)
+        result = Simulator(self._integrator()).run(
+            rc_charge_circuit(),
+            1.0e-4,
+            4.0e-5,
+            output_times=output_times,
+        )
+
+        by_time = {point.time: point for point in result.points}
+        for output_time in output_times:
+            self.assertIn(output_time, by_time)
+            self.assertFalse(by_time[output_time].event_boundary)
+            self.assertNotEqual(by_time[output_time].history_reset_reason, "event")
+
+    def test_output_times_reject_invalid_schedules(self) -> None:
+        circuit = Circuit()
+        invalid_schedules = (
+            (0.5, 0.5),
+            (0.75, 0.5),
+            (-0.1,),
+            (1.1,),
+            (math.nan,),
+        )
+        for output_times in invalid_schedules:
+            with self.subTest(output_times=output_times), self.assertRaises(ValueError):
+                Simulator().run(
+                    circuit,
+                    1.0,
+                    0.1,
+                    output_times=output_times,
+                )
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            Simulator().run(
+                circuit,
+                1.0,
+                0.1,
+                output_times=(0.5,),
+                output_interval_substeps=0,
+            )
+        with self.assertRaisesRegex(ValueError, "positive integer"):
+            Simulator().run(
+                circuit,
+                1.0,
+                0.1,
+                output_times=(0.5,),
+                output_interval_substeps=2.5,
+            )
+        with self.assertRaisesRegex(ValueError, "requires output_times"):
+            Simulator().run(circuit, 1.0, 0.1, output_interval_substeps=2)
 
     def test_exact_step_ratio_boundaries_use_ab(self) -> None:
         for ratio in (0.5, 2.0):

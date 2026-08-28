@@ -19,6 +19,7 @@ CONCEPTUAL_SVG_ASSET_NAMES = (
     "external-comparison.svg",
     "qualification-surface.svg",
     "software-landscape.svg",
+    "speedup-accuracy-by-size-blueprint.svg",
 )
 SVG_ASSET_NAMES = CONCEPTUAL_SVG_ASSET_NAMES + FIGURE_ASSET_NAMES + TUTORIAL_SVG_ASSET_NAMES
 
@@ -427,6 +428,77 @@ def _software_landscape_svg() -> bytes:
     )
 
 
+def _runtime_benchmark_blueprint_svg() -> bytes:
+    body = '''  <rect width="1200" height="720" rx="28" fill="#f5f8fb"/>
+  <text class="sans title" x="60" y="62">BAB-CS versus ngspice: speed and accuracy stay visible together</text>
+  <text class="sans subtitle" x="60" y="94">Chart blueprint only · schematic marks show the intended visual grammar, not measured benchmark results.</text>
+
+  <rect class="box" x="60" y="128" width="520" height="460" rx="18"/>
+  <rect class="box" x="620" y="128" width="520" height="460" rx="18"/>
+
+  <text class="sans micro" x="90" y="164">HOW FAST?</text>
+  <text class="sans label" x="90" y="194">Speedup × versus ngspice</text>
+  <text class="sans small" x="650" y="164">HOW ACCURATE?</text>
+  <text class="sans label" x="650" y="194">Maximum scaled trajectory error</text>
+
+  <rect x="150" y="220" width="390" height="126" fill="#eaf5f2"/>
+  <rect x="150" y="346" width="390" height="164" fill="#fff1e7"/>
+  <text class="sans micro" x="164" y="242" fill="#0b6a82">BAB-CS FASTER</text>
+  <text class="sans micro" x="164" y="494" fill="#a35a22">NGSPICE FASTER</text>
+
+  <path d="M150 220 V510 H540" fill="none" stroke="#607386" stroke-width="2"/>
+  <path d="M710 220 V510 H1100" fill="none" stroke="#607386" stroke-width="2"/>
+  <path d="M150 346 H540" fill="none" stroke="#10243a" stroke-width="3"/>
+  <text class="sans small" x="142" y="351" text-anchor="end">1×</text>
+  <text class="sans small" x="142" y="287" text-anchor="end">2×</text>
+  <text class="sans small" x="142" y="225" text-anchor="end">4×</text>
+  <text class="sans small" x="142" y="414" text-anchor="end">0.5×</text>
+  <text class="sans small" x="142" y="507" text-anchor="end">0.25×</text>
+
+  <path d="M710 276 H1100" fill="none" stroke="#a6642e" stroke-width="2" stroke-dasharray="7 6"/>
+  <text class="sans micro" x="1088" y="268" text-anchor="end" fill="#a6642e">DECLARED ACCURACY TARGET</text>
+  <text class="sans small" x="702" y="225" text-anchor="end">10⁻¹</text>
+  <text class="sans small" x="702" y="318" text-anchor="end">10⁻²</text>
+  <text class="sans small" x="702" y="411" text-anchor="end">10⁻³</text>
+  <text class="sans small" x="702" y="507" text-anchor="end">10⁻⁴</text>
+  <text class="sans micro" x="726" y="494">LOWER IS BETTER</text>
+
+  <g fill="none" stroke="#d5e0e9" stroke-width="1">
+    <path d="M215 220 V510"/><path d="M280 220 V510"/><path d="M345 220 V510"/>
+    <path d="M410 220 V510"/><path d="M475 220 V510"/>
+    <path d="M775 220 V510"/><path d="M840 220 V510"/><path d="M905 220 V510"/>
+    <path d="M970 220 V510"/><path d="M1035 220 V510"/>
+  </g>
+
+  <g stroke="#0b6a82" fill="#ffffff" stroke-width="3">
+    <path d="M215 328 V292"/><path d="M205 328 H225"/><path d="M205 292 H225"/>
+    <circle cx="215" cy="310" r="7"/>
+    <circle cx="840" cy="360" r="7"/>
+    <path d="M897 352 L905 360 L897 368 L889 360 Z"/>
+  </g>
+  <text class="sans small" x="238" y="304">median speedup + uncertainty</text>
+  <text class="sans small" x="860" y="350">○ BAB-CS error</text>
+  <text class="sans small" x="924" y="377">◇ ngspice error</text>
+
+  <text class="sans micro" x="345" y="548" text-anchor="middle">CIRCUIT SIZE · DECLARED EQUATION UNKNOWNS →</text>
+  <text class="sans micro" x="905" y="548" text-anchor="middle">SAME CIRCUIT SIZE ORDERING →</text>
+  <text class="sans small" x="150" y="574">1</text><text class="sans small" x="280" y="574">4</text>
+  <text class="sans small" x="410" y="574">16</text><text class="sans small" x="528" y="574">64</text>
+  <text class="sans small" x="710" y="574">1</text><text class="sans small" x="840" y="574">4</text>
+  <text class="sans small" x="970" y="574">16</text><text class="sans small" x="1088" y="574">64</text>
+
+  <rect x="60" y="616" width="1080" height="66" rx="14" fill="#102f43"/>
+  <text class="sans" x="84" y="643" fill="#ffffff" font-size="14" font-weight="800">Immediate reading rule</text>
+  <text class="sans" x="84" y="666" fill="#d7e7ef" font-size="13">Above 1× means BAB-CS is faster. Lower trajectory error is better. Exact values follow the SVG in a retained table.</text>'''
+    return _svg_document(
+        "BAB-CS versus ngspice speedup and accuracy chart blueprint",
+        "An explicitly non-measured chart blueprint with speedup versus declared modified nodal analysis unknowns on the left and maximum scaled trajectory error on the right.",
+        body,
+        width=1200,
+        height=720,
+    )
+
+
 def render_svg_assets(payload: dict[str, Any]) -> dict[str, bytes]:
     assets = {
         "authority-loop.svg": _authority_loop_svg(),
@@ -435,6 +507,7 @@ def render_svg_assets(payload: dict[str, Any]) -> dict[str, bytes]:
         "external-comparison.svg": _external_comparison_svg(payload),
         "qualification-surface.svg": _qualification_surface_svg(payload),
         "software-landscape.svg": _software_landscape_svg(),
+        "speedup-accuracy-by-size-blueprint.svg": _runtime_benchmark_blueprint_svg(),
     }
     assets.update(render_figure_assets())
     assets.update(render_tutorial_assets())

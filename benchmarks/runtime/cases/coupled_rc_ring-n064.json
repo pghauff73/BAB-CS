@@ -1,0 +1,1454 @@
+{
+  "linear_backend": "dense",
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VIN",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "resistor",
+      "name": "RIN",
+      "positive": "vin",
+      "negative": "out1",
+      "resistance": 500.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH1",
+      "positive": "out1",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out1",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH2",
+      "positive": "out2",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C2",
+      "positive": "out2",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH3",
+      "positive": "out3",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C3",
+      "positive": "out3",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH4",
+      "positive": "out4",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C4",
+      "positive": "out4",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH5",
+      "positive": "out5",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C5",
+      "positive": "out5",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH6",
+      "positive": "out6",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C6",
+      "positive": "out6",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH7",
+      "positive": "out7",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C7",
+      "positive": "out7",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH8",
+      "positive": "out8",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C8",
+      "positive": "out8",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH9",
+      "positive": "out9",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C9",
+      "positive": "out9",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH10",
+      "positive": "out10",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C10",
+      "positive": "out10",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH11",
+      "positive": "out11",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C11",
+      "positive": "out11",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH12",
+      "positive": "out12",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C12",
+      "positive": "out12",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH13",
+      "positive": "out13",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C13",
+      "positive": "out13",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH14",
+      "positive": "out14",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C14",
+      "positive": "out14",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH15",
+      "positive": "out15",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C15",
+      "positive": "out15",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH16",
+      "positive": "out16",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C16",
+      "positive": "out16",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH17",
+      "positive": "out17",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C17",
+      "positive": "out17",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH18",
+      "positive": "out18",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C18",
+      "positive": "out18",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH19",
+      "positive": "out19",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C19",
+      "positive": "out19",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH20",
+      "positive": "out20",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C20",
+      "positive": "out20",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH21",
+      "positive": "out21",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C21",
+      "positive": "out21",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH22",
+      "positive": "out22",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C22",
+      "positive": "out22",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH23",
+      "positive": "out23",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C23",
+      "positive": "out23",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH24",
+      "positive": "out24",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C24",
+      "positive": "out24",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH25",
+      "positive": "out25",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C25",
+      "positive": "out25",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH26",
+      "positive": "out26",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C26",
+      "positive": "out26",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH27",
+      "positive": "out27",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C27",
+      "positive": "out27",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH28",
+      "positive": "out28",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C28",
+      "positive": "out28",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH29",
+      "positive": "out29",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C29",
+      "positive": "out29",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH30",
+      "positive": "out30",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C30",
+      "positive": "out30",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH31",
+      "positive": "out31",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C31",
+      "positive": "out31",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH32",
+      "positive": "out32",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C32",
+      "positive": "out32",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH33",
+      "positive": "out33",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C33",
+      "positive": "out33",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH34",
+      "positive": "out34",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C34",
+      "positive": "out34",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH35",
+      "positive": "out35",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C35",
+      "positive": "out35",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH36",
+      "positive": "out36",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C36",
+      "positive": "out36",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH37",
+      "positive": "out37",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C37",
+      "positive": "out37",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH38",
+      "positive": "out38",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C38",
+      "positive": "out38",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH39",
+      "positive": "out39",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C39",
+      "positive": "out39",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH40",
+      "positive": "out40",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C40",
+      "positive": "out40",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH41",
+      "positive": "out41",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C41",
+      "positive": "out41",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH42",
+      "positive": "out42",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C42",
+      "positive": "out42",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH43",
+      "positive": "out43",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C43",
+      "positive": "out43",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH44",
+      "positive": "out44",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C44",
+      "positive": "out44",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH45",
+      "positive": "out45",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C45",
+      "positive": "out45",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH46",
+      "positive": "out46",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C46",
+      "positive": "out46",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH47",
+      "positive": "out47",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C47",
+      "positive": "out47",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH48",
+      "positive": "out48",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C48",
+      "positive": "out48",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH49",
+      "positive": "out49",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C49",
+      "positive": "out49",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH50",
+      "positive": "out50",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C50",
+      "positive": "out50",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH51",
+      "positive": "out51",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C51",
+      "positive": "out51",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH52",
+      "positive": "out52",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C52",
+      "positive": "out52",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH53",
+      "positive": "out53",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C53",
+      "positive": "out53",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH54",
+      "positive": "out54",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C54",
+      "positive": "out54",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH55",
+      "positive": "out55",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C55",
+      "positive": "out55",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH56",
+      "positive": "out56",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C56",
+      "positive": "out56",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH57",
+      "positive": "out57",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C57",
+      "positive": "out57",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH58",
+      "positive": "out58",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C58",
+      "positive": "out58",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH59",
+      "positive": "out59",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C59",
+      "positive": "out59",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH60",
+      "positive": "out60",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C60",
+      "positive": "out60",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH61",
+      "positive": "out61",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C61",
+      "positive": "out61",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH62",
+      "positive": "out62",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C62",
+      "positive": "out62",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH63",
+      "positive": "out63",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C63",
+      "positive": "out63",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH64",
+      "positive": "out64",
+      "negative": "0",
+      "resistance": 2000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C64",
+      "positive": "out64",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC1_2",
+      "positive": "out1",
+      "negative": "out2",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC2_3",
+      "positive": "out2",
+      "negative": "out3",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC3_4",
+      "positive": "out3",
+      "negative": "out4",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC4_5",
+      "positive": "out4",
+      "negative": "out5",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC5_6",
+      "positive": "out5",
+      "negative": "out6",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC6_7",
+      "positive": "out6",
+      "negative": "out7",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC7_8",
+      "positive": "out7",
+      "negative": "out8",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC8_9",
+      "positive": "out8",
+      "negative": "out9",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC9_10",
+      "positive": "out9",
+      "negative": "out10",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC10_11",
+      "positive": "out10",
+      "negative": "out11",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC11_12",
+      "positive": "out11",
+      "negative": "out12",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC12_13",
+      "positive": "out12",
+      "negative": "out13",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC13_14",
+      "positive": "out13",
+      "negative": "out14",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC14_15",
+      "positive": "out14",
+      "negative": "out15",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC15_16",
+      "positive": "out15",
+      "negative": "out16",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC16_17",
+      "positive": "out16",
+      "negative": "out17",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC17_18",
+      "positive": "out17",
+      "negative": "out18",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC18_19",
+      "positive": "out18",
+      "negative": "out19",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC19_20",
+      "positive": "out19",
+      "negative": "out20",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC20_21",
+      "positive": "out20",
+      "negative": "out21",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC21_22",
+      "positive": "out21",
+      "negative": "out22",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC22_23",
+      "positive": "out22",
+      "negative": "out23",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC23_24",
+      "positive": "out23",
+      "negative": "out24",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC24_25",
+      "positive": "out24",
+      "negative": "out25",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC25_26",
+      "positive": "out25",
+      "negative": "out26",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC26_27",
+      "positive": "out26",
+      "negative": "out27",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC27_28",
+      "positive": "out27",
+      "negative": "out28",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC28_29",
+      "positive": "out28",
+      "negative": "out29",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC29_30",
+      "positive": "out29",
+      "negative": "out30",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC30_31",
+      "positive": "out30",
+      "negative": "out31",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC31_32",
+      "positive": "out31",
+      "negative": "out32",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC32_33",
+      "positive": "out32",
+      "negative": "out33",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC33_34",
+      "positive": "out33",
+      "negative": "out34",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC34_35",
+      "positive": "out34",
+      "negative": "out35",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC35_36",
+      "positive": "out35",
+      "negative": "out36",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC36_37",
+      "positive": "out36",
+      "negative": "out37",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC37_38",
+      "positive": "out37",
+      "negative": "out38",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC38_39",
+      "positive": "out38",
+      "negative": "out39",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC39_40",
+      "positive": "out39",
+      "negative": "out40",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC40_41",
+      "positive": "out40",
+      "negative": "out41",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC41_42",
+      "positive": "out41",
+      "negative": "out42",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC42_43",
+      "positive": "out42",
+      "negative": "out43",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC43_44",
+      "positive": "out43",
+      "negative": "out44",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC44_45",
+      "positive": "out44",
+      "negative": "out45",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC45_46",
+      "positive": "out45",
+      "negative": "out46",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC46_47",
+      "positive": "out46",
+      "negative": "out47",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC47_48",
+      "positive": "out47",
+      "negative": "out48",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC48_49",
+      "positive": "out48",
+      "negative": "out49",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC49_50",
+      "positive": "out49",
+      "negative": "out50",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC50_51",
+      "positive": "out50",
+      "negative": "out51",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC51_52",
+      "positive": "out51",
+      "negative": "out52",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC52_53",
+      "positive": "out52",
+      "negative": "out53",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC53_54",
+      "positive": "out53",
+      "negative": "out54",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC54_55",
+      "positive": "out54",
+      "negative": "out55",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC55_56",
+      "positive": "out55",
+      "negative": "out56",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC56_57",
+      "positive": "out56",
+      "negative": "out57",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC57_58",
+      "positive": "out57",
+      "negative": "out58",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC58_59",
+      "positive": "out58",
+      "negative": "out59",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC59_60",
+      "positive": "out59",
+      "negative": "out60",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC60_61",
+      "positive": "out60",
+      "negative": "out61",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC61_62",
+      "positive": "out61",
+      "negative": "out62",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC62_63",
+      "positive": "out62",
+      "negative": "out63",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC63_64",
+      "positive": "out63",
+      "negative": "out64",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC64_1",
+      "positive": "out64",
+      "negative": "out1",
+      "resistance": 1000.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.006,
+    "nominal_step": 5e-05
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "heun",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 4,
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  },
+  "runtime_benchmark": {
+    "family_id": "coupled_rc_ring",
+    "size": 64,
+    "size_parameter": "coupled_nodes",
+    "authority": {
+      "type": "refined_trapezoidal",
+      "refinement_factor": 8
+    },
+    "babcs_profile_id": "active_heun_deferred4_smooth",
+    "babcs_profile_description": "Active bounded Heun candidate for smooth linear and coupled-linear transients, with an implicit trapezoidal reference at least every four accepted steps and periodic replay every 16 accepted steps."
+  }
+}

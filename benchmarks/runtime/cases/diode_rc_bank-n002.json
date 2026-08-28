@@ -1,0 +1,90 @@
+{
+  "linear_backend": "dense",
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VIN",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": {
+        "type": "sine",
+        "offset": 0.0,
+        "amplitude": 1.0,
+        "frequency": 500.0
+      }
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "vin",
+      "negative": "out1",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out1",
+      "negative": "0",
+      "capacitance": 1e-07,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "diode",
+      "name": "D1",
+      "positive": "out1",
+      "negative": "0",
+      "saturation_current": 1e-12,
+      "thermal_voltage": 0.02585
+    },
+    {
+      "type": "resistor",
+      "name": "R2",
+      "positive": "vin",
+      "negative": "out2",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C2",
+      "positive": "out2",
+      "negative": "0",
+      "capacitance": 1e-07,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "diode",
+      "name": "D2",
+      "positive": "out2",
+      "negative": "0",
+      "saturation_current": 1e-12,
+      "thermal_voltage": 0.02585
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.002,
+    "nominal_step": 2e-05
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "ab2",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 1,
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  },
+  "runtime_benchmark": {
+    "family_id": "diode_rc_bank",
+    "size": 2,
+    "size_parameter": "channels",
+    "authority": {
+      "type": "refined_trapezoidal",
+      "refinement_factor": 8
+    },
+    "babcs_profile_id": "active_ab2_reference1_nonlinear",
+    "babcs_profile_description": "Conservative active bounded Adams-Bashforth second-order candidate with a trapezoidal reference every accepted step for nonlinear diode cases whose independent authority is not yet converged."
+  }
+}
