@@ -1,0 +1,41 @@
+{
+  "adaptive_certified": 36,
+  "adaptive_configurations": 36,
+  "report_sha256": {
+    "adaptive-effort.json": "be2285be2953f840e26b3b41b9fee505d8adfa07f4d76a07e06662f2556cac99",
+    "events.json": "aa32a86637ccde8d19dab78a85da72054d2b6721d2a19aecc7a8226caf0e979e",
+    "production-replay.json": "6b88a4ccb6f34e82c07bee549a69b0eb7dff52a7a3f048fbcca653ebbf4020d3",
+    "weighted-norms.json": "ddd95a4f8a6a1e7048416a5ed00ae31733eb8ecfd928e0022be8d902046c24b0"
+  },
+  "schema": "babcs-affine-research-v2",
+  "scope": "research harness and offline audit; production acceptance logic unchanged",
+  "source_sha256": {
+    "src/babcs/__init__.py": "a535e69f768f209c521a7022140a3ae2d8855bfce4fbc182080661823dc9a230",
+    "src/babcs/__main__.py": "0f7d54f3fbb1f79a85eb8110f11793db99da6f3c61ee979de5abe9a1b5f3fdb3",
+    "src/babcs/_klu.py": "841a5ce80c1d92448d14308424bffebfd90479a0359bcf7f90852dd458c74ca6",
+    "src/babcs/_project.py": "eeb09af8fa06c40d32b1f236c9b6d0ab40ae8991804c3c5e1ead7b867bfc29ec",
+    "src/babcs/bounded.py": "f5b235fefe598d14dec40e170f8190b89c96078a8c35070c40467a5932df7178",
+    "src/babcs/cache_diagnostics.py": "07de03ea4bc62656dd77687cbfe46b2bbd83adea26175b3084c7b212005168d3",
+    "src/babcs/candidates.py": "2d048d78da7ae1ee15104582638c2a92f46a9e419923428b479181794c3f1409",
+    "src/babcs/certified.py": "8f79082c55d8536e00e66fd0c514a705e085a4dcd80f9508f068251c9af20ba0",
+    "src/babcs/certified_buck.py": "6d4fc701707d367ec2674975a7abbb7dcbb18c53c648ceed5388ce8cac473a7a",
+    "src/babcs/cli.py": "01eb2f615dda0bfd2d9cb85dea61e851f1e01c5dc4f4e96101635c8f195c668d",
+    "src/babcs/integrators.py": "67173074086f0be04063809c86904cb2db14433759995e4c1782d5dd66e0972f",
+    "src/babcs/intervals.py": "c340802834c0b70ddc241219fce82320c33b694779af5a3a4210f3285b816aad",
+    "src/babcs/io.py": "7c354a0b14075ec1c6b0c5b976d45d84e3b8f67fdb59a035eda095804b92bc72",
+    "src/babcs/linalg.py": "21556b8982beb2e559f39906951ec69cffd5a3e3cde03b7a496ad1540ab57f6e",
+    "src/babcs/model.py": "2b00aaf640bedbc4e3ffd778dd609978751e53f8cd901a80b4f96e63f9eb21e3",
+    "src/babcs/native_buck.py": "cdbda81bb5c41372b0d4b740d2bd85f7b6dd878c98707fe63bfff920a0118d2d",
+    "src/babcs/portable_commands.py": "d7660dbf6a2b04346d7ca33d9886df990e35e59de37a5668949f65eced8f73b3",
+    "src/babcs/reachability.py": "9ee2f1dfccde9eb5b92548c59e22b737790e5a640ce9c9625c5ccb6f5e4add47",
+    "src/babcs/rootfinding.py": "d1bf32d198e8585911c0acc2f204272f4d3988b68a11990a73c964e8ea07ecc4",
+    "src/babcs/simulator.py": "c81875b18f08fadf9160310fd27dd09f321c53c5d8b775a3b0158c8738723fa1",
+    "src/babcs/state_events.py": "968319f962eb26885977f9225055a5ccdbcb7af4559dd40a062e799c838fe2ff",
+    "src/babcs/waveforms.py": "de20d553df17af5a16dfb18156e8ba03ff22d5973ceea1a6150896623e4aa2a9",
+    "tests/test_affine_research.py": "c381ade0a285ec0f8c3fbd83f1e6aa1d1307ae989e960f9985326db7529e68d8",
+    "tools/affine_research.py": "1e58653b63d4b1ca13c1489eb9954f9a81179cef224e464546a665caaa2fb6a0",
+    "tools/audit_affine_replay.py": "85111d2420557c24dd7520f885549e786b5db4449d344963e846c59f9ae86bed",
+    "tools/replay_error_budget.py": "176e60fc40437a4e7406553227db96ccd266d054a7eb414990a852faeb64fb2c",
+    "tools/run_affine_research.py": "45634b3bb101151fa6d6e4918404dbab1703209f948134549636116e0ef073b8"
+  }
+}

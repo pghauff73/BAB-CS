@@ -1,0 +1,324 @@
+{
+  "assessment_date": "2026-09-05",
+  "requested_result_count": 63,
+  "queries": [
+    {
+      "query": "category:research paper Simplex architecture verified runtime assurance numerical simulation supervisory controller",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "An adaptive, provable correct simplex architecture | International Journal on Software Tools for Technology Transfer | Springer Nature Link",
+          "url": "https://link.springer.com/article/10.1007/s10009-025-00779-0"
+        },
+        {
+          "title": "The Black-Box Simplex Architecture for Runtime Assurance",
+          "url": "https://www3.cs.stonybrook.edu/~stoller/papers/black-box-simplex-2024.pdf"
+        },
+        {
+          "title": "A Barrier Certificate-based Simplex Architecture for Systems with Approximate and Hybrid Dynamics",
+          "url": "https://arxiv.org/html/2202.09710"
+        },
+        {
+          "title": "The Black-Box Simplex Architecture for Runtime Assurance of Autonomous CPS",
+          "url": "https://doi.org/10.1007/978-3-031-06773-0_12"
+        },
+        {
+          "title": "A Verification Framework for Runtime Assurance",
+          "url": "https://shemesh.larc.nasa.gov/fm/papers/DASC2024-SWDMC-draft.pdf"
+        },
+        {
+          "title": "A Simplex Architecture for Hybrid Systems using Barrier Certificates",
+          "url": "https://www3.cs.stonybrook.edu/~stoller/papers/safecomp2017.pdf"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper validated numerical integration hybrid systems Flowstar SpaceEx HySon reachability",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Computing Flow Pipe of Nonlinear Hybrid Systems",
+          "url": "https://www.lix.polytechnique.fr/Labo/Samuel.Mimram/docs/mimram_flowpipe.pdf"
+        },
+        {
+          "title": "Flow*: An Analyzer for Non-Linear Hybrid Systems",
+          "url": "https://plv.colorado.edu/papers/flowstar-cav13.pdf"
+        },
+        {
+          "title": "SpaceEx: Scalable Verification of Hybrid Systems",
+          "url": "http://spaceex.imag.fr/sites/default/files/paper_55.pdf"
+        },
+        {
+          "title": "GajulaLingala_HybridSystems_revised",
+          "url": "https://arxiv.org/pdf/2504.04638"
+        },
+        {
+          "title": "LNCS 6806 - SpaceEx: Scalable Verification of Hybrid Systems",
+          "url": "http://www-verimag.imag.fr/%7Etdang/Papers/CAV2011.pdf"
+        },
+        {
+          "title": "Flow*: An Analyzer for Non-linear Hybrid Systems | Springer Nature Link",
+          "url": "https://link.springer.com/chapter/10.1007/978-3-642-39799-8_18"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper a posteriori error estimates ordinary differential equations logarithmic norm defect global error",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "P:\\TEX\\SISC\\26-2\\42096\\42096",
+          "url": "https://people.cs.vt.edu/~ycao/publication/siam_42096.pdf"
+        },
+        {
+          "title": "[1503.05166] Estimating Global Errors in Time SteppingThis material is based upon work supported by the U.S. Department of Energy, Office of Science, Advanced Scientific Computing Research Program under contract DE-AC02-06CH11357, FWP #56706 and #57K87.",
+          "url": "https://ar5iv.labs.arxiv.org/html/1503.05166"
+        },
+        {
+          "title": "Global, rigorous and realistic bounds for the solution of dissipative differential equations. Part I: Theory",
+          "url": "https://arnold-neumaier.at/ms/ode.pdf"
+        },
+        {
+          "title": "A Posteriori Error Bounds and Global Error Control for Approximation of Ordinary Differential Equations",
+          "url": "https://doi.org/10.1137/0732001"
+        },
+        {
+          "title": "A Posteriori Error Bounds and Global Error Control for Approximation of Ordinary Differential Equations",
+          "url": "https://epubs.siam.org/doi/10.1137/0732001"
+        },
+        {
+          "title": "reposiTUm: Error estimation based on locally weighted defect for boundary value problems in second order ordinary differential equations",
+          "url": "https://repositum.tuwien.at/handle/20.500.12708/25344"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper reachability analysis DC DC buck converter hysteresis uncertain parameters verification",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Reachability analysis of closed-loop switching power converters",
+          "url": "https://doi.org/10.1109/peci.2013.6506047"
+        },
+        {
+          "title": "Model Validation and Formal Verification of PWM",
+          "url": "https://web.engr.oregonstate.edu/~abbasho/publications/papers/DCDC-Johnson.pdf"
+        },
+        {
+          "title": "Reachability Analysis of Closed-Loop Switching Power Converters",
+          "url": "http://www.taylortjohnson.com/research/hossain2013peci.pdf"
+        },
+        {
+          "title": "Model Validation of PWM DC-DC Converters",
+          "url": "http://www.taylortjohnson.com/research/beg2017tie.pdf"
+        },
+        {
+          "title": "Design Verification Methods for Switching Power Converters",
+          "url": "http://www.taylortjohnson.com/research/johnson2012peci.pdf"
+        },
+        {
+          "title": "Reachability Analysis of Closed-Loop Switching Power ...",
+          "url": "http://mitras.ece.illinois.edu/ECE584/Archives/2012/Projects/Hossain.pdf"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper saltation matrices hybrid systems sensitivity event timing grazing 2023",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Saltation Matrices: The Essential Tool for Linearizing Hybrid Dynamical Systems",
+          "url": "https://doi.org/10.1109/jproc.2024.3440211"
+        },
+        {
+          "title": "Saltation Matrices: The Essential Tool for Linearizing Hybrid Dynamical Systems",
+          "url": "https://arxiv.org/html/2306.06862v1"
+        },
+        {
+          "title": "Robust Bipedal Locomotion: Leveraging Saltation Matrices for Gait Optimization",
+          "url": "https://doi.org/10.1109/icra48891.2023.10161309"
+        },
+        {
+          "title": "Saltation Matrices: The Essential Tool for Linearizing Hybrid Dynamical Systems",
+          "url": "https://doi.org/10.48550/arxiv.2306.06862"
+        },
+        {
+          "title": "N/A",
+          "url": "https://arxiv.org/pdf/2209.10452"
+        },
+        {
+          "title": "Hybrid Event Shaping to Stabilize Periodic Hybrid Orbits",
+          "url": "https://doi.org/10.1109/icra46639.2022.9811782"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper structure preserving numerical integration port Hamiltonian differential algebraic electrical circuits energy",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Dynamic iteration schemes and port-Hamiltonian formulation in coupled differential-algebraic equation circuit simulation",
+          "url": "https://onlinelibrary.wiley.com/doi/10.1002/cta.2870"
+        },
+        {
+          "title": "Discrete gradient methods for port-Hamiltonian differential-algebraic equations",
+          "url": "https://publikationen.bibliothek.kit.edu/1000189990/173848887"
+        },
+        {
+          "title": "Structure-Preserving Operator Splitting via JR-Decomposition for Circuit Models",
+          "url": "https://arxiv.org/pdf/2606.06153v1/__stdout.txt"
+        },
+        {
+          "title": "Splitting Techniques for DAEs with port-Hamiltonian Applications",
+          "url": "https://arxiv.org/html/2404.13531v1"
+        },
+        {
+          "title": "N/A",
+          "url": "http://arxiv.org/pdf/2004.12951v1"
+        },
+        {
+          "title": "Effective numerical simulations of synchronous generator system",
+          "url": "https://sage.cnpereading.com/doi/10.1177/00375497241231986"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper ARCH COMP 2025 2026 affine nonlinear hybrid systems reachability JuliaReach CORA Ariadne",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "ARCH-COMP26 Category Report: Continuous and Hybrid Systems with Nonlinear Dynamics",
+          "url": "https://portal.fis.tum.de/en/publications/arch-comp26-category-report-continuous-and-hybrid-systems-with-no/"
+        },
+        {
+          "title": "ARCH-COMP25 Category Report: Continuous and Hybrid Systems with Nonlinear Dynamics",
+          "url": "https://vbn.aau.dk/en/publications/arch-comp25-category-report-continuous-and-hybrid-systems-with-no/"
+        },
+        {
+          "title": "ARCH-COMP25 Category Report: Continuous and Hybrid Systems ...",
+          "url": "https://easychair.org/publications/paper/m9FM"
+        },
+        {
+          "title": "ARCH-COMP26 Category Report: Continuous and Hybrid Systems with Nonlinear Dynamics",
+          "url": "https://e.easychair.org/publications/paper/2Zsc/download"
+        },
+        {
+          "title": "ARCH-COMP26 Category Report: Continuous and Hybrid Systems with Nonlinear Dynamics",
+          "url": "https://e.easychair.org/publications/paper/2Zsc/open"
+        },
+        {
+          "title": "ARCH-COMP26 Category Report:",
+          "url": "https://eraw.easychair.org/publications/paper/hFjB/download"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper validated integration interval arithmetic Lohner Taylor models wrapping effect parameter uncertainty",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "On Taylor Model Based Integration of ODEs - SIAM Publications Library",
+          "url": "https://epubs.siam.org/doi/10.1137/050638448"
+        },
+        {
+          "title": "Validated solution of ODEs with parametric uncertainties",
+          "url": "https://academicweb.nd.edu/~markst/lin-stadtherr-cacheg2006.pdf"
+        },
+        {
+          "title": "Problems Parameters",
+          "url": "https://academicweb.nd.edu/~markst/lin-stadtherr-rec06-v2.pdf"
+        },
+        {
+          "title": "[PDF] suppression of the wrapping effect by taylor model- based validated ...",
+          "url": "https://www.bmtdynamics.org/pub/papers/VIRC03/VIRC03.pdf"
+        },
+        {
+          "title": "SUPPRESSION OF THE WRAPPING EFFECT BY TAYLOR MODEL - BASED VERIFIED INTEGRATORS: THE SINGLE STEP",
+          "url": "https://ijpam.eu/contents/2007-36-2/4/4.pdf"
+        },
+        {
+          "title": "Shrink wrapping for Taylor models revisited | Numerical Algorithms | Springer Nature Link",
+          "url": "https://link.springer.com/article/10.1007/s11075-017-0410-1"
+        }
+      ]
+    },
+    {
+      "query": "Model Validation of PWM DC DC Converters Beg 2017 authors DOI",
+      "numResults": 5,
+      "results": [
+        {
+          "title": "Model Validation of PWM DC–DC Converters",
+          "url": "https://doi.org/10.1109/tie.2017.2688961"
+        },
+        {
+          "title": "Model Validation of PWM DC–DC Converters",
+          "url": "https://ieeexplore.ieee.org/document/7888995/"
+        },
+        {
+          "title": "Model Validation of PWM DC-DC Converters - researchr publication",
+          "url": "https://researchr.org/publication/BegAJD17"
+        },
+        {
+          "title": "Model Validation of PWM DC–DC Converters | SCIENCE@home",
+          "url": "https://sah.borca.ai/papers/28256105"
+        },
+        {
+          "title": "Approximate Discrete-Time Modeling of DC–DC Converters With Consideration of the Effects of Pulse Width Modulation",
+          "url": "https://doi.org/10.1109/tpel.2017.2752419"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper circuit differential algebraic equations index topology Tischendorf Estevez Schwarz 2000",
+      "numResults": 5,
+      "results": [
+        {
+          "title": "Structural analysis of electric circuits and consequences for MNA",
+          "url": "https://doi.org/10.1002/(sici)1097-007x(200003/04)28:2"
+        },
+        {
+          "title": "Structural analysis for electric circuits and consequences for MNA",
+          "url": "http://hdl.handle.net/10068/183437"
+        },
+        {
+          "title": "Topological index‐calculation of DAEs in circuit simulation",
+          "url": "https://doi.org/10.1002/zamm.199807815118"
+        },
+        {
+          "title": "Finding beneficial DAE structures in circuit simulation",
+          "url": "http://hdl.handle.net/10068/182911"
+        },
+        {
+          "title": "Topological index-calculation of DAEs in circuit simulation",
+          "url": "https://onlinelibrary.wiley.com/doi/10.1002/zamm.199807815118"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper adaptive time stepping digital filters Gustafsson Soderlind control error",
+      "numResults": 5,
+      "results": [
+        {
+          "title": "Digital filters in adaptive time-stepping",
+          "url": "https://doi.org/10.1145/641876.641877"
+        },
+        {
+          "title": "Automatic Control and Adaptive Time-Stepping",
+          "url": "https://doi.org/10.1023/a:1021160023092"
+        },
+        {
+          "title": "Adaptive Time-Stepping, Part I  How Control Theory and Digital Filters Enhance IVP Solver Performance",
+          "url": "https://math.bme.hu/sites/math.bme.hu/files/AlkAnalSzemi/PapersPresentations/Gustaf1.pdf"
+        },
+        {
+          "title": "Digital Filters in Adaptive Time-Stepping",
+          "url": "http://www.nacad.ufrj.br/~amit/oumar_papers/p1-soderlind.pdf"
+        },
+        {
+          "title": "Control-theoretic techniques for stepsize selection in implicit Runge-Kutta methods",
+          "url": "https://doi.org/10.1145/198429.198437"
+        }
+      ]
+    }
+  ]
+}

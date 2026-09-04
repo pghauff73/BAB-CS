@@ -1,0 +1,134 @@
+{
+  "case": "rlc_damped",
+  "initial_euclidean_radius": "1/1000",
+  "rows": [
+    {
+      "metric": {
+        "coordinate_conversion_upper": "1",
+        "lower_eigenvalue_bound": "1",
+        "matrix": [
+          [
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "1"
+          ]
+        ],
+        "mu": "0",
+        "name": "euclidean",
+        "upper_eigenvalue_bound": "1"
+      },
+      "physical_endpoint_radius": "15330579148662884469/7812500000000000000000",
+      "time": "2"
+    },
+    {
+      "metric": {
+        "coordinate_conversion_upper": "2",
+        "lower_eigenvalue_bound": "1/4",
+        "matrix": [
+          [
+            "3/2",
+            "1/2"
+          ],
+          [
+            "1/2",
+            "1/2"
+          ]
+        ],
+        "mu": "-1/4",
+        "name": "lyapunov",
+        "upper_eigenvalue_bound": "2"
+      },
+      "physical_endpoint_radius": "310446318600856413941/125000000000000000000000",
+      "time": "2"
+    },
+    {
+      "metric": {
+        "coordinate_conversion_upper": "1",
+        "lower_eigenvalue_bound": "1",
+        "matrix": [
+          [
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "1"
+          ]
+        ],
+        "mu": "0",
+        "name": "euclidean",
+        "upper_eigenvalue_bound": "1"
+      },
+      "physical_endpoint_radius": "2038258991504026388089/1000000000000000000000000",
+      "time": "10"
+    },
+    {
+      "metric": {
+        "coordinate_conversion_upper": "2",
+        "lower_eigenvalue_bound": "1/4",
+        "matrix": [
+          [
+            "3/2",
+            "1/2"
+          ],
+          [
+            "1/2",
+            "1/2"
+          ]
+        ],
+        "mu": "-1/4",
+        "name": "lyapunov",
+        "upper_eigenvalue_bound": "2"
+      },
+      "physical_endpoint_radius": "184305625787005040241/500000000000000000000000",
+      "time": "10"
+    },
+    {
+      "metric": {
+        "coordinate_conversion_upper": "1",
+        "lower_eigenvalue_bound": "1",
+        "matrix": [
+          [
+            "1",
+            "0"
+          ],
+          [
+            "0",
+            "1"
+          ]
+        ],
+        "mu": "0",
+        "name": "euclidean",
+        "upper_eigenvalue_bound": "1"
+      },
+      "physical_endpoint_radius": "2038486452583029380951/1000000000000000000000000",
+      "time": "20"
+    },
+    {
+      "metric": {
+        "coordinate_conversion_upper": "2",
+        "lower_eigenvalue_bound": "1/4",
+        "matrix": [
+          [
+            "3/2",
+            "1/2"
+          ],
+          [
+            "1/2",
+            "1/2"
+          ]
+        ],
+        "mu": "-1/4",
+        "name": "lyapunov",
+        "upper_eigenvalue_bound": "2"
+      },
+      "physical_endpoint_radius": "15148056843486567743/500000000000000000000000",
+      "time": "20"
+    }
+  ],
+  "same_state_trace_for_all_metrics": true,
+  "step": "1/20"
+}

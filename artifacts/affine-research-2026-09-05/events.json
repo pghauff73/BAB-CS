@@ -1,0 +1,166 @@
+{
+  "cases": {
+    "exhausted": {
+      "budget_exhausted": true,
+      "events": [
+        {
+          "derivative_lower": "1",
+          "derivative_upper": "1",
+          "direction": "rising",
+          "reason": "cell budget exhausted",
+          "status": "UNKNOWN",
+          "time_lower": "0",
+          "time_upper": "1"
+        }
+      ],
+      "excluded_cells": 0,
+      "inspected_cells": 1,
+      "meaning": "all possible roots enclosed; CROSSING proves one root per trajectory and fixed threshold in this cell",
+      "requested_cell_tolerance": "1/1000",
+      "status": "UNKNOWN",
+      "threshold": [
+        "0",
+        "0"
+      ]
+    },
+    "grazing": {
+      "budget_exhausted": false,
+      "events": [
+        {
+          "derivative_lower": "-1/512",
+          "derivative_upper": "1/512",
+          "direction": "unresolved",
+          "reason": "existence or uniqueness unproved",
+          "status": "UNKNOWN",
+          "time_lower": "511/1024",
+          "time_upper": "513/1024"
+        }
+      ],
+      "excluded_cells": 18,
+      "inspected_cells": 39,
+      "meaning": "all possible roots enclosed; CROSSING proves one root per trajectory and fixed threshold in this cell",
+      "requested_cell_tolerance": "1/1000",
+      "status": "UNKNOWN",
+      "threshold": [
+        "0",
+        "0"
+      ]
+    },
+    "no_crossing": {
+      "budget_exhausted": false,
+      "events": [],
+      "excluded_cells": 1,
+      "inspected_cells": 1,
+      "meaning": "all possible roots enclosed; CROSSING proves one root per trajectory and fixed threshold in this cell",
+      "requested_cell_tolerance": "1/1000",
+      "status": "NO_CROSSING",
+      "threshold": [
+        "0",
+        "0"
+      ]
+    },
+    "paired": {
+      "budget_exhausted": false,
+      "events": [
+        {
+          "derivative_lower": "-257/512",
+          "derivative_upper": "-255/512",
+          "direction": "falling",
+          "reason": "opposite endpoint signs and strict monotonicity",
+          "status": "CROSSING",
+          "time_lower": "255/1024",
+          "time_upper": "257/1024"
+        },
+        {
+          "derivative_lower": "255/512",
+          "derivative_upper": "257/512",
+          "direction": "rising",
+          "reason": "opposite endpoint signs and strict monotonicity",
+          "status": "CROSSING",
+          "time_lower": "767/1024",
+          "time_upper": "769/1024"
+        }
+      ],
+      "excluded_cells": 32,
+      "inspected_cells": 71,
+      "meaning": "all possible roots enclosed; CROSSING proves one root per trajectory and fixed threshold in this cell",
+      "requested_cell_tolerance": "1/1000",
+      "status": "CROSSINGS",
+      "threshold": [
+        "0",
+        "0"
+      ]
+    },
+    "threshold_uncertainty": {
+      "budget_exhausted": false,
+      "events": [
+        {
+          "derivative_lower": "1",
+          "derivative_upper": "1",
+          "direction": "rising",
+          "reason": "opposite endpoint signs and strict monotonicity",
+          "status": "CROSSING",
+          "time_lower": "501/1024",
+          "time_upper": "523/1024"
+        }
+      ],
+      "excluded_cells": 14,
+      "inspected_cells": 71,
+      "meaning": "all possible roots enclosed; CROSSING proves one root per trajectory and fixed threshold in this cell",
+      "requested_cell_tolerance": "1/1000",
+      "status": "CROSSINGS",
+      "threshold": [
+        "-1/100",
+        "1/100"
+      ]
+    },
+    "uncertain_pair": {
+      "budget_exhausted": false,
+      "events": [
+        {
+          "derivative_lower": "-507140895002036218684453/1000000000000000000000000",
+          "derivative_upper": "-123213208068568699330633/250000000000000000000000",
+          "direction": "falling",
+          "reason": "opposite endpoint signs and strict monotonicity",
+          "status": "CROSSING",
+          "time_lower": "253/1024",
+          "time_upper": "259/1024"
+        },
+        {
+          "derivative_lower": "488125628384283853285637/1000000000000000000000000",
+          "derivative_upper": "511892987208488483194697/1000000000000000000000000",
+          "direction": "rising",
+          "reason": "opposite endpoint signs and strict monotonicity",
+          "status": "CROSSING",
+          "time_lower": "763/1024",
+          "time_upper": "773/1024"
+        }
+      ],
+      "excluded_cells": 28,
+      "inspected_cells": 87,
+      "meaning": "all possible roots enclosed; CROSSING proves one root per trajectory and fixed threshold in this cell",
+      "requested_cell_tolerance": "1/1000",
+      "status": "CROSSINGS",
+      "threshold": [
+        "0",
+        "0"
+      ]
+    }
+  },
+  "delayed_transition": {
+    "delay": [
+      "1/100",
+      "1/50"
+    ],
+    "jitter": [
+      "-1/1000",
+      "1/1000"
+    ],
+    "meaning": "time enclosure only; post-transition flow is not certified here",
+    "status": "CROSSING",
+    "time_lower": "63777/128000",
+    "time_upper": "68063/128000"
+  },
+  "overlap_order": "SIMULTANEOUS_OR_ORDER_UNRESOLVED",
+  "paired_order": "STRICT_ORDER"
+}
