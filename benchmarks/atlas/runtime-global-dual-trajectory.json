@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "runtime_manifest": "../runtime/manifest.json",
+  "babcs_linear_backend": "hybrid",
+  "global_dual_trajectory": {
+    "coarse_refinement_factor": 2,
+    "fine_refinement_factor": 4,
+    "safety_factors": [1.0, 2.0, 4.0, 8.0, 16.0]
+  },
+  "cases": [
+    {
+      "id": "rc_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_dual_trajectory"
+    },
+    {
+      "id": "rl_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_dual_trajectory"
+    },
+    {
+      "id": "coupled_rc_ring-n001",
+      "step_divisor": 1,
+      "variant_id": "global_dual_trajectory"
+    }
+  ],
+  "claim_boundary": "Global factor-2 versus factor-4 trapezoidal trajectory drift is an offline empirical diagnostic. Safety factors are reported as a curve, not selected as a hidden tuned bound. The report does not alter BAB-CS runtime profiles or claim a formal exact-trajectory enclosure."
+}

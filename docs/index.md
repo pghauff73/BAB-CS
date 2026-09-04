@@ -60,6 +60,8 @@ model, not to the unknown exact physical trajectory.
 - [Power-Stage Sandbox](POWER_STAGE_SANDBOX.md)
 - [Teaching and Reproducibility Lab](TEACHING_AND_REPRODUCIBILITY_LAB.md)
 - [ngspice 20-case mapping atlas](NGSPICE_CASE_ATLAS.md)
+- [BAB-CS versus ngspice runtime benchmark](NGSPICE_RUNTIME_BENCHMARK.md)
+- [BAB-CS versus ngspice runtime benchmark plan](../BABCS_NGSPICE_RUNTIME_BENCHMARK_PLAN.md)
 - [Observatory, atlas, sandbox, and lab implementation audit](OBSERVATORY_ATLAS_SANDBOX_LAB_IMPLEMENTATION_AUDIT.md)
 - [ngspice and teaching-tutorial expansion plan](../NGSPICE_AND_TEACHING_TUTORIAL_EXPANSION_PLAN.md)
 - [External comparison](EXTERNAL_COMPARISON.md)

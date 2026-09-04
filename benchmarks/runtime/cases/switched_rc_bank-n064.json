@@ -1,0 +1,2214 @@
+{
+  "linear_backend": "dense",
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VIN",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "switch",
+      "name": "S1",
+      "positive": "vin",
+      "negative": "sw1",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "sw1",
+      "negative": "out1",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out1",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S2",
+      "positive": "vin",
+      "negative": "sw2",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R2",
+      "positive": "sw2",
+      "negative": "out2",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C2",
+      "positive": "out2",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S3",
+      "positive": "vin",
+      "negative": "sw3",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R3",
+      "positive": "sw3",
+      "negative": "out3",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C3",
+      "positive": "out3",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S4",
+      "positive": "vin",
+      "negative": "sw4",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R4",
+      "positive": "sw4",
+      "negative": "out4",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C4",
+      "positive": "out4",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S5",
+      "positive": "vin",
+      "negative": "sw5",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R5",
+      "positive": "sw5",
+      "negative": "out5",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C5",
+      "positive": "out5",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S6",
+      "positive": "vin",
+      "negative": "sw6",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R6",
+      "positive": "sw6",
+      "negative": "out6",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C6",
+      "positive": "out6",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S7",
+      "positive": "vin",
+      "negative": "sw7",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R7",
+      "positive": "sw7",
+      "negative": "out7",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C7",
+      "positive": "out7",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S8",
+      "positive": "vin",
+      "negative": "sw8",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R8",
+      "positive": "sw8",
+      "negative": "out8",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C8",
+      "positive": "out8",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S9",
+      "positive": "vin",
+      "negative": "sw9",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R9",
+      "positive": "sw9",
+      "negative": "out9",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C9",
+      "positive": "out9",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S10",
+      "positive": "vin",
+      "negative": "sw10",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R10",
+      "positive": "sw10",
+      "negative": "out10",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C10",
+      "positive": "out10",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S11",
+      "positive": "vin",
+      "negative": "sw11",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R11",
+      "positive": "sw11",
+      "negative": "out11",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C11",
+      "positive": "out11",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S12",
+      "positive": "vin",
+      "negative": "sw12",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R12",
+      "positive": "sw12",
+      "negative": "out12",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C12",
+      "positive": "out12",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S13",
+      "positive": "vin",
+      "negative": "sw13",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R13",
+      "positive": "sw13",
+      "negative": "out13",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C13",
+      "positive": "out13",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S14",
+      "positive": "vin",
+      "negative": "sw14",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R14",
+      "positive": "sw14",
+      "negative": "out14",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C14",
+      "positive": "out14",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S15",
+      "positive": "vin",
+      "negative": "sw15",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R15",
+      "positive": "sw15",
+      "negative": "out15",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C15",
+      "positive": "out15",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S16",
+      "positive": "vin",
+      "negative": "sw16",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R16",
+      "positive": "sw16",
+      "negative": "out16",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C16",
+      "positive": "out16",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S17",
+      "positive": "vin",
+      "negative": "sw17",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R17",
+      "positive": "sw17",
+      "negative": "out17",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C17",
+      "positive": "out17",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S18",
+      "positive": "vin",
+      "negative": "sw18",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R18",
+      "positive": "sw18",
+      "negative": "out18",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C18",
+      "positive": "out18",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S19",
+      "positive": "vin",
+      "negative": "sw19",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R19",
+      "positive": "sw19",
+      "negative": "out19",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C19",
+      "positive": "out19",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S20",
+      "positive": "vin",
+      "negative": "sw20",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R20",
+      "positive": "sw20",
+      "negative": "out20",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C20",
+      "positive": "out20",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S21",
+      "positive": "vin",
+      "negative": "sw21",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R21",
+      "positive": "sw21",
+      "negative": "out21",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C21",
+      "positive": "out21",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S22",
+      "positive": "vin",
+      "negative": "sw22",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R22",
+      "positive": "sw22",
+      "negative": "out22",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C22",
+      "positive": "out22",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S23",
+      "positive": "vin",
+      "negative": "sw23",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R23",
+      "positive": "sw23",
+      "negative": "out23",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C23",
+      "positive": "out23",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S24",
+      "positive": "vin",
+      "negative": "sw24",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R24",
+      "positive": "sw24",
+      "negative": "out24",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C24",
+      "positive": "out24",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S25",
+      "positive": "vin",
+      "negative": "sw25",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R25",
+      "positive": "sw25",
+      "negative": "out25",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C25",
+      "positive": "out25",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S26",
+      "positive": "vin",
+      "negative": "sw26",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R26",
+      "positive": "sw26",
+      "negative": "out26",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C26",
+      "positive": "out26",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S27",
+      "positive": "vin",
+      "negative": "sw27",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R27",
+      "positive": "sw27",
+      "negative": "out27",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C27",
+      "positive": "out27",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S28",
+      "positive": "vin",
+      "negative": "sw28",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R28",
+      "positive": "sw28",
+      "negative": "out28",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C28",
+      "positive": "out28",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S29",
+      "positive": "vin",
+      "negative": "sw29",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R29",
+      "positive": "sw29",
+      "negative": "out29",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C29",
+      "positive": "out29",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S30",
+      "positive": "vin",
+      "negative": "sw30",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R30",
+      "positive": "sw30",
+      "negative": "out30",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C30",
+      "positive": "out30",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S31",
+      "positive": "vin",
+      "negative": "sw31",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R31",
+      "positive": "sw31",
+      "negative": "out31",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C31",
+      "positive": "out31",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S32",
+      "positive": "vin",
+      "negative": "sw32",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R32",
+      "positive": "sw32",
+      "negative": "out32",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C32",
+      "positive": "out32",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S33",
+      "positive": "vin",
+      "negative": "sw33",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R33",
+      "positive": "sw33",
+      "negative": "out33",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C33",
+      "positive": "out33",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S34",
+      "positive": "vin",
+      "negative": "sw34",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R34",
+      "positive": "sw34",
+      "negative": "out34",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C34",
+      "positive": "out34",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S35",
+      "positive": "vin",
+      "negative": "sw35",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R35",
+      "positive": "sw35",
+      "negative": "out35",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C35",
+      "positive": "out35",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S36",
+      "positive": "vin",
+      "negative": "sw36",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R36",
+      "positive": "sw36",
+      "negative": "out36",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C36",
+      "positive": "out36",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S37",
+      "positive": "vin",
+      "negative": "sw37",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R37",
+      "positive": "sw37",
+      "negative": "out37",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C37",
+      "positive": "out37",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S38",
+      "positive": "vin",
+      "negative": "sw38",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R38",
+      "positive": "sw38",
+      "negative": "out38",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C38",
+      "positive": "out38",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S39",
+      "positive": "vin",
+      "negative": "sw39",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R39",
+      "positive": "sw39",
+      "negative": "out39",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C39",
+      "positive": "out39",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S40",
+      "positive": "vin",
+      "negative": "sw40",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R40",
+      "positive": "sw40",
+      "negative": "out40",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C40",
+      "positive": "out40",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S41",
+      "positive": "vin",
+      "negative": "sw41",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R41",
+      "positive": "sw41",
+      "negative": "out41",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C41",
+      "positive": "out41",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S42",
+      "positive": "vin",
+      "negative": "sw42",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R42",
+      "positive": "sw42",
+      "negative": "out42",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C42",
+      "positive": "out42",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S43",
+      "positive": "vin",
+      "negative": "sw43",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R43",
+      "positive": "sw43",
+      "negative": "out43",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C43",
+      "positive": "out43",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S44",
+      "positive": "vin",
+      "negative": "sw44",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R44",
+      "positive": "sw44",
+      "negative": "out44",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C44",
+      "positive": "out44",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S45",
+      "positive": "vin",
+      "negative": "sw45",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R45",
+      "positive": "sw45",
+      "negative": "out45",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C45",
+      "positive": "out45",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S46",
+      "positive": "vin",
+      "negative": "sw46",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R46",
+      "positive": "sw46",
+      "negative": "out46",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C46",
+      "positive": "out46",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S47",
+      "positive": "vin",
+      "negative": "sw47",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R47",
+      "positive": "sw47",
+      "negative": "out47",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C47",
+      "positive": "out47",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S48",
+      "positive": "vin",
+      "negative": "sw48",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R48",
+      "positive": "sw48",
+      "negative": "out48",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C48",
+      "positive": "out48",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S49",
+      "positive": "vin",
+      "negative": "sw49",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R49",
+      "positive": "sw49",
+      "negative": "out49",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C49",
+      "positive": "out49",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S50",
+      "positive": "vin",
+      "negative": "sw50",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R50",
+      "positive": "sw50",
+      "negative": "out50",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C50",
+      "positive": "out50",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S51",
+      "positive": "vin",
+      "negative": "sw51",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R51",
+      "positive": "sw51",
+      "negative": "out51",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C51",
+      "positive": "out51",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S52",
+      "positive": "vin",
+      "negative": "sw52",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R52",
+      "positive": "sw52",
+      "negative": "out52",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C52",
+      "positive": "out52",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S53",
+      "positive": "vin",
+      "negative": "sw53",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R53",
+      "positive": "sw53",
+      "negative": "out53",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C53",
+      "positive": "out53",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S54",
+      "positive": "vin",
+      "negative": "sw54",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R54",
+      "positive": "sw54",
+      "negative": "out54",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C54",
+      "positive": "out54",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S55",
+      "positive": "vin",
+      "negative": "sw55",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R55",
+      "positive": "sw55",
+      "negative": "out55",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C55",
+      "positive": "out55",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S56",
+      "positive": "vin",
+      "negative": "sw56",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R56",
+      "positive": "sw56",
+      "negative": "out56",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C56",
+      "positive": "out56",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S57",
+      "positive": "vin",
+      "negative": "sw57",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R57",
+      "positive": "sw57",
+      "negative": "out57",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C57",
+      "positive": "out57",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S58",
+      "positive": "vin",
+      "negative": "sw58",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R58",
+      "positive": "sw58",
+      "negative": "out58",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C58",
+      "positive": "out58",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S59",
+      "positive": "vin",
+      "negative": "sw59",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R59",
+      "positive": "sw59",
+      "negative": "out59",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C59",
+      "positive": "out59",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S60",
+      "positive": "vin",
+      "negative": "sw60",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R60",
+      "positive": "sw60",
+      "negative": "out60",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C60",
+      "positive": "out60",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S61",
+      "positive": "vin",
+      "negative": "sw61",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R61",
+      "positive": "sw61",
+      "negative": "out61",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C61",
+      "positive": "out61",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S62",
+      "positive": "vin",
+      "negative": "sw62",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R62",
+      "positive": "sw62",
+      "negative": "out62",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C62",
+      "positive": "out62",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S63",
+      "positive": "vin",
+      "negative": "sw63",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R63",
+      "positive": "sw63",
+      "negative": "out63",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C63",
+      "positive": "out63",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S64",
+      "positive": "vin",
+      "negative": "sw64",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R64",
+      "positive": "sw64",
+      "negative": "out64",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C64",
+      "positive": "out64",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.003,
+    "nominal_step": 5e-05
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "ab2",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 4,
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  },
+  "runtime_benchmark": {
+    "family_id": "switched_rc_bank",
+    "size": 64,
+    "size_parameter": "channels",
+    "authority": {
+      "type": "analytic_switched_rc"
+    },
+    "babcs_profile_id": "active_ab2_deferred4_events",
+    "babcs_profile_description": "Active bounded Adams-Bashforth second-order candidate for scheduled switching, with event boundaries handled by implicit authority and a reference interval of four accepted non-event steps."
+  }
+}

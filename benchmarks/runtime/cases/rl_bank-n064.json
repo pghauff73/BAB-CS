@@ -1,0 +1,998 @@
+{
+  "linear_backend": "dense",
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VIN",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "vin",
+      "negative": "mid1",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L1",
+      "positive": "mid1",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R2",
+      "positive": "vin",
+      "negative": "mid2",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L2",
+      "positive": "mid2",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R3",
+      "positive": "vin",
+      "negative": "mid3",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L3",
+      "positive": "mid3",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R4",
+      "positive": "vin",
+      "negative": "mid4",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L4",
+      "positive": "mid4",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R5",
+      "positive": "vin",
+      "negative": "mid5",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L5",
+      "positive": "mid5",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R6",
+      "positive": "vin",
+      "negative": "mid6",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L6",
+      "positive": "mid6",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R7",
+      "positive": "vin",
+      "negative": "mid7",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L7",
+      "positive": "mid7",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R8",
+      "positive": "vin",
+      "negative": "mid8",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L8",
+      "positive": "mid8",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R9",
+      "positive": "vin",
+      "negative": "mid9",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L9",
+      "positive": "mid9",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R10",
+      "positive": "vin",
+      "negative": "mid10",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L10",
+      "positive": "mid10",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R11",
+      "positive": "vin",
+      "negative": "mid11",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L11",
+      "positive": "mid11",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R12",
+      "positive": "vin",
+      "negative": "mid12",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L12",
+      "positive": "mid12",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R13",
+      "positive": "vin",
+      "negative": "mid13",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L13",
+      "positive": "mid13",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R14",
+      "positive": "vin",
+      "negative": "mid14",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L14",
+      "positive": "mid14",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R15",
+      "positive": "vin",
+      "negative": "mid15",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L15",
+      "positive": "mid15",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R16",
+      "positive": "vin",
+      "negative": "mid16",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L16",
+      "positive": "mid16",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R17",
+      "positive": "vin",
+      "negative": "mid17",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L17",
+      "positive": "mid17",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R18",
+      "positive": "vin",
+      "negative": "mid18",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L18",
+      "positive": "mid18",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R19",
+      "positive": "vin",
+      "negative": "mid19",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L19",
+      "positive": "mid19",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R20",
+      "positive": "vin",
+      "negative": "mid20",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L20",
+      "positive": "mid20",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R21",
+      "positive": "vin",
+      "negative": "mid21",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L21",
+      "positive": "mid21",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R22",
+      "positive": "vin",
+      "negative": "mid22",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L22",
+      "positive": "mid22",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R23",
+      "positive": "vin",
+      "negative": "mid23",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L23",
+      "positive": "mid23",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R24",
+      "positive": "vin",
+      "negative": "mid24",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L24",
+      "positive": "mid24",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R25",
+      "positive": "vin",
+      "negative": "mid25",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L25",
+      "positive": "mid25",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R26",
+      "positive": "vin",
+      "negative": "mid26",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L26",
+      "positive": "mid26",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R27",
+      "positive": "vin",
+      "negative": "mid27",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L27",
+      "positive": "mid27",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R28",
+      "positive": "vin",
+      "negative": "mid28",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L28",
+      "positive": "mid28",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R29",
+      "positive": "vin",
+      "negative": "mid29",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L29",
+      "positive": "mid29",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R30",
+      "positive": "vin",
+      "negative": "mid30",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L30",
+      "positive": "mid30",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R31",
+      "positive": "vin",
+      "negative": "mid31",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L31",
+      "positive": "mid31",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R32",
+      "positive": "vin",
+      "negative": "mid32",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L32",
+      "positive": "mid32",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R33",
+      "positive": "vin",
+      "negative": "mid33",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L33",
+      "positive": "mid33",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R34",
+      "positive": "vin",
+      "negative": "mid34",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L34",
+      "positive": "mid34",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R35",
+      "positive": "vin",
+      "negative": "mid35",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L35",
+      "positive": "mid35",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R36",
+      "positive": "vin",
+      "negative": "mid36",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L36",
+      "positive": "mid36",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R37",
+      "positive": "vin",
+      "negative": "mid37",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L37",
+      "positive": "mid37",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R38",
+      "positive": "vin",
+      "negative": "mid38",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L38",
+      "positive": "mid38",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R39",
+      "positive": "vin",
+      "negative": "mid39",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L39",
+      "positive": "mid39",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R40",
+      "positive": "vin",
+      "negative": "mid40",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L40",
+      "positive": "mid40",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R41",
+      "positive": "vin",
+      "negative": "mid41",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L41",
+      "positive": "mid41",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R42",
+      "positive": "vin",
+      "negative": "mid42",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L42",
+      "positive": "mid42",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R43",
+      "positive": "vin",
+      "negative": "mid43",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L43",
+      "positive": "mid43",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R44",
+      "positive": "vin",
+      "negative": "mid44",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L44",
+      "positive": "mid44",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R45",
+      "positive": "vin",
+      "negative": "mid45",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L45",
+      "positive": "mid45",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R46",
+      "positive": "vin",
+      "negative": "mid46",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L46",
+      "positive": "mid46",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R47",
+      "positive": "vin",
+      "negative": "mid47",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L47",
+      "positive": "mid47",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R48",
+      "positive": "vin",
+      "negative": "mid48",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L48",
+      "positive": "mid48",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R49",
+      "positive": "vin",
+      "negative": "mid49",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L49",
+      "positive": "mid49",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R50",
+      "positive": "vin",
+      "negative": "mid50",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L50",
+      "positive": "mid50",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R51",
+      "positive": "vin",
+      "negative": "mid51",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L51",
+      "positive": "mid51",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R52",
+      "positive": "vin",
+      "negative": "mid52",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L52",
+      "positive": "mid52",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R53",
+      "positive": "vin",
+      "negative": "mid53",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L53",
+      "positive": "mid53",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R54",
+      "positive": "vin",
+      "negative": "mid54",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L54",
+      "positive": "mid54",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R55",
+      "positive": "vin",
+      "negative": "mid55",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L55",
+      "positive": "mid55",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R56",
+      "positive": "vin",
+      "negative": "mid56",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L56",
+      "positive": "mid56",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R57",
+      "positive": "vin",
+      "negative": "mid57",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L57",
+      "positive": "mid57",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R58",
+      "positive": "vin",
+      "negative": "mid58",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L58",
+      "positive": "mid58",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R59",
+      "positive": "vin",
+      "negative": "mid59",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L59",
+      "positive": "mid59",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R60",
+      "positive": "vin",
+      "negative": "mid60",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L60",
+      "positive": "mid60",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R61",
+      "positive": "vin",
+      "negative": "mid61",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L61",
+      "positive": "mid61",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R62",
+      "positive": "vin",
+      "negative": "mid62",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L62",
+      "positive": "mid62",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R63",
+      "positive": "vin",
+      "negative": "mid63",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L63",
+      "positive": "mid63",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "R64",
+      "positive": "vin",
+      "negative": "mid64",
+      "resistance": 10.0
+    },
+    {
+      "type": "inductor",
+      "name": "L64",
+      "positive": "mid64",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.003,
+    "nominal_step": 5e-05
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "heun",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 4,
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  },
+  "runtime_benchmark": {
+    "family_id": "rl_bank",
+    "size": 64,
+    "size_parameter": "channels",
+    "authority": {
+      "type": "analytic_rl"
+    },
+    "babcs_profile_id": "active_heun_deferred4_smooth",
+    "babcs_profile_description": "Active bounded Heun candidate for smooth linear and coupled-linear transients, with an implicit trapezoidal reference at least every four accepted steps and periodic replay every 16 accepted steps."
+  }
+}

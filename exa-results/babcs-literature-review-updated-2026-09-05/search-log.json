@@ -1,0 +1,188 @@
+{
+  "assessment_date": "2026-09-05",
+  "requested_result_count": 36,
+  "workstreams": 6,
+  "prior_review": "../babcs-literature-review-2026-09-05/REVIEW.md",
+  "queries": [
+    {
+      "query": "category:research paper spectral deferred correction methods ordinary differential equations Dutt Greengard Rokhlin 2000",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Spectral Deferred Correction Methods for Ordinary Differential ...",
+          "url": "https://link.springer.com/article/10.1023/A:1022338906936"
+        },
+        {
+          "title": "Spectral Deferred Correction Methods for Ordinary Differential Equations",
+          "url": "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.1028.1216"
+        },
+        {
+          "title": "MR1765736 - MathSciNet",
+          "url": "https://mathscinet.ams.org/mathscinet/relay-station?mr=1765736"
+        },
+        {
+          "title": "Spectral Deferred Correction Methods for Ordinary Differential Equatio...",
+          "url": "https://bishtref.com/articles/10.1023/a:1022338906936"
+        },
+        {
+          "title": "Spectral deferred correction methods for ordinary differential equations - MaRDI portal",
+          "url": "https://portal.mardi4nfdi.de/wiki/Publication:1577717"
+        },
+        {
+          "title": "Convergence theory for spectral deferred correction",
+          "url": "http://www.damtp.cam.ac.uk/research/afha/anders/Spectral.pdf"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper a posteriori error analysis parareal algorithm adaptive error control coarse fine propagation",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "A posteriori error analysis for a space-time parallel discretization of parabolic partial differential equations",
+          "url": "https://arxiv.org/html/2111.00606"
+        },
+        {
+          "title": "Adaptive Parareal for systems of ODEs",
+          "url": "https://cims.nyu.edu/dd16/proceedings/tromeur-dervout_contrib.pdf"
+        },
+        {
+          "title": "Optimizing Coarse Propagators in Parareal AlgorithmsThe work of B. Jin is supported by UK EPSRC EP/V026259/1, Hong Kong RGC General Research Fund (14306423), and a start-up fund from The Chinese University of Hong Kong. The work of Z. Zhou is supported by Hong Kong RGC General Research Fund (15303021) and an internal grant of Hong Kong Polytechnic University (Project ID: P0038888, Work Programme: ZVX3).",
+          "url": "https://arxiv.org/html/2311.15320v2"
+        },
+        {
+          "title": "N/A",
+          "url": "https://hal.science/hal-03189428v1/file/legoll_lelievre_sharma_parareal.pdf"
+        },
+        {
+          "title": "[1909.08333] An Adaptive Parareal Algorithm",
+          "url": "https://ar5iv.labs.arxiv.org/html/1909.08333"
+        },
+        {
+          "title": "N/A",
+          "url": "https://hal.science/hal-04012480v1/document"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper global error estimation ordinary differential equations Hermite interpolation defect residual logarithmic norm",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Runge–Kutta Defect Control Using Hermite–Birkhoff Interpolation",
+          "url": "https://doi.org/10.1137/0912053"
+        },
+        {
+          "title": "N/A",
+          "url": "https://arxiv.org/pdf/1804.03363"
+        },
+        {
+          "title": "Error Estimation of Numerical Solvers for Linear Ordinary Differential Equations",
+          "url": "https://doi.org/10.12783/dtcse/cmsms2018/25204"
+        },
+        {
+          "title": "Global error estimation with adaptive explicit Runge-Kutta methods",
+          "url": "https://webhomes.maths.ed.ac.uk/~dhigham/Publications/P23.pdf"
+        },
+        {
+          "title": "Discrete and continuous global error estimation with globally embedded",
+          "url": "https://peteprince.co.uk/cge.pdf"
+        },
+        {
+          "title": "STAT.",
+          "url": "https://webhomes.maths.ed.ac.uk/~dhigham/Publications/P8.pdf"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper weighted logarithmic norm Lyapunov equation dissipative stiff differential equations verified error bounds",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Logarithmic norms and regular perturbations of differential equations",
+          "url": "https://doi.org/10.17951/a.2019.73.2.5-19"
+        },
+        {
+          "title": "Kybernetika - Article detail",
+          "url": "https://www.kybernetika.cz/content/2012/5/865"
+        },
+        {
+          "title": "Global, rigorous and realistic bounds for the solution of dissipative differential equations. Part I: Theory",
+          "url": "https://arnold-neumaier.at/ms/ode.pdf"
+        },
+        {
+          "title": "Validated Numerical Bounds on the Global Error for Initial Value Problems for Stiff Ordinary Differential Equations",
+          "url": "http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.76.4705"
+        },
+        {
+          "title": "Kybernetika",
+          "url": "https://www.dml.cz/manakin/bitstream/handle/10338.dmlcz/143086/Kybernetika_48-2012-5_3.pdf"
+        },
+        {
+          "title": "Logarithmic norms and regular perturbations of differential ...",
+          "url": "https://repository.up.ac.za/bitstreams/cbc9d3a8-7070-410c-9023-44803feaa350/download"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper verified ordinary differential equations Isabelle HOL Immler numerical integration certificates",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Numerical Analysis of Ordinary Differential Equations in Isabelle/HOL",
+          "url": "https://www.cs.vu.nl/~jhl890/pub/immler2012ode.pdf"
+        },
+        {
+          "title": "Numerical Analysis of Ordinary Differential Equations in Isabelle/HOL",
+          "url": "https://doi.org/10.1007/978-3-642-32347-8_26"
+        },
+        {
+          "title": "Verified Reachability Analysis of Continuous Systems",
+          "url": "https://saloranta.de/immler/fabian/documents/immler2015reachability.pdf"
+        },
+        {
+          "title": "A Verified ODE Solver and the Lorenz Attractor",
+          "url": "https://link.springer.com/content/pdf/10.1007/s10817-017-9448-y.pdf?error=cookies_not_supported&code=43be654a-8e2e-422d-b895-a896544acf80"
+        },
+        {
+          "title": "Formally Verified Computation of Enclosures of Solutions of Ordinary Differential Equations",
+          "url": "https://doi.org/10.1007/978-3-319-06200-6_9"
+        },
+        {
+          "title": "A Verified ODE Solver and the Lorenz Attractor",
+          "url": "https://link.springer.com/content/pdf/10.1007/s10817-017-9448-y.pdf?error=cookies_not_supported&code=8bf0b74b-f1e0-4e9b-9f25-78f82a14b104"
+        }
+      ]
+    },
+    {
+      "query": "category:research paper goal oriented a posteriori error estimation time to event differential equations",
+      "numResults": 6,
+      "results": [
+        {
+          "title": "Error estimation for the time to a threshold value in evolutionary partial differential equations",
+          "url": "https://doi.org/10.1007/s10543-023-00947-1"
+        },
+        {
+          "title": "Error estimation for the time to a threshold value in evolutionary partial differential equations",
+          "url": "https://doi.org/10.48550/arxiv.2111.09834"
+        },
+        {
+          "title": "[2001.11139] Error estimation and uncertainty quantification for first time to a threshold value",
+          "url": "https://ar5iv.labs.arxiv.org/html/2001.11139"
+        },
+        {
+          "title": "[2111.09834] Error estimation for the time to a threshold value in evolutionary partial differential equations",
+          "url": "https://ar5iv.labs.arxiv.org/html/2111.09834"
+        },
+        {
+          "title": "N/A",
+          "url": "https://export.arxiv.org/pdf/2207.04764v2.pdf"
+        },
+        {
+          "title": "A Posteriori Single- and Multi-Goal Error Control and Adaptivity for Partial Differential Equations",
+          "url": "https://arxiv.org/html/2404.01738v1"
+        }
+      ]
+    }
+  ]
+}

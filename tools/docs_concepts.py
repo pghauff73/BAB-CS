@@ -168,6 +168,18 @@ CONCEPT_GLOSSARY: tuple[dict[str, Any], ...] = (
         "definition": "An installable Python package file containing code and package metadata.",
     },
     {
+        "id": "rss",
+        "term": "RSS",
+        "aliases": ["RSS", "resident set size"],
+        "definition": "Resident set size: the physical memory occupied by a process at a measured time; maximum RSS records its observed peak.",
+    },
+    {
+        "id": "gnu-time",
+        "term": "GNU Time",
+        "aliases": ["GNU", "GNU Time"],
+        "definition": "The GNU Project's command-line utility for measuring process runtime and resource use, including maximum resident memory.",
+    },
+    {
         "id": "mna",
         "term": "MNA",
         "aliases": ["MNA", "modified nodal analysis"],

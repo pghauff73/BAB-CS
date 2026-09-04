@@ -31,6 +31,18 @@ class ExternalComparisonTests(unittest.TestCase):
         self.assertIn("wrdata external.dat bab_state_0", netlist)
         self.assertEqual(state_names, ("v(C1)",))
 
+    def test_ngspice_netlist_accepts_explicit_accuracy_sweep_timestep(self) -> None:
+        case = json.loads(
+            (REPOSITORY_ROOT / "benchmarks" / "cases" / "rc_step.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        netlist, _ = generate_ngspice_netlist(
+            case,
+            nominal_step_override=1.25e-6,
+        )
+        self.assertIn(f"tran {format(1.25e-6, '.17g')}", netlist)
+
     def test_external_netlist_preserves_dynamic_initial_conditions(self) -> None:
         data = json.loads(
             (REPOSITORY_ROOT / "benchmarks" / "cases" / "rl_step.json").read_text(

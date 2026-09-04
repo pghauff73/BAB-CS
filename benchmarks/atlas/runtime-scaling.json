@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "runtime_manifest": "../runtime/manifest.json",
+  "babcs_linear_backend": "hybrid",
+  "cases": [
+    {"id": "rc_bank-n001", "step_divisor": 1},
+    {"id": "rc_bank-n004", "step_divisor": 1},
+    {"id": "rc_bank-n016", "step_divisor": 1},
+    {"id": "rl_bank-n001", "step_divisor": 1},
+    {"id": "rl_bank-n004", "step_divisor": 1},
+    {"id": "rl_bank-n016", "step_divisor": 1},
+    {"id": "coupled_rc_ring-n001", "step_divisor": 1},
+    {"id": "coupled_rc_ring-n004", "step_divisor": 1},
+    {"id": "coupled_rc_ring-n016", "step_divisor": 1},
+    {"id": "switched_rc_bank-n001", "step_divisor": 16},
+    {"id": "diode_rc_bank-n001", "step_divisor": 1}
+  ],
+  "claim_boundary": "External-authority coverage is empirical characterization of the declared runtime profiles. The recursive internal bound remains reference-relative, and an unqualified external authority produces no coverage samples or accuracy claim."
+}

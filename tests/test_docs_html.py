@@ -404,7 +404,7 @@ class DocumentationHtmlTests(unittest.TestCase):
         second = render_svg_assets(payload)
 
         self.assertEqual(tuple(first), SVG_ASSET_NAMES)
-        self.assertEqual(len(first), 42)
+        self.assertEqual(len(first), 43)
         self.assertTrue(set(FIGURE_ASSET_NAMES).issubset(first))
         self.assertTrue(set(TUTORIAL_SVG_ASSET_NAMES).issubset(first))
         self.assertEqual(first, second)
@@ -423,6 +423,12 @@ class DocumentationHtmlTests(unittest.TestCase):
         self.assertIn(b"154", graph)
         self.assertIn(b"126", graph)
         self.assertIn(b"57", graph)
+
+        blueprint = first["speedup-accuracy-by-size-blueprint.svg"]
+        self.assertIn(b"HOW FAST?", blueprint)
+        self.assertIn(b"HOW ACCURATE?", blueprint)
+        self.assertIn(b"1\xc3\x97", blueprint)
+        self.assertIn(b"not measured benchmark results", blueprint)
 
     def test_generated_svg_text_layout_regressions_are_fixed(self) -> None:
         assets = render_svg_assets(build_payload())
@@ -678,8 +684,8 @@ class DocumentationHtmlTests(unittest.TestCase):
             text=True,
         )
 
-        self.assertIn('"assets": 42', completed.stdout)
-        self.assertIn('"documents": 39', completed.stdout)
+        self.assertIn('"assets": 43', completed.stdout)
+        self.assertIn('"documents": 40', completed.stdout)
 
     def test_redesign_plan_records_requirements_issue_loop_and_completion_gates(self) -> None:
         plan = (REPOSITORY_ROOT / "HTML_DOCUMENT_REDESIGN_AND_REWRITE_PLAN.md").read_text(
@@ -708,6 +714,45 @@ class DocumentationHtmlTests(unittest.TestCase):
         self.assertIn("ENGINEERING_AND_PERFORMANCE_ESSAY.md", plan)
         self.assertIn("VALIDATION_RELEASE_AND_CLAIMS_ESSAY.md", plan)
         self.assertIn("INTEXT_LEARNING_GUIDE_AND_NOVICE_ESSAY_PLAN.md", docs_index)
+
+    def test_ngspice_runtime_plan_records_fairness_metrics_and_chart_contract(self) -> None:
+        plan_path = REPOSITORY_ROOT / "BABCS_NGSPICE_RUNTIME_BENCHMARK_PLAN.md"
+        plan = plan_path.read_text(encoding="utf-8")
+        docs_index = (DOCS_ROOT / "index.md").read_text(encoding="utf-8")
+
+        for heading in (
+            "## Purpose",
+            "## Non-Negotiable Comparison Contract",
+            "## Benchmark Inventory",
+            "## Measurement Model",
+            "## Required Metrics",
+            "## The Headline Chart",
+            "## Implementation Work Packages",
+            "## Tests",
+            "## Completion Criteria",
+            "## Claim Boundary",
+        ):
+            with self.subTest(runtime_plan_heading=heading):
+                self.assertIn(heading, plan)
+        for requirement in (
+            "same physical machine",
+            "same stop time",
+            "median_ngspice_analysis_seconds / median_babcs_analysis_seconds",
+            "### Accepted and output points",
+            "### Solver work",
+            "### Peak memory",
+            "### Trajectory accuracy",
+            "How fast?",
+            "How accurate?",
+            "1×",
+            "maximum resident set size",
+            "rusage all",
+            "speedup-accuracy-by-size.svg",
+            "speedup-accuracy-by-size-blueprint.svg",
+        ):
+            with self.subTest(runtime_plan_requirement=requirement):
+                self.assertIn(requirement, plan)
+        self.assertIn("BABCS_NGSPICE_RUNTIME_BENCHMARK_PLAN.md", docs_index)
 
     def test_svg_figure_plan_records_inventory_loop_and_completion_audit(self) -> None:
         plan = (

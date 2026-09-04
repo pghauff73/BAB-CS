@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "runtime_manifest": "../runtime/manifest.json",
+  "babcs_linear_backend": "hybrid",
+  "global_dual_trajectory": {
+    "refinement_pairs": [
+      {
+        "coarse_refinement_factor": 2,
+        "fine_refinement_factor": 4
+      },
+      {
+        "coarse_refinement_factor": 4,
+        "fine_refinement_factor": 8
+      },
+      {
+        "coarse_refinement_factor": 8,
+        "fine_refinement_factor": 16
+      },
+      {
+        "coarse_refinement_factor": 16,
+        "fine_refinement_factor": 32
+      }
+    ],
+    "safety_factors": [1.0],
+    "order_aware": {
+      "expected_order": 2.0,
+      "minimum_observed_order": 1.0,
+      "maximum_observed_order": 3.0,
+      "discrepancy_floor": 1e-12
+    },
+    "statewise_four_level": {
+      "minimum_observed_order": 1.0,
+      "maximum_observed_order": 3.0,
+      "scaled_difference_floor": 1e-12,
+      "maximum_adjacent_order_difference": 0.5,
+      "maximum_coefficient_relative_difference": 0.5,
+      "maximum_extrapolant_residual_ratio": 1.0
+    }
+  },
+  "cases": [
+    {
+      "id": "rc_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "rc_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "rc_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "rl_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "rl_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "rl_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "coupled_rc_ring-n001",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "coupled_rc_ring-n004",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    },
+    {
+      "id": "coupled_rc_ring-n016",
+      "step_divisor": 1,
+      "variant_id": "global_statewise_four_level"
+    }
+  ],
+  "claim_boundary": "The signed statewise four-level study is an offline empirical diagnostic. It retains per-state direction, estimates adjacent observed orders and leading coefficients from four successive equal-ratio trapezoidal refinements, rejects unstable states and samples fail closed, and reports rejected samples as uncovered. It does not tune a family-specific multiplier, alter a BAB-CS runtime profile, establish a formal exact-trajectory enclosure, or promote the estimator for runtime use."
+}

@@ -1,0 +1,166 @@
+{
+  "linear_backend": "dense",
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VIN",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "resistor",
+      "name": "RIN",
+      "positive": "vin",
+      "negative": "out1",
+      "resistance": 100.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH1",
+      "positive": "out1",
+      "negative": "0",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out1",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "inductor",
+      "name": "L1",
+      "positive": "out1",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH2",
+      "positive": "out2",
+      "negative": "0",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C2",
+      "positive": "out2",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "inductor",
+      "name": "L2",
+      "positive": "out2",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH3",
+      "positive": "out3",
+      "negative": "0",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C3",
+      "positive": "out3",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "inductor",
+      "name": "L3",
+      "positive": "out3",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RSH4",
+      "positive": "out4",
+      "negative": "0",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C4",
+      "positive": "out4",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "inductor",
+      "name": "L4",
+      "positive": "out4",
+      "negative": "0",
+      "inductance": 0.01,
+      "initial_current": 0.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC1_2",
+      "positive": "out1",
+      "negative": "out2",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC2_3",
+      "positive": "out2",
+      "negative": "out3",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC3_4",
+      "positive": "out3",
+      "negative": "out4",
+      "resistance": 1000.0
+    },
+    {
+      "type": "resistor",
+      "name": "RC4_1",
+      "positive": "out4",
+      "negative": "out1",
+      "resistance": 1000.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.004,
+    "nominal_step": 1e-05
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "heun",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 4,
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  },
+  "runtime_benchmark": {
+    "family_id": "coupled_rlc_ring",
+    "size": 4,
+    "size_parameter": "coupled_nodes",
+    "authority": {
+      "type": "refined_trapezoidal",
+      "refinement_factor": 8
+    },
+    "babcs_profile_id": "active_heun_deferred4_smooth",
+    "babcs_profile_description": "Active bounded Heun candidate for smooth linear and coupled-linear transients, with an implicit trapezoidal reference at least every four accepted steps and periodic replay every 16 accepted steps."
+  }
+}

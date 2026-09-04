@@ -214,6 +214,181 @@ PYTHONPATH=src python tools/bound_coverage_atlas.py \
   --sample-csv /tmp/babcs-atlas-samples.csv
 ```
 
+Run the manifest-owned runtime profiles through the same coverage machinery
+with independently qualified analytic or refined trajectory authority:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-scaling.json \
+  --output /tmp/babcs-runtime-atlas.json \
+  --sample-csv /tmp/babcs-runtime-atlas-samples.csv \
+  --plot-directory /tmp/babcs-runtime-atlas-plots
+```
+
+Reproduce the default-off local dual-resolution reference-discretization
+experiment with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-dual-reference.json \
+  --output /tmp/babcs-dual-reference-atlas.json \
+  --sample-csv /tmp/babcs-dual-reference-samples.csv \
+  --plot-directory /tmp/babcs-dual-reference-plots
+```
+
+The retained paired evidence under
+`artifacts/atlas/runtime-dual-reference/` does not support promotion: the local
+term provides negligible RC improvement, no RL improvement, and becomes
+non-informative for the coupled RC case. It remains an experimental diagnostic,
+not a formal exact-trajectory enclosure or a headline runtime configuration.
+
+Run the offline global coarse-versus-refined trajectory diagnostic with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-dual-trajectory.json \
+  --output /tmp/babcs-global-dual-atlas.json \
+  --sample-csv /tmp/babcs-global-dual-samples.csv \
+  --plot-directory /tmp/babcs-global-dual-plots
+```
+
+This mode reports a complete safety-factor curve and uncertainty-inflation
+quantiles. The retained factor-2-versus-factor-4 result improves empirical
+coverage but remains hundreds of times wider than actual authority drift at the
+median sample, so it is also an offline diagnostic rather than a runtime bound.
+
+Run the size-scaled refinement-pair sweep with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-refinement-pair-sweep.json \
+  --output /tmp/babcs-global-pair-sweep.json \
+  --sample-csv /tmp/babcs-global-pair-sweep-samples.csv \
+  --plot-directory /tmp/babcs-global-pair-sweep-plots
+```
+
+The atlas reports per-case and common-policy Pareto frontiers across coverage,
+uncertainty inflation, and reference work. It also states an important scaling
+boundary: deterministic work units count unweighted solver events and iterations.
+They do not represent runtime, floating-point operations, sparse fill, or matrix
+factorization cost. Repeated RC and RL banks remain throughput controls; the
+coupled RC ring adds genuine modes but does not replace broader nonlinear,
+switching, and oscillatory scaling families. The retained sweep does not support
+promotion of any tested refinement pair.
+
+Run the order-aware refinement study with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-order-aware.json \
+  --output /tmp/babcs-global-order-aware.json \
+  --sample-csv /tmp/babcs-global-order-aware-samples.csv \
+  --plot-directory /tmp/babcs-global-order-aware-plots
+```
+
+This study reports pointwise, anchor-epoch, and anchor-epoch-envelope
+qualification separately. It rejects nondecreasing discrepancies, observed
+orders outside the declared range, and numerical-floor cases. Epoch aggregation
+reduces pointwise qualification noise, but no tested variant provides sufficient
+common effective reference coverage without either rejected windows or increased
+tail inflation. The diagnostic remains offline and is not promoted.
+
+Run the signed statewise four-level study with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-statewise-four-level.json \
+  --output /tmp/babcs-global-statewise-four-level.json \
+  --sample-csv /tmp/babcs-global-statewise-four-level-samples.csv \
+  --plot-directory /tmp/babcs-global-statewise-four-level-plots
+```
+
+This study preserves per-state error signs and requires adjacent observed-order,
+leading-coefficient, and extrapolant-residual stability across four refinements.
+It also records whether direct difference-floor rejections occur at interpolated
+times, immediately after an anchor reset, or with a material algebraic residual.
+The retained nine-case evidence qualifies only 292 of 14,238 eligible
+sample-policy evaluations, so the estimator remains offline and is not promoted.
+Run the native epoch-aligned statewise study with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-statewise-epoch.json \
+  --output /tmp/babcs-global-statewise-epoch.json \
+  --sample-csv /tmp/babcs-global-statewise-epoch-samples.csv \
+  --plot-directory /tmp/babcs-global-statewise-epoch-plots
+```
+
+This study integrates each refinement directly to the diagnostic times while
+preserving its factor as local interval substeps. It removes interpolation and
+redundant periodic authority replay, classifies coherent versus unmatched error
+sign changes, and fits each state over complete anchor epochs. The finer common
+policy qualifies 49 of 483 epochs and 412 of 3,630 state epochs, but coupled
+sizes 4 and 16 still qualify no complete epoch. The common fail-closed frontier
+is empty, so the estimator remains offline and is not promoted. The next
+diagnostic direction is a reviewed mode-aligned epoch basis for eligible smooth
+linear circuits; statewise evidence remains the fallback when that basis is
+ambiguous or ill-conditioned.
+
+Run the deterministic mode-aligned study with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-modal-epoch.json \
+  --output /tmp/babcs-global-modal-epoch.json \
+  --sample-csv /tmp/babcs-global-modal-epoch-samples.csv \
+  --plot-directory /tmp/babcs-global-modal-epoch-plots
+```
+
+This offline study admits only smooth linear circuits with homogeneous dynamic
+units and a symmetric differential Jacobian. A deterministic Jacobi basis must
+pass symmetry, eigen-residual, and orthogonality gates; repeated eigenvalues stay
+grouped as one invariant subspace. The finer policy raises the size-four coupled
+RC ring from zero to one qualified epoch, but size 16 still qualifies none and
+the common fail-closed frontier remains empty.
+
+Run the bounded temporal-alignment study with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-temporal-modal-epoch.json \
+  --output /tmp/babcs-global-temporal-modal-epoch.json \
+  --sample-csv /tmp/babcs-global-temporal-modal-epoch-samples.csv \
+  --plot-directory /tmp/babcs-global-temporal-modal-epoch-plots
+```
+
+This study permits at most one sample of lag and only for scalar modal groups
+with a unique one-to-one zero-crossing match. It attempted alignment for 1,861
+coarse-policy and 1,844 finer-policy modal-group epochs. Only one and three
+groups respectively produced unique crossing matches, and all four still failed
+the aligned direction gate. No alignment was applied, every qualification and
+coverage result remained identical to the unshifted modal study, and the common
+frontier remained empty.
+
+Run the five-level two-term holdout study with:
+
+```bash
+PYTHONPATH=src python tools/bound_coverage_atlas.py \
+  --runtime-atlas-manifest benchmarks/atlas/runtime-global-two-term-modal.json \
+  --output /tmp/babcs-global-two-term-modal.json \
+  --sample-csv /tmp/babcs-global-two-term-modal-samples.csv \
+  --plot-directory /tmp/babcs-global-two-term-modal-plots
+```
+
+Qualified Loop 5G groups remain unchanged. The rejected groups fit primary order
+2 with common secondary orders 3 and 4 using factors 2 through 16, while factor
+32 remains excluded from fitting and serves as the independent holdout. Both
+designs pass the condition-number gate, but none of 1,945 attempted groups per
+policy passes every training and holdout gate. The report therefore reproduces
+the 50 qualified joint epochs, 209 qualified modal-group epochs, and 740
+qualified samples from Loop 5G without adding coverage. The next diagnostic will
+extend the common native refinement ladder to factors 64 and 128 to test whether
+factor 32 remains pre-asymptotic rather than relaxing a residual gate.
+
+The runtime atlas reports internal-bound components and empirical external
+coverage separately. A refined authority that fails the fixed-accuracy
+convergence contract produces no coverage samples or accuracy claim.
+
 The observatory requires all 126 fixed-step rows. The atlas reports actual
 authority error, recursive internal bound, anchor deviation, phase and energy,
 empirical coverage, and fallback/rejection causes without promoting empirical

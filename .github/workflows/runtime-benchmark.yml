@@ -1,0 +1,95 @@
+name: Same-Machine Runtime Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Runtime benchmark profile
+        required: true
+        default: publication
+        type: choice
+        options:
+          - quick
+          - development
+          - publication
+      cpu:
+        description: Logical CPU number used for process affinity
+        required: true
+        default: "2"
+        type: string
+      babcs_backend:
+        description: BAB-CS linear backend profile
+        required: true
+        default: dense
+        type: choice
+        options:
+          - dense
+          - scipy
+          - hybrid
+      accuracy_mode:
+        description: Runtime accuracy selection mode
+        required: true
+        default: fixed_config
+        type: choice
+        options:
+          - fixed_config
+          - fixed_accuracy
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: BAB-CS versus ngspice on self-hosted machine
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 240
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Verify local tools
+        run: |
+          python --version
+          ngspice --version
+          /usr/bin/time --version
+          if [ "${{ inputs.babcs_backend }}" != "dense" ]; then
+            python -c 'import numpy, scipy; print("numpy", numpy.__version__); print("scipy", scipy.__version__)'
+          fi
+
+      - name: Run same-machine benchmark
+        env:
+          PYTHONPATH: src
+          OMP_NUM_THREADS: "1"
+          OPENBLAS_NUM_THREADS: "1"
+          MKL_NUM_THREADS: "1"
+          NUMEXPR_NUM_THREADS: "1"
+        run: |
+          python tools/benchmark_ngspice_runtime.py \
+            --profile "${{ inputs.profile }}" \
+            --manifest benchmarks/runtime/manifest.json \
+            --external-manifest benchmarks/external/manifest.json \
+            --output-root artifacts/runtime \
+            --babcs-backend "${{ inputs.babcs_backend }}" \
+            --accuracy-mode "${{ inputs.accuracy_mode }}" \
+            --cpu "${{ inputs.cpu }}" \
+            --overwrite
+
+      - name: Hash retained evidence
+        run: |
+          find artifacts/runtime -type f -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            > artifacts/runtime/SHA256SUMS
+
+      - name: Upload runtime evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: bab-cs-same-machine-runtime-${{ inputs.profile }}-${{ inputs.babcs_backend }}-${{ inputs.accuracy_mode }}
+          path: artifacts/runtime
+          if-no-files-found: error
+          retention-days: 30

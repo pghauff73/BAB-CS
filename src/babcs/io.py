@@ -154,6 +154,11 @@ def write_csv(path: str | Path, circuit: Circuit, result: SimulationResult) -> N
         "replay_refinement_retries",
         "replay_embedded_error",
         "pre_reset_estimated_bound",
+        "reference_discretization_defect",
+        "reference_uncertainty",
+        "pre_reset_reference_uncertainty",
+        "total_estimated_uncertainty",
+        "reference_refinement_solve_count",
     ]
     columns = (
         [
@@ -259,6 +264,22 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
         "maximum_pre_reset_estimated_bound": max(
             (metric.pre_reset_estimated_bound for metric in metrics), default=0.0
         ),
+        "maximum_reference_discretization_defect": max(
+            (metric.reference_discretization_defect for metric in metrics),
+            default=0.0,
+        ),
+        "maximum_reference_uncertainty": max(
+            (metric.reference_uncertainty for metric in metrics),
+            default=0.0,
+        ),
+        "maximum_pre_reset_reference_uncertainty": max(
+            (metric.pre_reset_reference_uncertainty for metric in metrics),
+            default=0.0,
+        ),
+        "maximum_total_estimated_uncertainty": max(
+            (metric.total_estimated_uncertainty for metric in metrics),
+            default=0.0,
+        ),
         "maximum_anchor_reference_error": max(
             (metric.anchor_reference_error for metric in metrics), default=0.0
         ),
@@ -277,6 +298,9 @@ def summary_data(result: SimulationResult) -> dict[str, object]:
             metric.candidate_algebraic_iterations for metric in metrics
         ),
         "reference_solves": sum(metric.reference_solve_count for metric in metrics),
+        "reference_refinement_solves": sum(
+            metric.reference_refinement_solve_count for metric in metrics
+        ),
         "reference_iterations": sum(metric.reference_iterations for metric in metrics),
         "reference_circuit_evaluations": sum(
             metric.reference_circuit_evaluations for metric in metrics

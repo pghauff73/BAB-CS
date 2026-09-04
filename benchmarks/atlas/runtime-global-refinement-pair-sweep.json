@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "runtime_manifest": "../runtime/manifest.json",
+  "babcs_linear_backend": "hybrid",
+  "global_dual_trajectory": {
+    "refinement_pairs": [
+      {
+        "coarse_refinement_factor": 2,
+        "fine_refinement_factor": 4
+      },
+      {
+        "coarse_refinement_factor": 4,
+        "fine_refinement_factor": 8
+      },
+      {
+        "coarse_refinement_factor": 8,
+        "fine_refinement_factor": 16
+      },
+      {
+        "coarse_refinement_factor": 16,
+        "fine_refinement_factor": 32
+      }
+    ],
+    "safety_factors": [1.0, 2.0, 4.0, 8.0, 16.0]
+  },
+  "cases": [
+    {
+      "id": "rc_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "rc_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "rc_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "rl_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "rl_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "rl_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "coupled_rc_ring-n001",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "coupled_rc_ring-n004",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    },
+    {
+      "id": "coupled_rc_ring-n016",
+      "step_divisor": 1,
+      "variant_id": "global_refinement_pair_sweep"
+    }
+  ],
+  "claim_boundary": "The refinement-pair sweep is an offline empirical coverage-vacuity-work comparison. It reports every declared pair and safety factor, computes a Pareto frontier without family-specific hidden tuning, and does not alter BAB-CS runtime profiles or claim a formal exact-trajectory enclosure."
+}

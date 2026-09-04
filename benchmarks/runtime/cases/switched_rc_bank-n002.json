@@ -1,0 +1,106 @@
+{
+  "linear_backend": "dense",
+  "elements": [
+    {
+      "type": "voltage_source",
+      "name": "VIN",
+      "positive": "vin",
+      "negative": "0",
+      "waveform": 1.0
+    },
+    {
+      "type": "switch",
+      "name": "S1",
+      "positive": "vin",
+      "negative": "sw1",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R1",
+      "positive": "sw1",
+      "negative": "out1",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C1",
+      "positive": "out1",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    },
+    {
+      "type": "switch",
+      "name": "S2",
+      "positive": "vin",
+      "negative": "sw2",
+      "control": {
+        "type": "pulse",
+        "low": 0.0,
+        "high": 1.0,
+        "delay": 0.0005,
+        "rise": 0.0,
+        "fall": 0.0,
+        "width": 0.001,
+        "period": 0.002
+      },
+      "threshold": 0.5,
+      "on_resistance": 0.1,
+      "off_resistance": 10000000.0
+    },
+    {
+      "type": "resistor",
+      "name": "R2",
+      "positive": "sw2",
+      "negative": "out2",
+      "resistance": 1000.0
+    },
+    {
+      "type": "capacitor",
+      "name": "C2",
+      "positive": "out2",
+      "negative": "0",
+      "capacitance": 1e-06,
+      "initial_voltage": 0.0
+    }
+  ],
+  "simulation": {
+    "start_time": 0.0,
+    "stop_time": 0.003,
+    "nominal_step": 5e-05
+  },
+  "babcs": {
+    "rollout_mode": "active",
+    "candidate_method": "ab2",
+    "reference_method": "trapezoidal",
+    "reference_interval_steps": 4,
+    "predictor_reference_cap": 1000000000.0,
+    "anchor_reference_cap": 1000000000.0,
+    "energy_injection_cap": 1000000000.0,
+    "stiffness_limit": 1000000000.0,
+    "anchor_interval_steps": 16
+  },
+  "runtime_benchmark": {
+    "family_id": "switched_rc_bank",
+    "size": 2,
+    "size_parameter": "channels",
+    "authority": {
+      "type": "analytic_switched_rc"
+    },
+    "babcs_profile_id": "active_ab2_deferred4_events",
+    "babcs_profile_description": "Active bounded Adams-Bashforth second-order candidate for scheduled switching, with event boundaries handled by implicit authority and a reference interval of four accepted non-event steps."
+  }
+}

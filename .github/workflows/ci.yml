@@ -72,6 +72,28 @@ jobs:
             --output /tmp/babcs-comparison-b.json
           cmp /tmp/babcs-comparison-a.json /tmp/babcs-comparison-b.json
 
+      - name: Install ngspice for runtime smoke
+        if: matrix.python-version == '3.14'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ngspice
+
+      - name: Verify same-machine runtime benchmark smoke
+        if: matrix.python-version == '3.14'
+        env:
+          PYTHONPATH: src
+        run: |
+          python tools/benchmark_ngspice_runtime.py \
+            --quick \
+            --case rc_bank-n001 \
+            --output-root /tmp/babcs-runtime-smoke \
+            --warmups 0 \
+            --repeats 1 \
+            --rounds 1
+          test -s /tmp/babcs-runtime-smoke/raw-samples.json
+          test -s /tmp/babcs-runtime-smoke/matched-results.json
+          test -s /tmp/babcs-runtime-smoke/speedup-accuracy-by-size.svg
+
   wheel:
     name: Build validated wheel
     needs: test

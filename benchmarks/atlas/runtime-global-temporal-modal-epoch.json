@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "runtime_manifest": "../runtime/manifest.json",
+  "babcs_linear_backend": "hybrid",
+  "global_dual_trajectory": {
+    "sampling_mode": "integrated_output_times",
+    "refinement_pairs": [
+      {
+        "coarse_refinement_factor": 2,
+        "fine_refinement_factor": 4
+      },
+      {
+        "coarse_refinement_factor": 4,
+        "fine_refinement_factor": 8
+      },
+      {
+        "coarse_refinement_factor": 8,
+        "fine_refinement_factor": 16
+      },
+      {
+        "coarse_refinement_factor": 16,
+        "fine_refinement_factor": 32
+      }
+    ],
+    "safety_factors": [
+      1.0
+    ],
+    "order_aware": {
+      "expected_order": 2.0,
+      "minimum_observed_order": 1.0,
+      "maximum_observed_order": 3.0,
+      "discrepancy_floor": 1e-12
+    },
+    "statewise_four_level": {
+      "minimum_observed_order": 1.0,
+      "maximum_observed_order": 3.0,
+      "scaled_difference_floor": 1e-12,
+      "maximum_adjacent_order_difference": 0.5,
+      "maximum_coefficient_relative_difference": 0.5,
+      "maximum_extrapolant_residual_ratio": 1.0,
+      "epoch_fit": {
+        "minimum_epoch_samples": 4,
+        "minimum_pairwise_direction_cosine": 0.9,
+        "maximum_unmatched_sign_change_intervals": 0,
+        "modal_fit": {
+          "maximum_symmetry_relative_error": 1e-10,
+          "maximum_eigen_residual_relative_error": 1e-9,
+          "maximum_orthogonality_error": 1e-9,
+          "repeated_eigenvalue_relative_tolerance": 1e-9,
+          "repeated_eigenvalue_absolute_tolerance": 1e-12,
+          "maximum_jacobi_sweeps": 128,
+          "temporal_alignment": {
+            "maximum_sample_lag": 1
+          }
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "rc_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "rc_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "rc_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "rl_bank-n001",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "rl_bank-n004",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "rl_bank-n016",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "coupled_rc_ring-n001",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "coupled_rc_ring-n004",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    },
+    {
+      "id": "coupled_rc_ring-n016",
+      "step_divisor": 1,
+      "variant_id": "global_temporal_modal_epoch"
+    }
+  ],
+  "claim_boundary": "The temporally aligned mode study is an offline empirical diagnostic for smooth linear circuits with homogeneous dynamic units and a qualified symmetric modal basis. Only scalar modal groups may use a nonzero lag. Three signed refinement-difference sequences must provide a unique, monotone, one-to-one zero-crossing match within the single declared maximum sample lag. Direction cosines are evaluated only on the published common retained interval. Observed order, coefficient agreement, extrapolant residuals, error estimates, and conservative state reconstruction remain unshifted. Chatter, absent crossing evidence, ambiguous matches, ineligible bases, and unsuccessful alignment preserve the unshifted fail-closed Loop 5G result. The study does not alter a BAB-CS runtime profile and does not establish a formal exact-trajectory enclosure."
+}
